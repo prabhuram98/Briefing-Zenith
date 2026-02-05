@@ -6,7 +6,6 @@
   <title>ZENITH – Daily Briefing</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
   <!-- HEADER -->
@@ -17,15 +16,33 @@
 
   <!-- LOGIN SCREEN -->
   <div id="loginScreen">
-    <h3>Login</h3>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="pin" placeholder="PIN" />
+    <h3>Login (Testing Mode)</h3>
+    <!-- Disabled username / PIN -->
     <button id="loginBtn">Login</button>
     <p id="loginError"></p>
   </div>
 
   <!-- MAIN APP -->
   <div id="mainScreen" style="display:none;">
+
+    <!-- USER MANAGEMENT -->
+    <div id="userManagement" style="display:none; margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; border-radius: 8px;">
+      <h3>User Management</h3>
+      <input type="text" id="newName" placeholder="Name" />
+      <select id="newArea">
+        <option value="SALA">SALA</option>
+        <option value="BAR">BAR</option>
+      </select>
+      <select id="newType">
+        <option value="Manager">Manager</option>
+        <option value="Staff">Staff</option>
+      </select>
+      <button id="addUserBtn">Add User</button>
+
+      <h4>Current Users:</h4>
+      <ul id="userList"></ul>
+    </div>
+
     <button id="generateBtn">Generate Briefing</button>
     <pre id="briefingOutput"></pre>
     <button id="downloadBtn">Download as Text</button>

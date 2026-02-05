@@ -1,85 +1,99 @@
-// ----- Users (username + PIN + role) -----
-let users = [
-  { username: "ana", pin: "1234", role: "manager" },
-  { username: "prabhu", pin: "5678", role: "staff" },
-  { username: "julieta", pin: "2345", role: "staff" },
-  { username: "goncalo", pin: "6789", role: "staff" },
-  { username: "leonor", pin: "3456", role: "staff" }
-];
+// ----- USERS array (dynamic now) -----
+let users = [];
 
-// ----- Staff and tasks (editable by admin) -----
-let staff = [
-  { name: "Ana", area: "SALA", role: "Manager" },
-  { name: "Prabhu", area: "SALA", role: "Seller" },
-  { name: "Julieta", area: "SALA", role: "Seller" },
-  { name: "Gonçalo", area: "BAR", role: "Barista" },
-  { name: "Leonor", area: "BAR", role: "Barista" }
-];
+// ----- STAFF array for briefing -----
+let staff = [];
 
-let tasks = [
-  { section: "Porta", time: "08:00", description: "" },
-  { section: "BAR", time: "07:30", description: "Abertura Sala/Bar" },
-  { section: "BAR", time: "07:30", description: "Barista – Bebidas" },
-  { section: "BAR", time: "09:00", description: "Barista – Cafés / Caixa" },
-  { section: "SELLERS", time: "08:00", description: "Seller A" },
-  { section: "SELLERS", time: "10:30", description: "Seller B" }
-  // Add more tasks as needed
-];
+// ----- LOGIN (disabled username/PIN) -----
+document.getElementById("loginBtn").addEventListener("click", () => {
+  // Hide login screen, show main screen
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainScreen").style.display = "block";
 
-// ----- Login Logic -----
-const loginBtn = document.getElementById("loginBtn");
-loginBtn.addEventListener("click", () => {
-  const username = document.getElementById("username").value.toLowerCase();
-  const pin = document.getElementById("pin").value;
-  const user = users.find(u => u.username === username && u.pin === pin);
+  // Show user management icon/panel for testing
+  document.getElementById("userManagement").style.display = "block";
 
-  if(user){
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("mainScreen").style.display = "block";
-
-    if(user.role === "manager"){
-      document.getElementById("adminPanel").style.display = "block";
-    }
-  } else {
-    document.getElementById("loginError").innerText = "Invalid username or PIN";
-  }
+  updateUserList();
 });
 
-// ----- Generate Briefing -----
-function shuffle(array){
-  return array.sort(() => Math.random() - 0.5);
-}
+// ----- ADD USER BUTTON -----
+document.getElementById("addUserBtn").addEventListener("click", () => {
+  const name = document.getElementById("newName").value.trim();
+  const area = document.getElementById("newArea").value;
+  const type = document.getElementById("newType").value;
 
-function generateBriefing(){
-  let output = "Bom dia a todos!\n\n";
-  const today = new Date();
-  const dateStr = today.toLocaleDateString("pt-PT");
-  output += `*BRIEFING ${dateStr}*\n\n`;
+  if(name === "") return alert("Please enter a name");
 
-  // Group tasks by section
-  const sections = [...new Set(tasks.map(t => t.section))];
-  sections.forEach(section => {
-    output += section + ":\n";
-    tasks.filter(t => t.section === section).forEach(t => {
-      // Randomly pick a staff from the section's area
-      let possibleStaff = staff.filter(s => s.area.toUpperCase() === section || section === "SELLERS" || section === "RUNNERS");
-      let assigned = possibleStaff.length > 0 ? shuffle(possibleStaff)[0].name : "N/A";
-      output += `${t.time} ${t.description}: *${assigned}*\n`;
-    });
-    output += "-----------------------\n";
+  // Add to arrays
+  users.push({ name, area, type });
+  staff.push({ name, area, role: type });
+
+  // Clear inputs
+  document.getElementById("newName").value = "";
+
+  updateUserList();
+});
+
+// ----- UPDATE USER LIST -----
+function updateUserList() {
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
+  users.forEach(u => {
+    const li = document.createElement("li");
+    li.textContent = `${u.name} - ${u.area} - ${u.type}`;
+    list.appendChild(li);
   });
-
-  document.getElementById("briefingOutput").innerText = output;
 }
 
-// ----- Buttons -----
+// ----- BRIEFING GENERATOR -----
+function generateBriefing() {
+  const today = new Date();
+  const date = today.toLocaleDateString("pt-PT");
+
+  let text = "";
+  text += "Bom dia a todos!\n\n";
+  text += `*BRIEFING ${date}*\n\n`;
+
+  // Example static briefing
+  text += "08:00 Porta: Ana\n\n";
+
+  text += "BAR:\n";
+  text += "07:30 Abertura Sala/Bar: *Leonor*\n";
+  text += "07:30 Bar A: *Leonor* Barista – Bebidas\n";
+  text += "09:00 Bar B: *Gonçalo* Barista – Cafés / Caixa\n\n";
+
+  text += "SELLERS:\n";
+  text += "08:00 Seller A: *David*\n";
+  text += "10:30 Seller B: *Julieta*\n\n";
+
+  text += "RUNNERS:\n";
+  text += "Runner A e B: Todos\n\n";
+
+  text += "HACCP / LIMPEZA BAR:\n";
+  text += "15:00 Preparações Bar: *Leonor*\n";
+  text += "15:00 Reposição Bar: *Leonor*\n";
+  text += "17:30 Fecho Bar: *Gonçalo*\n\n";
+
+  text += "HACCP / SALA:\n";
+  text += "16:00 Limpeza e reposição aparador / cadeira bebés: *Julieta*\n";
+  text += "16:00 Repor papel (WC): *Julieta*\n";
+  text += "16:00 Limpeza WC (clientes e staff): *Julieta*\n";
+  text += "17:30 Limpeza vidros e espelhos: *David*\n";
+  text += "17:30 Fecho da sala: *David*\n";
+  text += "17:30 Fecho de Caixa: *Ana*\n";
+
+  document.getElementById("briefingOutput").innerText = text;
+}
+
+// ----- GENERATE BUTTON -----
 document.getElementById("generateBtn").addEventListener("click", generateBriefing);
 
+// ----- DOWNLOAD BUTTON -----
 document.getElementById("downloadBtn").addEventListener("click", () => {
   const text = document.getElementById("briefingOutput").innerText;
-  const blob = new Blob([text], {type: "text/plain"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "briefing.txt";
-  a.click();
+  const blob = new Blob([text], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "briefing.txt";
+  link.click();
 });
