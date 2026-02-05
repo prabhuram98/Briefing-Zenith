@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ------------------- PRE-DEFINED SCHEDULE (JSON) -------------------
   const scheduleData = {
     "2026-02-01": [
       { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "16:30" },
@@ -19,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ]
   };
 
-  // DOM elements
   const dateSelect = document.getElementById("dateSelect");
   const generateBtn = document.getElementById("generateBtn");
   const briefingPopup = document.getElementById("briefingPopup");
@@ -44,28 +42,22 @@ document.addEventListener("DOMContentLoaded", () => {
       briefingText.innerText = "No schedule available for this day.";
     } else {
       let text = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
-
-      // Example formatting like your original style
-      text += "STAFF SCHEDULE:\n";
       staffList.forEach(staff => {
         text += `${staff.entry} - ${staff.name}: ${staff.area}\n`;
       });
-
       text += "\n⸻⸻⸻⸻\n\n⚠ Please follow your area responsibilities\n";
-
       briefingText.innerText = text;
     }
 
     briefingPopup.style.display = "flex";
   });
 
-  // Copy & Close
-  copyBtn.addEventListener("click", ()=>{
+  copyBtn.addEventListener("click", () => {
     navigator.clipboard.writeText(briefingText.innerText);
     alert("Briefing copied!");
   });
 
-  closeBtn.addEventListener("click", ()=>{
+  closeBtn.addEventListener("click", () => {
     briefingPopup.style.display = "none";
   });
 
