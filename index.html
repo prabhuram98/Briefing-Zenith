@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZENITH – Daily Briefing</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <h1 class="brand">ZENITH</h1>
+    <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
+  </header>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <h3>Login</h3>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="pin" placeholder="PIN" />
+    <button id="loginBtn">Login</button>
+    <p id="loginError"></p>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainScreen" style="display:none;">
+    <button id="generateBtn">Generate Briefing</button>
+    <pre id="briefingOutput"></pre>
+    <button id="downloadBtn">Download as Text</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
