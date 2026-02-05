@@ -2,7 +2,7 @@
 const data = require('./data.json');
 
 function roundTime(timeStr) {
-    return timeStr; // HH:MM format
+    return timeStr; // keep HH:MM
 }
 
 function generateBriefing(date) {
@@ -14,12 +14,11 @@ function generateBriefing(date) {
     // ------------------- PORTA -------------------
     let portaStaff = sala.find(s => s.name.toLowerCase() === 'ana');
     if (!portaStaff) {
-        // Ana absent → earliest Sala member
         portaStaff = sala.reduce((earliest, s) => !earliest || s.entry < earliest.entry ? s : earliest, null);
     }
 
-    // ------------------- BAR SECTION -------------------
-    const barSorted = [...bar].sort((a, b) => a.entry.localeCompare(b.entry));
+    // ------------------- BAR -------------------
+    const barSorted = [...bar].sort((a,b) => a.entry.localeCompare(b.entry));
     let barLines = [];
     barLines.push(`${roundTime(barSorted[0].entry)} Abertura Sala/Bar: ${barSorted[0].name}`);
     if (barSorted[0]) barLines.push(`${roundTime(barSorted[0].entry)} Bar A: ${barSorted[0].name}`);
@@ -28,43 +27,35 @@ function generateBriefing(date) {
     if (barSorted[3]) barLines.push(`${roundTime(barSorted[3].entry)} Bar D: ${barSorted[3].name}`);
 
     // ------------------- SELLERS -------------------
-    const salaExcludingAna = sala.filter(s => s.name.toLowerCase() !== 'ana'); // Only Sala staff
-    let julieta = salaExcludingAna.find(s => s.name.toLowerCase() === 'julieta');
-    const otherSala = salaExcludingAna.filter(s => s.name.toLowerCase() !== 'julieta');
+    let salaStaffExclAna = sala.filter(s => s.name.toLowerCase() !== 'ana'); // Only Sala staff
+    const julieta = salaStaffExclAna.find(s => s.name.toLowerCase() === 'julieta');
+    const otherSala = salaStaffExclAna.filter(s => s.name.toLowerCase() !== 'julieta');
 
     let sellers = [];
-    if (salaExcludingAna.length === 1) {
-        sellers = salaExcludingAna.sort((a,b)=>a.entry.localeCompare(b.entry));
-    } else if (salaExcludingAna.length === 2) {
-        sellers = salaExcludingAna.sort((a,b)=>a.entry.localeCompare(b.entry));
-    } else {
+    let runnerLine = '';
+
+    if (salaStaffExclAna.length >= 3) {
+        // 3+ Sala members → Julieta becomes Runner
         sellers = otherSala.sort((a,b)=>a.entry.localeCompare(b.entry));
+        runnerLine = `Runner A e B: Julieta`;
+    } else {
+        // 1-2 Sala members → Julieta can be Seller
+        sellers = salaStaffExclAna.sort((a,b)=>a.entry.localeCompare(b.entry));
+        runnerLine = `Runner A e B: Todos`;
     }
 
     const sellerLines = sellers.map((s, idx) => `${roundTime(s.entry)} Seller ${String.fromCharCode(65+idx)}: ${s.name}`);
 
-    // ------------------- RUNNERS -------------------
-    let runnerLine = '';
-    if (julieta && salaExcludingAna.length >= 3) {
-        runnerLine = `Runner A e B: Julieta`;
-    } else {
-        runnerLine = `Runner A e B: Todos`;
-    }
-
     // ------------------- HACCP BAR -------------------
-    const barHACCP = [...bar].sort((a, b) => a.exit.localeCompare(b.exit));
+    const barHACCP = [...bar].sort((a,b)=>a.exit.localeCompare(b.exit));
     let barHACCPLines = [];
     if (barHACCP[0]) barHACCPLines.push(`${roundTime(barHACCP[0].exit)} Preparações Bar: ${barHACCP[0].name}`);
     if (barHACCP[1]) barHACCPLines.push(`${roundTime(barHACCP[1].exit)} Reposição Bar: ${barHACCP[1].name}`);
-    if (barHACCP.length >=3) {
-        barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Limpeza Máquina de Café / Reposição de Leites: ${barHACCP[barHACCP.length-1].name}`);
-    }
-    if (barHACCP.length >=2) {
-        barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Fecho Bar: ${barHACCP[barHACCP.length-1].name}`);
-    }
+    if (barHACCP.length >=3) barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Limpeza Máquina de Café / Reposição de Leites: ${barHACCP[barHACCP.length-1].name}`);
+    if (barHACCP.length >=2) barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Fecho Bar: ${barHACCP[barHACCP.length-1].name}`);
 
     // ------------------- HACCP SALA -------------------
-    const salaSortedByExit = [...salaExcludingAna].sort((a,b)=>a.exit.localeCompare(b.exit)); // Only Sala staff
+    const salaSortedByExit = [...salaStaffExclAna].sort((a,b)=>a.exit.localeCompare(b.exit)); // Only Sala staff
     let salaHACCPLines = [];
 
     if (salaSortedByExit.length === 1) {
@@ -103,7 +94,7 @@ function generateBriefing(date) {
     const lastBarExit = barSorted[barSorted.length-1].exit;
     const fechoLine = `${roundTime(lastBarExit)} Fecho de Caixa: ${fechoPerson.charAt(0).toUpperCase()+fechoPerson.slice(1)}`;
 
-    // ------------------- Compose Full Briefing -------------------
+    // ------------------- Compose Briefing -------------------
     let briefing = `Bom dia a todos!\n\n*BRIEFING ${date}*\n\n`;
     briefing += `${roundTime(portaStaff.entry)} Porta: ${portaStaff.name}\n\n`;
     briefing += `BAR:\n${barLines.join('\n')}\n\n⸻⸻⸻⸻\n\n`;
@@ -118,5 +109,5 @@ function generateBriefing(date) {
     return briefing;
 }
 
-// Example usage
+// Example
 console.log(generateBriefing("06/02/2026"));
