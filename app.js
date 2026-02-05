@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
     briefingPopup.style.display = "flex";
   });
 
+  // Copy & Close
   copyBtn.addEventListener("click", () => {
     navigator.clipboard.writeText(briefingText.innerText);
     alert("Briefing copied!");

@@ -8,29 +8,31 @@
 </head>
 <body>
 
- <header class="app-header">
-  <h1 class="brand">ZENITH</h1>
-  <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
-</header>
+  <!-- HEADER -->
+  <header class="app-header">
+    <h1 class="brand">ZENITH</h1>
+    <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
+  </header>
 
   <!-- MAIN FORM -->
   <div id="mainForm">
-
     <h3>Select Day for Briefing</h3>
 
-    <label>Date:</label>
+    <label for="dateSelect">Date:</label>
     <select id="dateSelect"></select>
 
     <button class="option-btn" id="generateBtn">Generate Briefing</button>
-
+    <p class="developer-credit">Developed by PRABHU</p>
   </div>
 
   <!-- BRIEFING POPUP -->
   <div id="briefingPopup">
     <div id="popupContent">
+      <div class="popup-header">
+        <span id="closeBtn" class="close-btn">X</span>
+      </div>
       <pre id="briefingText"></pre>
       <button class="option-btn" id="copyBtn">Copy</button>
-      <button class="option-btn" id="closeBtn">Close</button>
     </div>
   </div>
 
