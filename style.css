@@ -1,11 +1,11 @@
 /* HEADER */
 .app-header {
-  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  background: #000;
   color: #fff;
   padding: 30px 10px;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   text-align: center;
 }
 
@@ -13,7 +13,6 @@
   font-size: 42px;
   margin: 0;
   letter-spacing: 4px;
-  text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
 }
 
 .subtitle {
@@ -21,7 +20,6 @@
   margin-top: 6px;
   letter-spacing: 2px;
   font-weight: 300;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 /* SECTION CARDS */
@@ -33,8 +31,8 @@
 }
 
 .card {
-  background: linear-gradient(90deg, #ff7e5f, #feb47b);
-  color: white;
+  background: #222;
+  color: #fff;
   width: 140px;
   height: 140px;
   border-radius: 20px;
@@ -44,13 +42,14 @@
   justify-content: center;
   margin: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  transition: transform 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  transition: transform 0.2s, background 0.2s;
   text-align: center;
 }
 
 .card:hover {
   transform: scale(1.05);
+  background: #333;
 }
 
 .card-icon {
@@ -67,13 +66,14 @@
   border-radius: 8px;
   border: none;
   font-size: 16px;
-  background: #4CAF50;
-  color: white;
+  background: #444;
+  color: #fff;
   cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
 .option-btn:hover {
-  background: #45a049;
+  background: #555;
 }
 
 /* INPUTS AND SELECTS */
@@ -83,14 +83,17 @@ input, select {
   padding: 12px;
   margin: 6px auto;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #555;
   display: block;
   font-size: 16px;
+  background: #111;
+  color: #fff;
 }
 
 /* PRE ELEMENT FOR BRIEFING */
 pre {
-  background: white;
+  background: #111;
+  color: #fff;
   padding: 15px;
   margin-top: 15px;
   border-radius: 8px;
@@ -99,6 +102,7 @@ pre {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 /* LISTS */
