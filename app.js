@@ -1,84 +1,69 @@
-// ------------------- PRE-FILLED STAFF -------------------
-const staffArray = [
-  { name: "Ana", area: "SALA", access: "Manager" },
-  { name: "David", area: "SALA", access: "User" },
-  { name: "Julieta", area: "SALA", access: "User" },
-  { name: "Prabhu", area: "SALA", access: "User" },
-  { name: "Carlos", area: "BAR", access: "Manager" },
-  { name: "Gonçalo", area: "BAR", access: "User" },
-  { name: "Leonor", area: "BAR", access: "User" },
-  { name: "Carol", area: "BAR", access: "User" }
-];
+document.addEventListener("DOMContentLoaded", () => {
 
-// DOM ELEMENTS
-const employeeSelect = document.getElementById("employeeSelect");
-const entryTimeSelect = document.getElementById("entryTimeSelect");
-const exitTimeSelect = document.getElementById("exitTimeSelect");
-const generateBtn = document.getElementById("generateBtn");
-const briefingPopup = document.getElementById("briefingPopup");
-const briefingText = document.getElementById("briefingText");
-const copyBtn = document.getElementById("copyBtn");
-const closeBtn = document.getElementById("closeBtn");
+  // ------------------- PRE-DEFINED SCHEDULE (from Excel) -------------------
+  const scheduleData = {
+    "2026-02-05": [
+      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "17:30" },
+      { "name": "Leonor", "area": "BAR", "entry": "07:30", "exit": "15:00" },
+      { "name": "Gonçalo", "area": "BAR", "entry": "09:00", "exit": "17:30" },
+      { "name": "David", "area": "SALA", "entry": "08:00", "exit": "17:30" },
+      { "name": "Julieta", "area": "SALA", "entry": "10:30", "exit": "17:30" }
+    ],
+    "2026-02-06": [
+      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "17:30" },
+      { "name": "Leonor", "area": "BAR", "entry": "07:30", "exit": "15:00" },
+      { "name": "Gonçalo", "area": "BAR", "entry": "09:00", "exit": "17:30" },
+      { "name": "David", "area": "SALA", "entry": "08:00", "exit": "17:30" },
+      { "name": "Julieta", "area": "SALA", "entry": "10:30", "exit": "17:30" }
+    ]
+  };
 
-// Populate Employee Dropdown
-staffArray.forEach(staff => {
-  const opt = document.createElement("option");
-  opt.value = staff.name;
-  opt.textContent = staff.name;
-  employeeSelect.appendChild(opt);
-});
+  // DOM elements
+  const dateSelect = document.getElementById("dateSelect");
+  const generateBtn = document.getElementById("generateBtn");
+  const briefingPopup = document.getElementById("briefingPopup");
+  const briefingText = document.getElementById("briefingText");
+  const copyBtn = document.getElementById("copyBtn");
+  const closeBtn = document.getElementById("closeBtn");
 
-// Populate time dropdowns with half-hour increments
-function generateTimeOptions(startHour, endHour, elementId, allowHalf=true){
-  const select = document.getElementById(elementId);
-  for(let h=startHour; h<=endHour; h++){
-    ["00","30"].forEach(min=>{
-      if(h===endHour && min==="30" && !allowHalf) return;
-      if(elementId==="entryTimeSelect" && h===endHour && min==="30") return; // Entry last at full hour
-      const time = h.toString().padStart(2,"0")+":"+min;
-      const opt = document.createElement("option");
-      opt.value = time;
-      opt.textContent = time;
-      select.appendChild(opt);
-    });
-  }
-}
+  // Populate date dropdown
+  Object.keys(scheduleData).forEach(date => {
+    const opt = document.createElement("option");
+    opt.value = date;
+    opt.textContent = date;
+    dateSelect.appendChild(opt);
+  });
 
-// Entry 07:00 - 12:00
-generateTimeOptions(7,12,"entryTimeSelect");
-// Exit 14:00 - 18:30
-generateTimeOptions(14,18,"exitTimeSelect");
+  // Generate briefing
+  generateBtn.addEventListener("click", () => {
+    const selectedDate = dateSelect.value;
+    const staffList = scheduleData[selectedDate];
 
-// Generate briefing
-generateBtn.addEventListener("click", ()=>{
-  const emp = employeeSelect.value;
-  const area = document.getElementById("areaSelect").value;
-  const entry = entryTimeSelect.value;
-  const exit = exitTimeSelect.value;
+    if(!staffList || staffList.length === 0){
+      briefingText.innerText = "No schedule available for this day.";
+    } else {
+      let text = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
 
-  const text = `
-Bom dia a todos!
+      staffList.forEach(staff => {
+        text += `${staff.entry} - ${staff.name}: ${staff.area}\n`;
+      });
 
-*BRIEFING*
+      text += "\n⸻⸻⸻⸻\n\n⚠ Please follow your area responsibilities\n";
 
-${entry} - ${emp}: ${area}
-${exit} - ${emp} leaves
+      briefingText.innerText = text;
+    }
 
-⸻⸻⸻⸻
+    briefingPopup.style.display = "flex";
+  });
 
-⚠ Please follow your area responsibilities
-`;
+  // Copy & Close
+  copyBtn.addEventListener("click", ()=>{
+    navigator.clipboard.writeText(briefingText.innerText);
+    alert("Briefing copied!");
+  });
 
-  briefingText.innerText = text;
-  briefingPopup.style.display = "flex";
-});
+  closeBtn.addEventListener("click", ()=>{
+    briefingPopup.style.display = "none";
+  });
 
-// Copy & Close
-copyBtn.addEventListener("click", ()=>{
-  navigator.clipboard.writeText(briefingText.innerText);
-  alert("Briefing copied!");
-});
-
-closeBtn.addEventListener("click", ()=>{
-  briefingPopup.style.display = "none";
 });
