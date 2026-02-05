@@ -1,94 +1,84 @@
-.section-cards {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZENITH – Daily Briefing</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-.card {
-  background: linear-gradient(90deg, #ff7e5f, #feb47b);
-  color: white;
-  width: 140px;
-  height: 140px;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  transition: transform 0.2s;
-  text-align: center;
-}
+  <!-- HEADER -->
+  <header class="app-header">
+    <h1 class="brand">ZENITH</h1>
+    <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
+  </header>
 
-.card:hover {
-  transform: scale(1.05);
-}
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <h3>Login (Testing Mode)</h3>
+    <button id="loginBtn">Login</button>
+  </div>
 
-.card-icon {
-  font-size: 40px;
-  margin-bottom: 10px;
-}
+  <!-- MAIN APP -->
+  <div id="mainScreen" style="display:none; padding: 20px;">
 
-.option-btn {
-  width: 100%;
-  max-width: 320px;
-  padding: 12px;
-  margin: 8px auto;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-  background: #4CAF50;
-  color: white;
-  cursor: pointer;
-}
+    <!-- SECTION CARDS -->
+    <div class="section-cards">
+      <div class="card" id="briefingsCard">
+        <span class="card-icon">📋</span>
+        <h3>Briefings</h3>
+      </div>
+      <div class="card" id="adminCard">
+        <span class="card-icon">⚙️</span>
+        <h3>Admin</h3>
+      </div>
+    </div>
 
-.option-btn:hover {
-  background: #45a049;
-}
+    <!-- BRIEFINGS OPTIONS -->
+    <div id="briefingsOptions" style="display:none; margin-top: 20px;">
+      <button class="option-btn" id="generateBriefingBtn">📝 Generate Briefing</button>
+      <button class="option-btn" id="tasksBtn">✅ Tasks</button>
+      <div id="briefingOutputContainer">
+        <pre id="briefingOutput"></pre>
+      </div>
+      <div id="tasksContainer" style="display:none; margin-top: 10px;">
+        <input type="text" id="newTaskName" placeholder="Task name" />
+        <button id="addTaskBtn">Add Task</button>
+        <ul id="tasksList"></ul>
+      </div>
+    </div>
 
-pre {
-  background: white;
-  padding: 15px;
-  margin-top: 15px;
-  border-radius: 8px;
-  text-align: left;
-  white-space: pre-wrap;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
+    <!-- ADMIN OPTIONS -->
+    <div id="adminOptions" style="display:none; margin-top: 20px;">
+      <!-- Staffs management -->
+      <div id="staffsContainer">
+        <h4>Staffs</h4>
+        <input type="text" id="staffName" placeholder="Name" />
+        <select id="staffArea">
+          <option value="SALA">SALA</option>
+          <option value="BAR">BAR</option>
+        </select>
+        <select id="staffAccess">
+          <option value="Manager">Manager</option>
+          <option value="User">User</option>
+        </select>
+        <button id="addStaffBtn">Add Staff</button>
+        <ul id="staffList"></ul>
+      </div>
 
-input, select {
-  width: 100%;
-  max-width: 320px;
-  padding: 12px;
-  margin: 6px auto;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  display: block;
-  font-size: 16px;
-}
+      <!-- Users / PIN assignment -->
+      <div id="usersContainer" style="margin-top:20px;">
+        <h4>Users</h4>
+        <select id="selectEmployee"></select>
+        <input type="text" id="employeePin" maxlength="4" placeholder="4-digit PIN" />
+        <button id="assignPinBtn">Assign PIN</button>
+        <ul id="usersList"></ul>
+      </div>
+    </div>
 
-ul {
-  list-style-type: none;
-  padding-left: 0;
-}
+  </div>
 
-@media (max-width: 480px) {
-  .section-cards {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .card {
-    width: 80%;
-    max-width: 200px;
-    height: 120px;
-  }
-
-  .card-icon {
-    font-size: 30px;
-  }
-}
+  <script src="app.js"></script>
+</body>
+</html>
