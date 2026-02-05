@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZENITH – Daily Briefing</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZENITH – Briefing Generator</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -14,63 +14,37 @@
     <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
   </header>
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen">
-    <h3>Login (Testing Mode)</h3>
-    <button id="loginBtn">Login</button>
+  <!-- MAIN FORM -->
+  <div id="mainForm" style="padding:20px;">
+
+    <h3>Select Employee and Schedule</h3>
+
+    <label>Employee:</label>
+    <select id="employeeSelect"></select>
+
+    <label>Area:</label>
+    <select id="areaSelect">
+      <option value="SALA">SALA</option>
+      <option value="BAR">BAR</option>
+    </select>
+
+    <label>Entry Time:</label>
+    <select id="entryTimeSelect"></select>
+
+    <label>Exit Time:</label>
+    <select id="exitTimeSelect"></select>
+
+    <button class="option-btn" id="generateBtn">Generate Briefing</button>
+
   </div>
 
-  <!-- MAIN APP -->
-  <div id="mainScreen" style="display:none; padding: 20px;">
-
-    <!-- SECTION CARDS -->
-    <div class="section-cards">
-      <div class="card" id="briefingsCard">
-        <span class="card-icon">📋</span>
-        <h3>Briefings</h3>
-      </div>
-      <div class="card" id="adminCard">
-        <span class="card-icon">⚙️</span>
-        <h3>Admin</h3>
-      </div>
+  <!-- BRIEFING POPUP -->
+  <div id="briefingPopup" style="display:none;">
+    <div id="popupContent">
+      <pre id="briefingText"></pre>
+      <button class="option-btn" id="copyBtn">Copy</button>
+      <button class="option-btn" id="closeBtn">Close</button>
     </div>
-
-    <!-- BRIEFINGS OPTIONS -->
-    <div id="briefingsOptions" style="display:none; margin-top: 20px;">
-      <button class="option-btn" id="generateBriefingBtn">📝 Generate Briefing</button>
-      <div id="briefingOutputContainer">
-        <pre id="briefingOutput"></pre>
-      </div>
-    </div>
-
-    <!-- ADMIN OPTIONS -->
-    <div id="adminOptions" style="display:none; margin-top: 20px;">
-      <!-- Staffs management -->
-      <div id="staffsContainer">
-        <h4>Staffs</h4>
-        <input type="text" id="staffName" placeholder="Name" />
-        <select id="staffArea">
-          <option value="SALA">SALA</option>
-          <option value="BAR">BAR</option>
-        </select>
-        <select id="staffAccess">
-          <option value="Manager">Manager</option>
-          <option value="User">User</option>
-        </select>
-        <button id="addStaffBtn">Add Staff</button>
-        <ul id="staffList"></ul>
-      </div>
-
-      <!-- Users / PIN assignment -->
-      <div id="usersContainer" style="margin-top:20px;">
-        <h4>Users</h4>
-        <select id="selectEmployee"></select>
-        <input type="text" id="employeePin" maxlength="4" placeholder="4-digit PIN" />
-        <button id="assignPinBtn">Assign PIN</button>
-        <ul id="usersList"></ul>
-      </div>
-    </div>
-
   </div>
 
   <script src="app.js"></script>

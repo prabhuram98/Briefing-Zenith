@@ -1,141 +1,82 @@
 /* HEADER */
 .app-header {
-  background: #000;               /* black background */
-  color: #ba9750;                 /* coffee color for text/logo */
+  background: #3e2f1c; /* dark coffee background */
+  color: #ba9750;      /* light coffee text */
   padding: 30px 10px;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
+  text-align: center;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  text-align: center;
 }
 
-.brand {
-  font-size: 42px;
-  margin: 0;
-  letter-spacing: 4px;
-  color: #ba9750;                 /* coffee color */
+.brand { font-size:42px; margin:0; color:#ba9750; }
+.subtitle { font-size:16px; margin-top:6px; color:#ba9750; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #2e1f0f; /* darker coffee background */
+  color: #ba9750;
 }
 
-.subtitle {
+/* FORM */
+select, label {
+  display: block;
+  margin: 10px auto;
   font-size: 16px;
-  margin-top: 6px;
-  letter-spacing: 2px;
-  font-weight: 300;
-  color: #ba9750;                 /* coffee color */
 }
 
-/* SECTION CARDS */
-.section-cards {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
-
-.card {
-  background: #111;               /* dark background */
-  color: #ba9750;                 /* coffee color */
-  width: 140px;
-  height: 140px;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  transition: transform 0.2s, background 0.2s;
-  text-align: center;
-}
-
-.card:hover {
-  transform: scale(1.05);
-  background: #222;
-}
-
-.card-icon {
-  font-size: 40px;
-  margin-bottom: 10px;
-}
-
-/* OPTION BUTTONS */
-.option-btn {
+select {
   width: 100%;
-  max-width: 320px;
-  padding: 12px;
-  margin: 8px auto;
-  border-radius: 8px;
+  max-width: 250px;
+  padding: 8px;
+  background: #3e2f1c;
+  color: #ba9750;
   border: 1px solid #ba9750;
-  font-size: 16px;
-  background: #000;               /* black button background */
-  color: #ba9750;                 /* coffee text */
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  transition: 0.2s;
+  border-radius: 6px;
+}
+
+.option-btn {
+  display:block;
+  width: 100%;
+  max-width: 250px;
+  padding: 12px;
+  margin: 15px auto;
+  font-size:16px;
+  background:#3e2f1c;
+  color:#ba9750;
+  border:1px solid #ba9750;
+  border-radius:8px;
+  cursor:pointer;
 }
 
 .option-btn:hover {
-  background: #111;
+  background:#5c462b;
 }
 
-/* INPUTS AND SELECTS */
-input, select {
-  width: 100%;
-  max-width: 320px;
-  padding: 12px;
-  margin: 6px auto;
-  border-radius: 6px;
-  border: 1px solid #ba9750;      /* coffee border */
-  display: block;
-  font-size: 16px;
-  background: #000;                /* black background */
-  color: #ba9750;                  /* coffee text */
+/* POPUP */
+#briefingPopup {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(62,47,28,0.9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 999;
 }
 
-/* PRE ELEMENT FOR BRIEFING */
+#popupContent {
+  background: #3e2f1c;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 90%;
+  text-align:left;
+}
+
 pre {
-  background: #000;
-  color: #ba9750;
-  padding: 15px;
-  margin-top: 15px;
-  border-radius: 8px;
-  text-align: left;
   white-space: pre-wrap;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-/* LISTS */
-ul {
-  list-style-type: none;
-  padding-left: 0;
-}
-
-/* MOBILE */
-@media (max-width: 480px) {
-  .section-cards {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .card {
-    width: 80%;
-    max-width: 200px;
-    height: 120px;
-  }
-
-  .card-icon {
-    font-size: 30px;
-  }
-
-  .brand {
-    font-size: 32px;
-  }
-
-  .subtitle {
-    font-size: 12px;
-  }
+  background:#2e1f0f;
+  color:#ba9750;
+  padding:15px;
+  border-radius:8px;
 }

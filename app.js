@@ -1,79 +1,84 @@
-// ------------------- LOGIN -------------------
-document.getElementById("loginBtn").addEventListener("click", () => {
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("mainScreen").style.display = "block";
+// ------------------- PRE-FILLED STAFF -------------------
+const staffArray = [
+  { name: "Ana", area: "SALA", access: "Manager" },
+  { name: "David", area: "SALA", access: "User" },
+  { name: "Julieta", area: "SALA", access: "User" },
+  { name: "Prabhu", area: "SALA", access: "User" },
+  { name: "Carlos", area: "BAR", access: "Manager" },
+  { name: "Gonçalo", area: "BAR", access: "User" },
+  { name: "Leonor", area: "BAR", access: "User" },
+  { name: "Carol", area: "BAR", access: "User" }
+];
+
+// DOM ELEMENTS
+const employeeSelect = document.getElementById("employeeSelect");
+const entryTimeSelect = document.getElementById("entryTimeSelect");
+const exitTimeSelect = document.getElementById("exitTimeSelect");
+const generateBtn = document.getElementById("generateBtn");
+const briefingPopup = document.getElementById("briefingPopup");
+const briefingText = document.getElementById("briefingText");
+const copyBtn = document.getElementById("copyBtn");
+const closeBtn = document.getElementById("closeBtn");
+
+// Populate Employee Dropdown
+staffArray.forEach(staff => {
+  const opt = document.createElement("option");
+  opt.value = staff.name;
+  opt.textContent = staff.name;
+  employeeSelect.appendChild(opt);
 });
 
-// ------------------- CARD NAVIGATION -------------------
-const briefingsCard = document.getElementById("briefingsCard");
-const adminCard = document.getElementById("adminCard");
-const briefingsOptions = document.getElementById("briefingsOptions");
-const adminOptions = document.getElementById("adminOptions");
-
-briefingsCard.addEventListener("click", () => {
-  briefingsOptions.style.display = "block";
-  adminOptions.style.display = "none";
-});
-
-adminCard.addEventListener("click", () => {
-  adminOptions.style.display = "block";
-  briefingsOptions.style.display = "none";
-});
-
-// ------------------- BRIEFINGS -------------------
-document.getElementById("generateBriefingBtn").addEventListener("click", () => {
-  const today = new Date();
-  const date = today.toLocaleDateString("pt-PT");
-  let text = `*BRIEFING ${date}*\n\n[Briefing will appear here]`;
-  document.getElementById("briefingOutput").innerText = text;
-});
-
-// ------------------- ADMIN STAFF -------------------
-const staffArray = [];
-const staffList = document.getElementById("staffList");
-
-document.getElementById("addStaffBtn").addEventListener("click", () => {
-  const name = document.getElementById("staffName").value.trim();
-  const area = document.getElementById("staffArea").value;
-  const access = document.getElementById("staffAccess").value;
-  if(!name) return;
-  staffArray.push({name, area, access});
-  updateStaffList();
-  document.getElementById("staffName").value = "";
-});
-
-function updateStaffList(){
-  staffList.innerHTML = "";
-  staffArray.forEach(s => {
-    const li = document.createElement("li");
-    li.textContent = `${s.name} - ${s.area} - ${s.access}`;
-    staffList.appendChild(li);
-  });
-  updateEmployeeDropdown();
+// Populate time dropdowns with half-hour increments
+function generateTimeOptions(startHour, endHour, elementId, allowHalf=true){
+  const select = document.getElementById(elementId);
+  for(let h=startHour; h<=endHour; h++){
+    ["00","30"].forEach(min=>{
+      if(h===endHour && min==="30" && !allowHalf) return;
+      if(elementId==="entryTimeSelect" && h===endHour && min==="30") return; // Entry last at full hour
+      const time = h.toString().padStart(2,"0")+":"+min;
+      const opt = document.createElement("option");
+      opt.value = time;
+      opt.textContent = time;
+      select.appendChild(opt);
+    });
+  }
 }
 
-// ------------------- USERS / PIN -------------------
-const selectEmployee = document.getElementById("selectEmployee");
-const usersList = document.getElementById("usersList");
-const userPins = [];
+// Entry 07:00 - 12:00
+generateTimeOptions(7,12,"entryTimeSelect");
+// Exit 14:00 - 18:30
+generateTimeOptions(14,18,"exitTimeSelect");
 
-function updateEmployeeDropdown(){
-  selectEmployee.innerHTML = "";
-  staffArray.forEach(s => {
-    const opt = document.createElement("option");
-    opt.value = s.name;
-    opt.textContent = s.name;
-    selectEmployee.appendChild(opt);
-  });
-}
+// Generate briefing
+generateBtn.addEventListener("click", ()=>{
+  const emp = employeeSelect.value;
+  const area = document.getElementById("areaSelect").value;
+  const entry = entryTimeSelect.value;
+  const exit = exitTimeSelect.value;
 
-document.getElementById("assignPinBtn").addEventListener("click", () => {
-  const emp = selectEmployee.value;
-  const pin = document.getElementById("employeePin").value.trim();
-  if(pin.length !== 4 || isNaN(pin)) return alert("PIN must be 4-digit number");
-  userPins.push({emp, pin});
-  const li = document.createElement("li");
-  li.textContent = `${emp} - PIN: ${pin}`;
-  usersList.appendChild(li);
-  document.getElementById("employeePin").value = "";
+  const text = `
+Bom dia a todos!
+
+*BRIEFING*
+
+${entry} - ${emp}: ${area}
+${exit} - ${emp} leaves
+
+⸻⸻⸻⸻
+
+⚠ Please follow your area responsibilities
+`;
+
+  briefingText.innerText = text;
+  briefingPopup.style.display = "flex";
+});
+
+// Copy & Close
+copyBtn.addEventListener("click", ()=>{
+  navigator.clipboard.writeText(briefingText.innerText);
+  alert("Briefing copied!");
+});
+
+closeBtn.addEventListener("click", ()=>{
+  briefingPopup.style.display = "none";
 });
