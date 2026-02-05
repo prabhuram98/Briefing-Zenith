@@ -1,41 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZENITH – Briefing Generator</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZENITH – Briefing Generator</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="app-header">
+<!-- HEADER -->
+<header class="app-header">
     <h1 class="brand">ZENITH</h1>
     <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
-  </header>
+</header>
 
-  <!-- MAIN FORM -->
-  <div id="mainForm">
+<!-- MAIN FORM -->
+<div id="mainForm">
     <h3>Select Day for Briefing</h3>
-
     <label for="dateSelect">Date:</label>
     <select id="dateSelect"></select>
-
     <button class="option-btn" id="generateBtn">Generate Briefing</button>
-    <p class="developer-credit">Developed by PRABHU</p>
-  </div>
+</div>
 
-  <!-- BRIEFING POPUP -->
-  <div id="briefingPopup">
+<!-- BRIEFING POPUP -->
+<div id="briefingPopup">
     <div id="popupContent">
-      <div class="popup-header">
-        <span id="closeBtn" class="close-btn">X</span>
-      </div>
-      <pre id="briefingText"></pre>
-      <button class="option-btn" id="copyBtn">Copy</button>
+        <pre id="briefingText"></pre>
+        <div class="popup-buttons">
+            <button class="option-btn" id="copyBtn">Copy</button>
+            <button class="option-btn" id="closeBtn">Close</button>
+        </div>
     </div>
-  </div>
+</div>
 
-  <script src="app.js"></script>
+<!-- Bottom developer credit -->
+<p class="developer-credit">Developed by PRABHU</p>
+
+<script src="app.js"></script>
 </body>
 </html>

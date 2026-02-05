@@ -1,65 +1,53 @@
-document.addEventListener("DOMContentLoaded", () => {
+// Elements
+const dateSelect = document.getElementById("dateSelect");
+const generateBtn = document.getElementById("generateBtn");
+const briefingPopup = document.getElementById("briefingPopup");
+const briefingText = document.getElementById("briefingText");
+const copyBtn = document.getElementById("copyBtn");
+const closeBtn = document.getElementById("closeBtn");
 
-  const scheduleData = {
-    "2026-02-01": [
-      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "16:30" },
-      { "name": "Carlos", "area": "BAR", "entry": "09:00", "exit": "17:30" },
-      { "name": "Prabhu", "area": "SALA", "entry": "09:00", "exit": "17:30" },
-      { "name": "Julieta", "area": "SALA", "entry": "08:30", "exit": "14:00" },
-      { "name": "Gonçalo", "area": "BAR", "entry": "07:30", "exit": "15:00" },
-      { "name": "Carol", "area": "BAR", "entry": "10:00", "exit": "17:30" }
-    ],
-    "2026-02-02": [
-      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "15:30" },
-      { "name": "Carlos", "area": "BAR", "entry": "10:00", "exit": "17:30" },
-      { "name": "Prabhu", "area": "SALA", "entry": "09:00", "exit": "17:30" },
-      { "name": "David", "area": "SALA", "entry": "08:30", "exit": "17:00" },
-      { "name": "Leonor", "area": "BAR", "entry": "07:30", "exit": "15:00" }
-    ]
-  };
+// Load JSON data
+let scheduleData = {};
 
-  const dateSelect = document.getElementById("dateSelect");
-  const generateBtn = document.getElementById("generateBtn");
-  const briefingPopup = document.getElementById("briefingPopup");
-  const briefingText = document.getElementById("briefingText");
-  const copyBtn = document.getElementById("copyBtn");
-  const closeBtn = document.getElementById("closeBtn");
+fetch('data.json')
+  .then(response => response.json())
+  .then(data => {
+      scheduleData = data;
 
-  // Populate date dropdown
-  Object.keys(scheduleData).forEach(date => {
-    const opt = document.createElement("option");
-    opt.value = date;
-    opt.textContent = date;
-    dateSelect.appendChild(opt);
+      // Populate date dropdown
+      Object.keys(scheduleData).forEach(date => {
+          const opt = document.createElement("option");
+          opt.value = date;
+          opt.textContent = date;
+          dateSelect.appendChild(opt);
+      });
   });
 
-  // Generate briefing
-  generateBtn.addEventListener("click", () => {
+// Generate briefing
+generateBtn.addEventListener("click", () => {
     const selectedDate = dateSelect.value;
     const staffList = scheduleData[selectedDate];
 
     if(!staffList || staffList.length === 0){
-      briefingText.innerText = "No schedule available for this day.";
+        briefingText.innerText = "No schedule available for this day.";
     } else {
-      let text = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
-      staffList.forEach(staff => {
-        text += `${staff.entry} - ${staff.name}: ${staff.area}\n`;
-      });
-      text += "\n⸻⸻⸻⸻\n\n⚠ Please follow your area responsibilities\n";
-      briefingText.innerText = text;
+        let text = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
+        staffList.forEach(staff => {
+            text += `${staff.entry} - ${staff.name}: ${staff.area}\n`;
+        });
+        text += "\n⸻⸻⸻⸻\n\n⚠ Please follow your area responsibilities\n";
+        briefingText.innerText = text;
     }
 
-    briefingPopup.style.display = "flex";
-  });
+    briefingPopup.style.display = "flex"; // show popup
+});
 
-  // Copy & Close
-  copyBtn.addEventListener("click", () => {
+// Copy & Close
+copyBtn.addEventListener("click", () => {
     navigator.clipboard.writeText(briefingText.innerText);
     alert("Briefing copied!");
-  });
+});
 
-  closeBtn.addEventListener("click", () => {
+closeBtn.addEventListener("click", () => {
     briefingPopup.style.display = "none";
-  });
-
 });
