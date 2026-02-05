@@ -1,20 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ------------------- PRE-DEFINED SCHEDULE (from Excel) -------------------
+  // ------------------- PRE-DEFINED SCHEDULE (JSON) -------------------
   const scheduleData = {
-    "2026-02-05": [
-      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "17:30" },
-      { "name": "Leonor", "area": "BAR", "entry": "07:30", "exit": "15:00" },
-      { "name": "Gonçalo", "area": "BAR", "entry": "09:00", "exit": "17:30" },
-      { "name": "David", "area": "SALA", "entry": "08:00", "exit": "17:30" },
-      { "name": "Julieta", "area": "SALA", "entry": "10:30", "exit": "17:30" }
+    "2026-02-01": [
+      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "16:30" },
+      { "name": "Carlos", "area": "BAR", "entry": "09:00", "exit": "17:30" },
+      { "name": "Prabhu", "area": "SALA", "entry": "09:00", "exit": "17:30" },
+      { "name": "Julieta", "area": "SALA", "entry": "08:30", "exit": "14:00" },
+      { "name": "Gonçalo", "area": "BAR", "entry": "07:30", "exit": "15:00" },
+      { "name": "Carol", "area": "BAR", "entry": "10:00", "exit": "17:30" }
     ],
-    "2026-02-06": [
-      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "17:30" },
-      { "name": "Leonor", "area": "BAR", "entry": "07:30", "exit": "15:00" },
-      { "name": "Gonçalo", "area": "BAR", "entry": "09:00", "exit": "17:30" },
-      { "name": "David", "area": "SALA", "entry": "08:00", "exit": "17:30" },
-      { "name": "Julieta", "area": "SALA", "entry": "10:30", "exit": "17:30" }
+    "2026-02-02": [
+      { "name": "Ana", "area": "SALA", "entry": "08:00", "exit": "15:30" },
+      { "name": "Carlos", "area": "BAR", "entry": "10:00", "exit": "17:30" },
+      { "name": "Prabhu", "area": "SALA", "entry": "09:00", "exit": "17:30" },
+      { "name": "David", "area": "SALA", "entry": "08:30", "exit": "17:00" },
+      { "name": "Leonor", "area": "BAR", "entry": "07:30", "exit": "15:00" }
     ]
   };
 
@@ -44,6 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       let text = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
 
+      // Example formatting like your original style
+      text += "STAFF SCHEDULE:\n";
       staffList.forEach(staff => {
         text += `${staff.entry} - ${staff.name}: ${staff.area}\n`;
       });
