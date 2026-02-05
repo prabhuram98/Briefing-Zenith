@@ -1,9 +1,8 @@
 // app.js
-const data = require('./data.json'); // Staff entry/exit times per day
+const data = require('./data.json');
 
 function roundTime(timeStr) {
-    // Ensure HH:MM format
-    return timeStr;
+    return timeStr; // HH:MM format
 }
 
 function generateBriefing(date) {
@@ -29,21 +28,17 @@ function generateBriefing(date) {
     if (barSorted[3]) barLines.push(`${roundTime(barSorted[3].entry)} Bar D: ${barSorted[3].name}`);
 
     // ------------------- SELLERS -------------------
-    const salaExcludingAna = sala.filter(s => s.name.toLowerCase() !== 'ana');
+    const salaExcludingAna = sala.filter(s => s.name.toLowerCase() !== 'ana'); // Only Sala staff
     let julieta = salaExcludingAna.find(s => s.name.toLowerCase() === 'julieta');
     const otherSala = salaExcludingAna.filter(s => s.name.toLowerCase() !== 'julieta');
 
     let sellers = [];
-    // Determine Seller eligibility
     if (salaExcludingAna.length === 1) {
-        // Only 1 Sala → can be Julieta
-        sellers = [...salaExcludingAna];
+        sellers = salaExcludingAna.sort((a,b)=>a.entry.localeCompare(b.entry));
     } else if (salaExcludingAna.length === 2) {
-        // 2 Sala → Julieta can be Seller if only 2 members? Actually logic: 2 Sala members → Julieta Seller
-        sellers = salaExcludingAna.sort((a, b) => a.entry.localeCompare(b.entry));
+        sellers = salaExcludingAna.sort((a,b)=>a.entry.localeCompare(b.entry));
     } else {
-        // 3+ Sala → Julieta Runner, others Sellers
-        sellers = otherSala.sort((a, b) => a.entry.localeCompare(b.entry));
+        sellers = otherSala.sort((a,b)=>a.entry.localeCompare(b.entry));
     }
 
     const sellerLines = sellers.map((s, idx) => `${roundTime(s.entry)} Seller ${String.fromCharCode(65+idx)}: ${s.name}`);
@@ -61,10 +56,15 @@ function generateBriefing(date) {
     let barHACCPLines = [];
     if (barHACCP[0]) barHACCPLines.push(`${roundTime(barHACCP[0].exit)} Preparações Bar: ${barHACCP[0].name}`);
     if (barHACCP[1]) barHACCPLines.push(`${roundTime(barHACCP[1].exit)} Reposição Bar: ${barHACCP[1].name}`);
-    if (barHACCP[barHACCP.length-1]) barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Fecho Bar: ${barHACCP[barHACCP.length-1].name}`);
+    if (barHACCP.length >=3) {
+        barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Limpeza Máquina de Café / Reposição de Leites: ${barHACCP[barHACCP.length-1].name}`);
+    }
+    if (barHACCP.length >=2) {
+        barHACCPLines.push(`${roundTime(barHACCP[barHACCP.length-1].exit)} Fecho Bar: ${barHACCP[barHACCP.length-1].name}`);
+    }
 
     // ------------------- HACCP SALA -------------------
-    const salaSortedByExit = [...salaExcludingAna].sort((a,b)=> a.exit.localeCompare(b.exit));
+    const salaSortedByExit = [...salaExcludingAna].sort((a,b)=>a.exit.localeCompare(b.exit)); // Only Sala staff
     let salaHACCPLines = [];
 
     if (salaSortedByExit.length === 1) {
@@ -84,7 +84,7 @@ function generateBriefing(date) {
         salaHACCPLines.push(`${roundTime(first.exit)} Limpeza casa de banho (clientes e staff): ${first.name}`);
         salaHACCPLines.push(`${roundTime(last.exit)} Limpeza vidros e Espelhos: ${last.name}`);
         salaHACCPLines.push(`${roundTime(last.exit)} Fecho da sala: ${last.name}`);
-    } else if (salaSortedByExit.length >=3) {
+    } else if (salaSortedByExit.length >= 3) {
         const first = salaSortedByExit[0];
         const second = salaSortedByExit[1];
         const last = salaSortedByExit[salaSortedByExit.length-1];
@@ -98,8 +98,8 @@ function generateBriefing(date) {
 
     // ------------------- Fecho de Caixa -------------------
     const fechoPriority = ['carlos','prabhu','ana'];
-    let fechoPerson = fechoPriority.find(p => bar.some(b=>b.name.toLowerCase()===p));
-    if (!fechoPerson) fechoPerson = bar[bar.length-1].name; // fallback
+    let fechoPerson = fechoPriority.find(p => bar.some(b => b.name.toLowerCase() === p));
+    if (!fechoPerson) fechoPerson = barSorted[barSorted.length-1].name;
     const lastBarExit = barSorted[barSorted.length-1].exit;
     const fechoLine = `${roundTime(lastBarExit)} Fecho de Caixa: ${fechoPerson.charAt(0).toUpperCase()+fechoPerson.slice(1)}`;
 
@@ -118,5 +118,5 @@ function generateBriefing(date) {
     return briefing;
 }
 
-// Example usage:
+// Example usage
 console.log(generateBriefing("06/02/2026"));
