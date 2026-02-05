@@ -21,10 +21,11 @@ fetch('data.json')
     });
   });
 
-// Utility: round time to HH:00 or HH:30
-function roundTimeToHalfHour(timeStr) {
-  let [h, m] = timeStr.split(":").map(Number);
-  if (m >= 30) m = 30; else m = 0;
+// Round time to HH:00 or HH:30
+function roundTimeToHalfHour(timeStr){
+  if(!timeStr) return "N/A";
+  let [h,m] = timeStr.split(":").map(Number);
+  m = m >=30 ? 30 : 0;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
@@ -36,100 +37,105 @@ generateBtn.addEventListener("click", () => {
   const salaStaff = staffList.filter(s => s.area.toUpperCase() === "SALA");
   const barStaff = staffList.filter(s => s.area.toUpperCase() === "BAR");
 
-  // Porta → Ana or earliest Sala staff
-  let portaStaff = staffList.find(s => s.name.toLowerCase() === "ana");
-  if(!portaStaff && salaStaff.length > 0) portaStaff = salaStaff[0];
+  // Sort by entry and exit
+  const salaSortedEntry = salaStaff.sort((a,b)=> a.entry.localeCompare(b.entry));
+  const barSortedEntry = barStaff.sort((a,b)=> a.entry.localeCompare(b.entry));
+  const salaSortedExit = salaStaff.sort((a,b)=> a.exit.localeCompare(b.exit));
+  const barSortedExit = barStaff.sort((a,b)=> a.exit.localeCompare(b.exit));
 
-  // BAR section: sort by entry time ascending
-  const barSorted = barStaff.sort((a,b) => a.entry.localeCompare(b.entry));
+  // Porta line
+  const portaStaff = staffList.find(s=>s.name.toLowerCase()==="ana") || salaSortedEntry[0];
+  const PORTA_LINE = portaStaff ? `${roundTimeToHalfHour(portaStaff.entry)} Porta: ${portaStaff.name}` : "N/A Porta: N/A";
 
-  // SELLERS: sort Sala by entry time ascending
-  const salaSorted = salaStaff.sort((a,b) => a.entry.localeCompare(b.entry));
-
-  // HACCP / LIMPEZA BAR: sort BAR by exit time ascending
-  const barExitSorted = barStaff.sort((a,b) => a.exit.localeCompare(b.exit));
-
-  // HACCP / SALA: sort Sala by exit time ascending
-  const salaExitSorted = salaStaff.sort((a,b) => a.exit.localeCompare(b.exit));
-
-  // RUNNERS → Julieta if present, else Todos
-  const julieta = salaStaff.find(s => s.name.toLowerCase() === "julieta");
-
-  // Fecho de Caixa → Carlos > Prabhu > Ana
-  let fechoCaixa = barStaff.find(s => s.name.toLowerCase() === "carlos") 
-                   || salaStaff.find(s => s.name.toLowerCase() === "prabhu") 
-                   || staffList.find(s => s.name.toLowerCase() === "ana");
-
-  // Start building briefing
-  let text = "Bom dia a todos!\n\n";
-  text += `*BRIEFING ${selectedDate}*\n\n`;
-
-  // Porta
-  text += portaStaff ? `${roundTimeToHalfHour(portaStaff.entry)} Porta: ${portaStaff.name}\n` : "";
-
-  // BAR
-  text += "BAR:\n";
-  if(barSorted.length >= 1){
-    text += `${roundTimeToHalfHour(barSorted[0].entry)} Abertura Sala/Bar: ${barSorted[0].name}\n`;
-    text += `${roundTimeToHalfHour(barSorted[0].entry)} Bar A: ${barSorted[0].name}\n`;
-  }
-  if(barSorted.length >= 2){
-    text += `${roundTimeToHalfHour(barSorted[1].entry)} Bar B: ${barSorted[1].name}\n`;
-  }
-  if(barSorted.length >=3){
-    text += `${roundTimeToHalfHour(barSorted[2].entry)} Bar C: ${barSorted[2].name}\n`;
-  }
-  if(barSorted.length >=4){
-    text += `${roundTimeToHalfHour(barSorted[3].entry)} Bar D: ${barSorted[3].name}\n`;
-  }
-
-  text += "\n⸻⸻⸻⸻\n\n";
-  text += "‼️ Loiça é responsabilidade de todos.\n";
-  text += "NÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO.\n";
-  text += "——————————————\n\n";
+  // BAR section lines
+  const BAR_LINE_1 = barSortedEntry[0] ? `${roundTimeToHalfHour(barSortedEntry[0].entry)} Abertura Sala/Bar: ${barSortedEntry[0].name}` : "N/A Abertura Sala/Bar: N/A";
+  const BAR_LINE_2 = barSortedEntry[0] ? `${roundTimeToHalfHour(barSortedEntry[0].entry)} Bar A: ${barSortedEntry[0].name}` : "N/A Bar A: N/A";
+  const BAR_LINE_3 = barSortedEntry[1] ? `${roundTimeToHalfHour(barSortedEntry[1].entry)} Bar B: ${barSortedEntry[1].name}` : "N/A Bar B: N/A";
+  const BAR_LINE_4 = barSortedEntry[2] ? `${roundTimeToHalfHour(barSortedEntry[2].entry)} Bar C: ${barSortedEntry[2].name}` : "N/A Bar C: N/A";
+  const BAR_LINE_5 = barSortedEntry[3] ? `${roundTimeToHalfHour(barSortedEntry[3].entry)} Bar D: ${barSortedEntry[3].name}` : "N/A Bar D: N/A";
 
   // SELLERS
-  text += "SELLERS:\n";
-  if(salaSorted.length >=1) text += `${roundTimeToHalfHour(salaSorted[0].entry)} Seller A: ${salaSorted[0].name}\n`;
-  if(salaSorted.length >=2) text += `${roundTimeToHalfHour(salaSorted[1].entry)} Seller B: ${salaSorted[1].name}\n`;
-  if(salaSorted.length >=3) text += `${roundTimeToHalfHour(salaSorted[2].entry)} Seller C: ${salaSorted[2].name}\n`;
-  text += "\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n";
-  text += "——————————————\n";
-  text += "Seller A: Mesas 20 - 30\n";
-  text += "Seller B & C: Mesas 1 - 12\n";
-  text += "——————————————\n\n";
+  const SELLER_LINE_1 = salaSortedEntry[0] ? `${roundTimeToHalfHour(salaSortedEntry[0].entry)} Seller A: ${salaSortedEntry[0].name}` : "N/A Seller A: N/A";
+  const SELLER_LINE_2 = salaSortedEntry[1] ? `${roundTimeToHalfHour(salaSortedEntry[1].entry)} Seller B: ${salaSortedEntry[1].name}` : "N/A Seller B: N/A";
+  const SELLER_LINE_3 = salaSortedEntry[2] ? `${roundTimeToHalfHour(salaSortedEntry[2].entry)} Seller C: ${salaSortedEntry[2].name}` : "N/A Seller C: N/A";
 
   // RUNNERS
-  text += "RUNNERS:\n";
-  text += julieta ? `Runner A e B: ${julieta.name}\n` : "Runner A e B: Todos\n";
-  text += "——————————————\n\n";
+  const julieta = salaStaff.find(s=>s.name.toLowerCase()==="julieta");
+  const RUNNER_LINE = julieta ? `Runner A e B: ${julieta.name}` : "Runner A e B: Todos";
 
   // HACCP / LIMPEZA BAR
-  text += "HACCP / LIMPEZA BAR:\n";
-  if(barExitSorted.length >=1) text += `${roundTimeToHalfHour(barExitSorted[0].exit)} Preparações Bar: ${barExitSorted[0].name}\n`;
-  if(barExitSorted.length >=2) text += `${roundTimeToHalfHour(barExitSorted[1].exit)} Reposição Bar: ${barExitSorted[1].name}\n`;
-  if(barExitSorted.length >=1) text += `${roundTimeToHalfHour(barExitSorted[barExitSorted.length-1].exit)} Limpeza Máquina de Café / Reposição de Leites: ${barExitSorted[barExitSorted.length-1].name}\n`;
-  if(barExitSorted.length >=1) text += `${roundTimeToHalfHour(barExitSorted[0].exit)} Fecho Bar: ${barExitSorted[0].name}\n\n`;
+  let HACCP_BAR_LINE_1 = barSortedExit[0] ? `${roundTimeToHalfHour(barSortedExit[0].exit)} Preparações Bar: ${barSortedExit[0].name}` : "N/A Preparações Bar: N/A";
+  let HACCP_BAR_LINE_2 = barSortedExit[1] ? `${roundTimeToHalfHour(barSortedExit[1].exit)} Reposição Bar: ${barSortedExit[1].name}` : "N/A Reposição Bar: N/A";
+  let HACCP_BAR_LINE_3 = (!barSortedExit[1] && barSortedExit.length>=1) ? `${roundTimeToHalfHour(barSortedExit[barSortedExit.length-1].exit)} Limpeza Máquina de Café / Reposição de Leites: ${barSortedExit[barSortedExit.length-1].name}` : "N/A Limpeza Máquina de Café / Reposição de Leites: N/A";
+  let HACCP_BAR_LINE_4 = barSortedExit.length>=1 ? `${roundTimeToHalfHour(barSortedExit[barSortedExit.length-1].exit)} Fecho Bar: ${barSortedExit[barSortedExit.length-1].name}` : "N/A Fecho Bar: N/A";
 
   // HACCP / SALA
-  text += "HACCP / SALA:\n";
-  if(salaExitSorted.length >=1){
-    text += `${roundTimeToHalfHour(salaExitSorted[0].exit)} Fecho da sala de cima: ${salaExitSorted[0].name}\n`;
-    text += `${roundTimeToHalfHour(salaExitSorted[0].exit)} Limpeza e reposição aparador/ cadeira de bebés: ${salaExitSorted[0].name}\n`;
-  }
-  if(salaExitSorted.length >=2){
-    text += `${roundTimeToHalfHour(salaExitSorted[1].exit)} Repor papel (casa de banho): ${salaExitSorted[1].name}\n`;
-    text += `${roundTimeToHalfHour(salaExitSorted[1].exit)} Limpeza casa de banho (clientes e staff): ${barExitSorted.length>=2 ? barExitSorted[1].name : ""}\n`;
-  }
-  if(salaExitSorted.length >=1){
-    text += `${roundTimeToHalfHour(salaExitSorted[salaExitSorted.length-1].exit)} Limpeza vidros e Espelhos: ${salaExitSorted[salaExitSorted.length-1].name}\n`;
-    text += `${roundTimeToHalfHour(salaExitSorted[salaExitSorted.length-1].exit)} Fecho da sala: ${salaExitSorted[salaExitSorted.length-1].name}\n`;
-  }
+  const HACCP_SALA_LINE_1 = salaSortedExit[0] ? `${roundTimeToHalfHour(salaSortedExit[0].exit)} Fecho da sala de cima: ${salaSortedExit[0].name}` : "N/A Fecho da sala de cima: N/A";
+  const HACCP_SALA_LINE_2 = salaSortedExit[0] ? `${roundTimeToHalfHour(salaSortedExit[0].exit)} Limpeza e reposição aparador/ cadeira de bebés: ${salaSortedExit[0].name}` : "N/A Limpeza e reposição aparador/ cadeira de bebés: N/A";
+  const HACCP_SALA_LINE_3 = salaSortedExit[1] ? `${roundTimeToHalfHour(salaSortedExit[1].exit)} Repor papel (casa de banho): ${salaSortedExit[1].name}` : "N/A Repor papel (casa de banho): N/A";
+  const HACCP_SALA_LINE_4 = (salaSortedExit[1] && barSortedExit[1]) ? `${roundTimeToHalfHour(barSortedExit[1].exit)} Limpeza casa de banho (clientes e staff): ${barSortedExit[1].name}` : "N/A Limpeza casa de banho (clientes e staff): N/A";
+  const HACCP_SALA_LINE_5 = salaSortedExit.length>=1 ? `${roundTimeToHalfHour(salaSortedExit[salaSortedExit.length-1].exit)} Limpeza vidros e Espelhos: ${salaSortedExit[salaSortedExit.length-1].name}` : "N/A Limpeza vidros e Espelhos: N/A";
+
+  const FECHO_SALA_LINE = salaSortedExit.length>=1 ? `${roundTimeToHalfHour(salaSortedExit[salaSortedExit.length-1].exit)} Fecho da sala: ${salaSortedExit[salaSortedExit.length-1].name}` : "N/A Fecho da sala: N/A";
 
   // Fecho de Caixa
-  if(fechoCaixa) text += `17:30 Fecho de Caixa: ${fechoCaixa.name}\n`;
+  let fechoCaixaStaff = barStaff.find(s=>s.name.toLowerCase()==="carlos") || salaStaff.find(s=>s.name.toLowerCase()==="prabhu") || staffList.find(s=>s.name.toLowerCase()==="ana");
+  let fechoCaixaTime = barSortedExit.length ? roundTimeToHalfHour(barSortedExit[barSortedExit.length-1].exit) : "N/A";
+  const FIC_LINE = `${fechoCaixaTime} Fecho de Caixa: ${fechoCaixaStaff ? fechoCaixaStaff.name : "N/A"}`;
 
-  briefingText.innerText = text;
+  // Template
+  let briefingTemplate = `
+Bom dia a todos!
+
+*BRIEFING ${selectedDate}*
+
+${PORTA_LINE}
+
+BAR:
+${BAR_LINE_1}
+${BAR_LINE_2}
+${BAR_LINE_3}
+${BAR_LINE_4}
+${BAR_LINE_5}
+
+⸻⸻⸻⸻
+
+‼️ Loiça é responsabilidade de todos.
+NÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO
+——————————————
+
+SELLERS:
+${SELLER_LINE_1}
+${SELLER_LINE_2}
+${SELLER_LINE_3}
+
+⚠ Pastéis de Nata – Cada Seller na sua secção ⚠
+——————————————
+Seller A: Mesas 20 - 30
+Seller B & C: Mesas 1 - 12
+——————————————
+
+RUNNERS:
+${RUNNER_LINE}
+
+HACCP / LIMPEZA BAR:
+${HACCP_BAR_LINE_1}
+${HACCP_BAR_LINE_2}
+${HACCP_BAR_LINE_3}
+${HACCP_BAR_LINE_4}
+
+HACCP / SALA:
+${HACCP_SALA_LINE_1}
+${HACCP_SALA_LINE_2}
+${HACCP_SALA_LINE_3}
+${HACCP_SALA_LINE_4}
+${HACCP_SALA_LINE_5}
+${FECHO_SALA_LINE}
+
+${FIC_LINE}
+`;
+
+  briefingText.innerText = briefingTemplate.trim();
   briefingPopup.style.display = "flex";
 });
 
@@ -138,7 +144,6 @@ copyBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(briefingText.innerText);
   alert("Briefing copied!");
 });
-
 closeBtn.addEventListener("click", () => {
   briefingPopup.style.display = "none";
 });
