@@ -1,55 +1,50 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
+.section-cards {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.card {
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  color: white;
+  width: 140px;
+  height: 140px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
   text-align: center;
 }
 
-.app-header {
-  background: #000;
-  color: #fff;
-  padding: 25px 10px;
+.card:hover {
+  transform: scale(1.05);
 }
 
-.brand {
-  font-size: 36px;
-  margin: 0;
-  letter-spacing: 4px;
+.card-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
 }
 
-.subtitle {
-  font-size: 14px;
-  margin-top: 6px;
-  letter-spacing: 2px;
-  font-weight: normal;
-}
-
-#loginScreen,
-#mainScreen {
-  padding: 20px;
-}
-
-input,
-select,
-button {
+.option-btn {
   width: 100%;
   max-width: 320px;
   padding: 12px;
   margin: 8px auto;
-  display: block;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: none;
   font-size: 16px;
-}
-
-button {
   background: #4CAF50;
   color: white;
-  border: none;
   cursor: pointer;
 }
 
-button:hover {
+.option-btn:hover {
   background: #45a049;
 }
 
@@ -65,12 +60,35 @@ pre {
   margin-right: auto;
 }
 
+input, select {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px;
+  margin: 6px auto;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  display: block;
+  font-size: 16px;
+}
+
+ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
 @media (max-width: 480px) {
-  .brand {
-    font-size: 28px;
+  .section-cards {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .subtitle {
-    font-size: 12px;
+  .card {
+    width: 80%;
+    max-width: 200px;
+    height: 120px;
+  }
+
+  .card-icon {
+    font-size: 30px;
   }
 }
