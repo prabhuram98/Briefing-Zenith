@@ -6,19 +6,32 @@ const copyBtn = document.getElementById("copyBtn");
 const closeBtn = document.getElementById("closeBtn");
 
 let scheduleData = {};
+let currentVersion = "1"; // used to track updates if needed
 
-fetch('data.json')
-  .then(res => res.json())
-  .then(data => {
+// Function to fetch latest data.json without cache
+async function fetchScheduleData() {
+  try {
+    const res = await fetch("data.json", { cache: "no-cache" });
+    const data = await res.json();
     scheduleData = data;
-    Object.keys(scheduleData).forEach(date => {
-      const opt = document.createElement("option");
-      opt.value = date;
-      opt.textContent = date;
-      dateSelect.appendChild(opt);
-    });
-  });
+    populateDateDropdown();
+  } catch (err) {
+    console.error("Failed to fetch schedule data:", err);
+  }
+}
 
+// Populate date dropdown from scheduleData
+function populateDateDropdown() {
+  dateSelect.innerHTML = '<option value="">--Select--</option>';
+  Object.keys(scheduleData).forEach(date => {
+    const opt = document.createElement("option");
+    opt.value = date;
+    opt.textContent = date;
+    dateSelect.appendChild(opt);
+  });
+}
+
+// Round time to HH:00 or HH:30
 function roundTimeToHalfHour(timeStr){
   if(!timeStr) return "";
   let [h,m] = timeStr.split(":").map(Number);
@@ -26,8 +39,8 @@ function roundTimeToHalfHour(timeStr){
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
-generateBtn.addEventListener("click", () => {
-  const selectedDate = dateSelect.value;
+// Generate briefing
+function generateBriefing(selectedDate){
   const staffList = scheduleData[selectedDate] || [];
 
   const salaStaff = staffList.filter(s => s.area.toUpperCase() === "SALA");
@@ -38,6 +51,7 @@ generateBtn.addEventListener("click", () => {
   const salaSortedExit = salaStaff.sort((a,b)=> a.exit.localeCompare(b.exit));
   const barSortedExit = barStaff.sort((a,b)=> a.exit.localeCompare(b.exit));
 
+  // Porta
   const portaStaff = staffList.find(s=>s.name.toLowerCase()==="ana") || salaSortedEntry[0];
   const PORTA_LINE = `${roundTimeToHalfHour(portaStaff.entry)} Porta: ${portaStaff.name}`;
 
@@ -57,15 +71,16 @@ generateBtn.addEventListener("click", () => {
     filteredSalaForSellers[2] ? `${roundTimeToHalfHour(filteredSalaForSellers[2].entry)} Seller C: ${filteredSalaForSellers[2].name}` : ""
   ];
 
+  // RUNNERS
   const julieta = salaStaff.find(s=>s.name.toLowerCase()==="julieta");
   const RUNNER_LINE = julieta ? `Runner A e B: ${julieta.name}` : "Runner A e B: Todos";
 
-  // HACCP BAR fix: Fecho Bar correct
+  // HACCP BAR
   let preparacoesBar = barSortedExit[0];
   let reposicaoBar = barSortedExit[1] || null;
   let limpezaMaquina = (!reposicaoBar && barSortedExit.length>0) ? barSortedExit[barSortedExit.length-1] : null;
 
-  // Fecho Bar: last exiting BAR staff, if multiple exit same time, prioritize Carlos
+  // Fecho Bar: last exiting BAR staff, prioritize Carlos if tied
   let lastExitTime = Math.max(...barSortedExit.map(s=>parseInt(s.exit.replace(":",""))));
   let fechoBarCandidates = barSortedExit.filter(s=>parseInt(s.exit.replace(":","")) === lastExitTime);
   let fechoBar = fechoBarCandidates.find(s=>s.name.toLowerCase()==="carlos") || fechoBarCandidates[fechoBarCandidates.length-1];
@@ -138,13 +153,26 @@ ${FIC_LINE}
 
   briefingText.innerText = briefingTemplate.trim();
   briefingPopup.style.display = "flex";
+}
+
+// Initial fetch of data.json
+fetchScheduleData();
+
+// Generate button
+generateBtn.addEventListener("click", () => {
+  const selectedDate = dateSelect.value;
+  if (!selectedDate) return alert("Please select a date");
+  generateBriefing(selectedDate);
 });
 
+// Copy / Close
 copyBtn.addEventListener("click", () => {
   navigator.clipboard.writeText(briefingText.innerText);
   alert("Briefing copied!");
 });
-
 closeBtn.addEventListener("click", () => {
   briefingPopup.style.display = "none";
 });
+
+// Optional: auto-refresh every 5 minutes
+setInterval(fetchScheduleData, 5*60*1000);
