@@ -86,3 +86,4 @@ document.getElementById("closeBtn").onclick = () => {
 document.getElementById("copyBtn").onclick = () => {
   navigator.clipboard.writeText(document.getElementById("briefingText").textContent);
 };
+
