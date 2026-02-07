@@ -94,13 +94,15 @@ function generateBriefing(date) {
         salaHACCPLines.push(`${s.exit} Fecho da sala: ${s.name}`);
     } else if (salaSortedExit.length === 2) {
         const first = salaSortedExit[0];
-        const second = salaSortedExit[1];
+        const last = salaSortedExit[1];
         salaHACCPLines.push(`${first.exit} Fecho da sala de cima: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Limpeza e reposição aparador/ cadeira de bebés: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Repor papel (casa de banho): ${first.name}`);
-        salaHACCPLines.push(`${second.exit} Limpeza casa de banho (clientes e staff): ${second.name}`);
-        salaHACCPLines.push(`${second.exit} Limpeza vidros e Espelhos: ${second.name}`);
-        salaHACCPLines.push(`${second.exit} Fecho da sala: ${second.name}`);
+        // --- Bathroom cleaning: first exiting staff
+        salaHACCPLines.push(`${first.exit} Limpeza casa de banho (clientes e staff): ${first.name}`);
+        // --- Vidros/espelhos: last exiting staff
+        salaHACCPLines.push(`${last.exit} Limpeza vidros e Espelhos: ${last.name}`);
+        salaHACCPLines.push(`${last.exit} Fecho da sala: ${last.name}`);
     } else if (salaSortedExit.length >= 3) {
         const first = salaSortedExit[0];
         const second = salaSortedExit[1];
@@ -108,7 +110,9 @@ function generateBriefing(date) {
         salaHACCPLines.push(`${first.exit} Fecho da sala de cima: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Limpeza e reposição aparador/ cadeira de bebés: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Repor papel (casa de banho): ${first.name}`);
+        // --- Bathroom cleaning: second exiting staff
         salaHACCPLines.push(`${second.exit} Limpeza casa de banho (clientes e staff): ${second.name}`);
+        // --- Vidros/espelhos: last exiting staff
         salaHACCPLines.push(`${last.exit} Limpeza vidros e Espelhos: ${last.name}`);
         salaHACCPLines.push(`${last.exit} Fecho da sala: ${last.name}`);
     }
