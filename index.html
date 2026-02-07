@@ -8,28 +8,15 @@
 </head>
 <body>
 
-<!-- ROLE SELECTION -->
-<div id="roleSelect" style="padding:20px; text-align:center;">
-    <h3>Select your role:</h3>
-    <select id="roleDropdown">
-        <option value="">Choose role</option>
-        <option value="manager">Manager</option>
-        <option value="staff">Staff</option>
-    </select>
-    <button class="option-btn" id="confirmRole">Confirm</button>
-</div>
+<!-- HEADER -->
+<header class="app-header">
+    <h1 class="brand">ZENITH</h1>
+    <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
+</header>
 
 <!-- MAIN FORM -->
-<div id="mainForm" style="display:none;">
+<div id="mainForm">
     <h3>Briefing Generator</h3>
-
-    <!-- Upload Excel (Manager only) -->
-    <div id="uploadSection" style="display:none;">
-        <label for="uploadExcel">Upload Schedule (Excel):</label>
-        <input type="file" id="uploadExcel" accept=".xlsx,.xls">
-    </div>
-
-    <!-- Date selection -->
     <label for="dateSelect">Select date to generate:</label>
     <select id="dateSelect"></select>
     <button class="option-btn" id="generateBtn">Generate Briefing</button>
@@ -49,8 +36,6 @@
 <!-- Bottom developer credit -->
 <p class="developer-credit">Developed by PRABHU</p>
 
-<!-- SheetJS for Excel -->
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
