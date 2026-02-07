@@ -1,38 +1,31 @@
 // ---------- VARIABLES ----------
 let data = {};
 
-// ---------- FETCH JSON ----------
-fetch('data.json')
-  .then(res => res.json())
-  .then(json => {
-    data = json;
-    populateDates();
-  })
-  .catch(err => {
-    console.error('Failed to load data.json', err);
-    alert('Failed to load data.json');
-  });
-
-// ---------- POPULATE DATE DROPDOWN ----------
+// ---------- POPULATE DATE DROPDOWN WITH PLACEHOLDER ----------
 function populateDates() {
     const dateSelect = document.getElementById('dateSelect');
     dateSelect.innerHTML = '';
 
+    // Placeholder option
+    const placeholder = document.createElement('option');
+    placeholder.textContent = 'Choose date';
+    placeholder.value = '';
+    placeholder.selected = true;
+    placeholder.disabled = true;
+    dateSelect.appendChild(placeholder);
+
+    // Actual dates
     Object.keys(data).forEach(date => {
         const opt = document.createElement('option');
         opt.value = date;
         opt.textContent = date;
         dateSelect.appendChild(opt);
     });
-
-    if (dateSelect.options.length > 0) {
-        dateSelect.selectedIndex = 0;
-    }
 }
 
 // ---------- ROUND TIME ----------
 function roundTime(timeStr) {
-    return timeStr; // already HH:MM
+    return timeStr; // HH:MM format
 }
 
 // ---------- GENERATE BRIEFING ----------
@@ -77,13 +70,11 @@ function generateBriefing(date) {
     // ---------- HACCP BAR ----------
     const barExit = [...bar].sort((a,b)=>a.exit.localeCompare(b.exit));
     let barHACCP = [];
-
     if (barExit[0]) barHACCP.push(`${barExit[0].exit} Preparações Bar: ${barExit[0].name}`);
     if (barExit.length >= 3)
         barHACCP.push(`${barExit[1].exit} Reposição Bar: ${barExit[1].name}`);
     else if (barExit[0])
         barHACCP.push(`${barExit[0].exit} Reposição Bar: ${barExit[0].name}`);
-
     if (barExit.at(-1)) {
         barHACCP.push(`${barExit.at(-1).exit} Limpeza Máquina / Reposição de Leites: ${barExit.at(-1).name}`);
         barHACCP.push(`${barExit.at(-1).exit} Fecho Bar: ${barExit.at(-1).name}`);
@@ -177,12 +168,28 @@ const briefingText = document.getElementById('briefingText');
 const copyBtn = document.getElementById('copyBtn');
 const closeBtn = document.getElementById('closeBtn');
 
+// ---------- GENERATE BUTTON ----------
 generateBtn.onclick = () => {
     const date = dateSelect.value;
-    if (!date) return;
+    if (!date) return alert('Please choose a date');
     briefingText.textContent = generateBriefing(date);
     briefingPopup.style.display = 'flex';
 };
 
+// ---------- COPY & CLOSE ----------
 closeBtn.onclick = () => briefingPopup.style.display = 'none';
 copyBtn.onclick = () => navigator.clipboard.writeText(briefingText.textContent);
+
+// ---------- REFRESH DATA ON DROPDOWN CLICK ----------
+dateSelect.addEventListener('click', () => {
+    fetch('data.json', { cache: "no-store" })
+      .then(res => res.json())
+      .then(json => {
+          data = json;
+          populateDates();
+      })
+      .catch(err => {
+          console.error('Failed to fetch data.json', err);
+          alert('Failed to fetch data');
+      });
+});
