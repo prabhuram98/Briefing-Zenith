@@ -1,0 +1,53 @@
+{
+  "05/02/2026": [
+    {"name": "Ana", "area": "Sala", "entry": "08:00", "exit": "16:30"},
+    {"name": "Prabhu", "area": "Sala", "entry": "09:00", "exit": "17:30"},
+    {"name": "Julieta", "area": "Sala", "entry": "08:30", "exit": "14:00"},
+    {"name": "Leonor", "area": "Sala", "entry": "07:30", "exit": "15:00"},
+    {"name": "Carlos", "area": "Bar", "entry": "09:00", "exit": "17:30"},
+    {"name": "Gonçalo", "area": "Bar", "entry": "07:30", "exit": "15:00"},
+    {"name": "Carol", "area": "Bar", "entry": "10:00", "exit": "17:30"}
+  ],
+  "06/02/2026": [
+    {"name": "Ana", "area": "Sala", "entry": "07:30", "exit": "16:00"},
+    {"name": "Gonçalo", "area": "Bar", "entry": "09:00", "exit": "17:30"},
+    {"name": "Leonor", "area": "Sala", "entry": "07:30", "exit": "16:00"},
+    {"name": "David", "area": "Sala", "entry": "08:00", "exit": "17:30"},
+    {"name": "Julieta", "area": "Sala", "entry": "10:00", "exit": "16:00"}
+  ],
+  "07/02/2026": [
+    {"name": "Prabhu", "area": "Sala", "entry": "08:00", "exit": "16:30"},
+    {"name": "Ana", "area": "Sala", "entry": "08:30", "exit": "16:30"},
+    {"name": "Carlos", "area": "Bar", "entry": "09:00", "exit": "17:30"},
+    {"name": "Julieta", "area": "Sala", "entry": "08:00", "exit": "16:30"},
+    {"name": "Leonor", "area": "Sala", "entry": "07:30", "exit": "15:30"}
+  ],
+  "08/02/2026": [
+    {"name": "Prabhu", "area": "Sala", "entry": "09:00", "exit": "17:30"},
+    {"name": "David", "area": "Sala", "entry": "08:00", "exit": "17:30"},
+    {"name": "Ana", "area": "Sala", "entry": "07:30", "exit": "16:00"},
+    {"name": "Carol", "area": "Bar", "entry": "10:00", "exit": "17:30"},
+    {"name": "Gonçalo", "area": "Bar", "entry": "08:00", "exit": "16:30"}
+  ],
+  "09/02/2026": [
+    {"name": "Prabhu", "area": "Sala", "entry": "08:00", "exit": "16:30"},
+    {"name": "Julieta", "area": "Sala", "entry": "08:30", "exit": "16:00"},
+    {"name": "Leonor", "area": "Sala", "entry": "07:30", "exit": "15:30"},
+    {"name": "Carlos", "area": "Bar", "entry": "09:00", "exit": "17:30"},
+    {"name": "Gonçalo", "area": "Bar", "entry": "07:30", "exit": "15:30"}
+  ],
+  "10/02/2026": [
+    {"name": "David", "area": "Sala", "entry": "08:00", "exit": "17:30"},
+    {"name": "Ana", "area": "Sala", "entry": "07:30", "exit": "16:00"},
+    {"name": "Prabhu", "area": "Sala", "entry": "09:00", "exit": "17:30"},
+    {"name": "Julieta", "area": "Sala", "entry": "08:00", "exit": "16:30"},
+    {"name": "Carol", "area": "Bar", "entry": "10:00", "exit": "17:30"}
+  ],
+  "11/02/2026": [
+    {"name": "Prabhu", "area": "Sala", "entry": "08:00", "exit": "16:30"},
+    {"name": "Ana", "area": "Sala", "entry": "08:30", "exit": "16:30"},
+    {"name": "Carlos", "area": "Bar", "entry": "09:00", "exit": "17:30"},
+    {"name": "Leonor", "area": "Sala", "entry": "07:30", "exit": "15:30"},
+    {"name": "Julieta", "area": "Sala", "entry": "08:00", "exit": "16:30"}
+  ]
+}
