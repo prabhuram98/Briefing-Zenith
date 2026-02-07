@@ -81,7 +81,15 @@ function generateBriefing(date) {
     }
 
     // ---------- HACCP SALA ----------
-    const salaSortedExit = [...salaNoAna].sort((a,b)=>a.exit.localeCompare(b.exit));
+    // Sort Sala staff by exit numerically
+    const salaSortedExit = [...salaNoAna].sort((a,b)=>{
+        const toMinutes = t => {
+            const [h,m] = t.split(':').map(Number);
+            return h*60 + m;
+        };
+        return toMinutes(a.exit) - toMinutes(b.exit);
+    });
+
     let salaHACCPLines = [];
 
     if (salaSortedExit.length === 1) {
@@ -98,9 +106,9 @@ function generateBriefing(date) {
         salaHACCPLines.push(`${first.exit} Fecho da sala de cima: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Limpeza e reposição aparador/ cadeira de bebés: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Repor papel (casa de banho): ${first.name}`);
-        // --- Bathroom cleaning: first exiting staff
+        // Bathroom cleaning: first exiting staff
         salaHACCPLines.push(`${first.exit} Limpeza casa de banho (clientes e staff): ${first.name}`);
-        // --- Vidros/espelhos: last exiting staff
+        // Vidros/espelhos: last exiting staff
         salaHACCPLines.push(`${last.exit} Limpeza vidros e Espelhos: ${last.name}`);
         salaHACCPLines.push(`${last.exit} Fecho da sala: ${last.name}`);
     } else if (salaSortedExit.length >= 3) {
@@ -110,9 +118,9 @@ function generateBriefing(date) {
         salaHACCPLines.push(`${first.exit} Fecho da sala de cima: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Limpeza e reposição aparador/ cadeira de bebés: ${first.name}`);
         salaHACCPLines.push(`${first.exit} Repor papel (casa de banho): ${first.name}`);
-        // --- Bathroom cleaning: second exiting staff
+        // Bathroom cleaning: second exiting staff
         salaHACCPLines.push(`${second.exit} Limpeza casa de banho (clientes e staff): ${second.name}`);
-        // --- Vidros/espelhos: last exiting staff
+        // Vidros/espelhos: last exiting staff
         salaHACCPLines.push(`${last.exit} Limpeza vidros e Espelhos: ${last.name}`);
         salaHACCPLines.push(`${last.exit} Fecho da sala: ${last.name}`);
     }
@@ -184,13 +192,13 @@ generateBtn.onclick = () => {
 closeBtn.onclick = () => briefingPopup.style.display = 'none';
 copyBtn.onclick = () => navigator.clipboard.writeText(briefingText.textContent);
 
-// ---------- REFRESH DATA ON DROPDOWN CLICK ----------
+// ---------- REFRESH DATA ON DROPDOWN CLICK WITHOUT RESET ----------
 dateSelect.addEventListener('click', () => {
     fetch('data.json', { cache: "no-store" })
       .then(res => res.json())
       .then(json => {
-          data = json;
-          populateDates();
+          data = json; // update in-memory data
+          if (dateSelect.options.length <= 1) populateDates();
       })
       .catch(err => {
           console.error('Failed to fetch data.json', err);
