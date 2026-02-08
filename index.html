@@ -17,19 +17,19 @@
 <div id="mainForm">
     <h3>Briefing Generator</h3>
     
-    <div style="margin: 20px auto; padding: 15px; border: 2px dashed #7a4f2c; border-radius: 10px; max-width: 320px;">
-        <label for="csvUpload">Upload Schedule CSV:</label>
+    <div style="margin-bottom: 20px;">
+        <label>1. Upload Schedule (CSV):</label>
         <input type="file" id="csvUpload" accept=".csv">
     </div>
 
-    <label for="dateSelect">Select date to generate:</label>
-    <select id="dateSelect">
-        <option value="">Upload a file first...</option>
-    </select>
-    <button class="option-btn" id="generateBtn">Generate Briefing</button>
+    <div id="dateSection" style="display:none;">
+        <label for="dateSelect">2. Select date:</label>
+        <select id="dateSelect"></select>
+        <button class="option-btn" id="generateBtn">Generate Briefing</button>
+    </div>
 </div>
 
-<div id="briefingPopup">
+<div id="briefingPopup" style="display:none;">
     <div id="popupContent">
         <pre id="briefingText"></pre>
         <div class="popup-buttons">
