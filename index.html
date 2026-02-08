@@ -8,21 +8,22 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="app-header">
     <h1 class="brand">ZENITH</h1>
     <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
 </header>
 
-<!-- MAIN FORM -->
 <div id="mainForm">
     <h3>Briefing Generator</h3>
-    <label for="dateSelect">Select date to generate:</label>
-    <select id="dateSelect"></select>
+
+    <label for="dateSelect">Select date:</label>
+    <select id="dateSelect">
+        <option value="">— Choose date —</option>
+    </select>
+
     <button class="option-btn" id="generateBtn">Generate Briefing</button>
 </div>
 
-<!-- BRIEFING POPUP -->
 <div id="briefingPopup">
     <div id="popupContent">
         <pre id="briefingText"></pre>
@@ -33,7 +34,6 @@
     </div>
 </div>
 
-<!-- Bottom developer credit -->
 <p class="developer-credit">Developed by PRABHU</p>
 
 <script src="app.js"></script>
