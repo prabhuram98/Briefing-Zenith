@@ -37,14 +37,14 @@
         </div>
         <div class="card">
             <h3>Staff List</h3>
-            <div id="staffList">Loading...</div>
+            <div id="staffList">Loading staff...</div>
         </div>
     </section>
 </main>
 
 <nav class="bottom-nav">
-    <button class="nav-btn active" onclick="switchPage('briefing', this)">📋 Briefing</button>
-    <button class="nav-btn" onclick="switchPage('manage', this)">👥 Manage</button>
+    <button class="nav-btn active" id="btn-briefing" onclick="switchPage('briefing', this)">📋 Briefing</button>
+    <button class="nav-btn" id="btn-manage" onclick="switchPage('manage', this)">👥 Manage</button>
 </nav>
 
 <div id="modal" class="modal" onclick="closeModal()">
