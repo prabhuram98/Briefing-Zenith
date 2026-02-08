@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOQSfjL_ha6xDj1D9_qmbiFqpbnUCyh76OacM90nS8d06W_8TxGv_0BiJd-NKEaBte5Q/exec';
 const SCHEDULE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pub?gid=562624639&single=true&output=csv';
-const STAFF_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pub?gid=581286590&single=true&output=csv';
+const STAFF_CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pubhtml?gid=581286590&single=true';
 
 let staffDB = [];
 let scheduleData = {};
