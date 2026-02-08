@@ -1,6 +1,6 @@
-// --- CONFIGURATION --- 
+// --- CONFIGURATION ---
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu-igrPqxd6OvW7ibRg9uoNRSSFr2aD_OieZPjTty6aR88gCPIA/exec'; 
-const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=0&single=true&output=csv';
+const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=0&single=true&output=csv'; 
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=609693221&single=true&output=csv';
 
 
@@ -9,15 +9,12 @@ let scheduleData = {};
 
 // --- NAVIGATION ---
 function switchPage(pageId, btn) {
-    // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
-    // Show selected page
     const targetPage = document.getElementById(pageId + 'Page');
     if (targetPage) targetPage.classList.add('active');
 
-    // Update UI
     btn.classList.add('active');
     const title = document.getElementById('pageTitle');
     if (title) title.innerText = pageId.toUpperCase();
@@ -25,14 +22,13 @@ function switchPage(pageId, btn) {
 
 // --- DATA LOADING ---
 async function loadStaff() {
-    console.log("Loading Staff List...");
-    // Add timestamp to bypass Google's 5-minute cache
+    console.log("Fetching Master Staff List...");
     const freshStaffUrl = STAFF_URL + (STAFF_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
 
     Papa.parse(freshStaffUrl, {
         download: true,
         complete: (results) => {
-            // Filter out header and empty rows
+            // Clean staff data: remove header, trim spaces
             staffData = results.data
                 .filter(r => r[0] && r[0].toLowerCase() !== "name")
                 .map(r => ({ 
@@ -42,49 +38,53 @@ async function loadStaff() {
             
             console.log("Staff Loaded:", staffData);
             renderStaffList();
-            loadSchedule(); // Load schedule only after we have the staff list
+            loadSchedule(); // Proceed to schedule once staff are known
         },
-        error: (err) => console.error("Error loading Staff CSV:", err)
+        error: (err) => console.error("Staff CSV Load Fail:", err)
     });
 }
 
 function loadSchedule() {
-    console.log("Loading Schedule...");
+    console.log("Fetching Schedule Data...");
     const freshScheduleUrl = SCHEDULE_URL + (SCHEDULE_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
 
     Papa.parse(freshScheduleUrl, {
         download: true,
         complete: (results) => {
             const dates = {};
-            // BASED ON YOUR SHEET: Dates are in Row 2 (index 1)
-            const headerRow = results.data[1] || []; 
-            const dateCols = [];
-            
-            // Identify columns with dates (looking for "/")
-            headerRow.forEach((cell, idx) => {
-                if(cell && cell.includes('/')) {
-                    dateCols.push({idx, date: cell.trim()});
-                }
-            });
+            const data = results.data;
+            if (!data || data.length < 1) return;
 
-            // Process each row to find staff members
-            results.data.forEach(row => {
-                // BASED ON YOUR SHEET: Names are in Column C (index 2)
+            // 1. DATE LOGIC: Row 1 (index 0), starting from Column D (index 3)
+            const headerRow = data[0] || []; 
+            const dateCols = [];
+            for (let i = 3; i < headerRow.length; i++) {
+                if (headerRow[i] && headerRow[i].trim() !== "") {
+                    dateCols.push({ idx: i, date: headerRow[i].trim() });
+                }
+            }
+            
+            console.log("Found Date Columns:", dateCols);
+
+            // 2. NAME LOGIC: Column C (index 2), starting from Row 3 (index 2)
+            for (let i = 2; i < data.length; i++) {
+                const row = data[i];
+                // Get name from Column C and clean it
                 const rawName = row[2] ? row[2].trim().toLowerCase() : null;
-                
+
                 if (rawName) {
-                    // Match with our managed staff list
+                    // Match against the Staff List loaded in loadStaff()
                     const staffMatch = staffData.find(s => s.name.toLowerCase() === rawName);
                     
                     if (staffMatch) {
                         dateCols.forEach(c => {
-                            const shiftInfo = row[c.idx];
-                            // Ignore "OFF" or empty cells
-                            if (shiftInfo && shiftInfo.toUpperCase() !== 'OFF' && shiftInfo.length > 1) {
+                            const shiftValue = row[c.idx];
+                            // Filter out "OFF", empty cells, or junk data
+                            if (shiftValue && shiftValue.toUpperCase() !== 'OFF' && shiftValue.trim().length > 1) {
                                 if (!dates[c.date]) dates[c.date] = { Sala: [], Bar: [] };
                                 
-                                // Clean the time (e.g., "18.00 - 02.00" -> "18.00")
-                                const startTime = shiftInfo.split('-')[0].trim();
+                                // Clean time: "18.00 - 02.00" -> "18.00"
+                                const startTime = shiftValue.split('-')[0].trim();
                                 
                                 dates[c.date][staffMatch.area].push({ 
                                     name: staffMatch.name, 
@@ -94,12 +94,11 @@ function loadSchedule() {
                         });
                     }
                 }
-            });
+            }
 
             scheduleData = dates;
             updateDateDropdown(Object.keys(dates));
-        },
-        error: (err) => console.error("Error loading Schedule CSV:", err)
+        }
     });
 }
 
@@ -110,22 +109,23 @@ function updateDateDropdown(dateKeys) {
     if (dateKeys.length > 0) {
         sel.innerHTML = dateKeys.map(d => `<option value="${d}">${d}</option>`).join('');
     } else {
-        sel.innerHTML = '<option>No Staff Matches Found</option>';
-        console.warn("No dates found. Ensure names in Schedule match the Manage tab exactly.");
+        // Diagnostic message
+        sel.innerHTML = '<option>No Matches (Check Names)</option>';
+        console.warn("No overlapping matches found between Staff List and Schedule Names.");
     }
 }
 
-// --- MANAGE STAFF ACTIONS ---
+// --- MANAGE STAFF ---
 function renderStaffList() {
     const listDiv = document.getElementById('staffList');
     if (!listDiv) return;
 
     listDiv.innerHTML = staffData.length ? staffData.map(s => `
-        <div class="staff-item" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; align-items:center;">
-            <span><strong>${s.name}</strong> <small style="color:#666">(${s.area})</small></span>
-            <button onclick="deleteStaff('${s.name}')" style="color:red; background:none; border:none; font-size:18px; cursor:pointer;">✕</button>
+        <div class="staff-item" style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #eee; align-items:center;">
+            <span><strong>${s.name}</strong> <small style="color:#888; margin-left:10px;">${s.area}</small></span>
+            <button onclick="deleteStaff('${s.name}')" style="color:#ff4444; background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
         </div>
-    `).join('') : "Your staff list is empty. Add someone above!";
+    `).join('') : "No staff found. Add names below.";
 }
 
 async function handleAddStaff() {
@@ -133,27 +133,22 @@ async function handleAddStaff() {
     const areaSelect = document.getElementById('staffArea');
     const saveBtn = document.getElementById('saveBtn');
     
-    const name = nameInput.value.trim();
-    if (!name) return alert("Please enter a name.");
+    if (!nameInput.value.trim()) return alert("Please enter a name.");
     
     saveBtn.disabled = true;
-    saveBtn.innerText = "Connecting...";
+    saveBtn.innerText = "Saving...";
 
     try {
-        // Send to Google Apps Script
         await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify({ action: 'add', name: name, area: areaSelect.value })
+            body: JSON.stringify({ action: 'add', name: nameInput.value.trim(), area: areaSelect.value })
         });
 
-        alert("Added to Google Sheets!");
         nameInput.value = "";
-        // Refresh local data after short delay
-        setTimeout(loadStaff, 1500);
+        setTimeout(loadStaff, 1500); // Reload after Google saves
     } catch (e) {
-        console.error(e);
-        alert("Failed to save. Check your SCRIPT_URL.");
+        alert("Error saving staff.");
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerText = "Save to Google Sheets";
@@ -161,8 +156,7 @@ async function handleAddStaff() {
 }
 
 async function deleteStaff(name) {
-    if(!confirm(`Are you sure you want to remove ${name}?`)) return;
-    
+    if(!confirm(`Delete ${name}?`)) return;
     try {
         await fetch(SCRIPT_URL, {
             method: 'POST',
@@ -171,50 +165,42 @@ async function deleteStaff(name) {
         });
         setTimeout(loadStaff, 1500);
     } catch (e) {
-        alert("Delete failed.");
+        alert("Error deleting staff.");
     }
 }
 
-// --- BRIEFING GENERATION ---
+// --- BRIEFING ---
 function generateBriefing() {
-    const selectedDate = document.getElementById('dateSelect').value;
-    const dayData = scheduleData[selectedDate];
+    const date = document.getElementById('dateSelect').value;
+    const day = scheduleData[date];
     
-    if (!dayData) return alert("Select a valid date first.");
+    if (!day) return alert("Select a valid date.");
 
-    let output = `*ZENITH BRIEFING - ${selectedDate}*\n\n`;
+    let text = `*ZENITH BRIEFING - ${date}*\n\n`;
     
-    output += `*BAR:*\n`;
-    if (dayData.Bar.length > 0) {
-        output += dayData.Bar.sort((a,b) => a.in.localeCompare(b.in))
-                  .map(s => `${s.in} - ${s.name}`).join('\n');
-    } else { output += "_No staff assigned_"; }
+    const sortFn = (a, b) => a.in.localeCompare(b.in);
 
-    output += `\n\n*SALA:*\n`;
-    if (dayData.Sala.length > 0) {
-        output += dayData.Sala.sort((a,b) => a.in.localeCompare(b.in))
-                  .map(s => `${s.in} - ${s.name}`).join('\n');
-    } else { output += "_No staff assigned_"; }
+    text += `*BAR:*\n`;
+    text += day.Bar.length ? day.Bar.sort(sortFn).map(s => `${s.in} - ${s.name}`).join('\n') : "_No staff_";
 
-    document.getElementById('briefingResult').innerText = output;
+    text += `\n\n*SALA:*\n`;
+    text += day.Sala.length ? day.Sala.sort(sortFn).map(s => `${s.in} - ${s.name}`).join('\n') : "_No staff_";
+
+    document.getElementById('briefingResult').innerText = text;
     document.getElementById('modal').style.display = 'flex';
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
 function copyText() {
-    const briefingText = document.getElementById('briefingResult').innerText;
-    navigator.clipboard.writeText(briefingText).then(() => {
-        alert("Briefing copied to clipboard!");
-    });
+    const text = document.getElementById('briefingResult').innerText;
+    navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
 }
 
-// --- INITIALIZE ---
+// --- INIT ---
 window.onload = () => {
-    // Basic check to see if URLs are actually changed
-    if (SCRIPT_URL.startsWith('PASTE')) {
-        console.error("Setup Incomplete: You must paste your URLs at the top of app.js");
-        document.getElementById('staffList').innerText = "Configuration Error: Check app.js URLs";
+    if (STAFF_URL.includes('PASTE')) {
+        alert("Please update your URLs in app.js");
     } else {
         loadStaff();
     }
