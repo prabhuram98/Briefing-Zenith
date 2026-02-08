@@ -1,162 +1,148 @@
-const SHEET_CSV =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSKuZ37JznuRBr5xNhzky3jZ83-3EoZVqjlHS8qXeGcU3J1mZ5K3tPS59FH90eSZxl65G9O8DwNmPrk/pub?output=csv";
+let appData = {};
 
-let scheduleData = {};
+function roundTime(timeStr) {
+    return timeStr.replace('.', ':');
+}
 
-const dateSelect = document.getElementById("dateSelect");
-const generateBtn = document.getElementById("generateBtn");
-const popup = document.getElementById("briefingPopup");
-const briefingText = document.getElementById("briefingText");
+// --- CSV PARSING LOGIC ---
+document.getElementById('csvUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-fetch(SHEET_CSV)
-  .then(res => res.text())
-  .then(csv => {
-    scheduleData = parseCSV(csv);
-    populateDates();
-  });
-
-function parseCSV(csvText) {
-  const lines = csvText.trim().split("\n");
-  const headers = lines.shift().split(",").map(h => h.trim());
-  const data = {};
-
-  lines.forEach(line => {
-    const row = line.split(",");
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]?.trim());
-
-    const date = obj.Date;
-    if (!date) return;
-
-    if (!data[date]) data[date] = [];
-    data[date].push({
-      name: obj.Name,
-      area: obj.Area,
-      entry: obj.Entry,
-      exit: obj.Exit
+    Papa.parse(file, {
+        skipEmptyLines: true,
+        complete: function(results) {
+            parseZenithFormat(results.data);
+        }
     });
-  });
+});
 
-  return data;
+function parseZenithFormat(rows) {
+    const newData = {};
+    const monthMap = { 
+        'JANEIRO': '01', 'FEVEREIRO': '02', 'MARÇO': '03', 'ABRIL': '04', 'MAIO': '05', 'JUNHO': '06',
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06'
+    };
+    
+    const titleRow = rows[1] || [];
+    const year = titleRow[0]?.split(' ')[1] || new Date().getFullYear();
+    const headerRow = rows[2] || [];
+    const colToDateMap = [];
+
+    for (let j = 3; j < headerRow.length; j++) {
+        const cell = headerRow[j];
+        if (cell && cell.includes('/')) {
+            const [day, mShort] = cell.split('/');
+            const formattedDate = `${day.padStart(2, '0')}/${monthMap[mShort] || '01'}/${year}`;
+            colToDateMap.push({ colIndex: j, dateStr: formattedDate });
+        }
+    }
+
+    rows.forEach(row => {
+        // Only rows marked H/W contain the shift schedules
+        if (row[1] === 'H/W' && row[2]) {
+            const name = row[2].trim();
+            // Assign area (logic assumes row 0 grouping or name-based later)
+            const area = row[0] === '1' ? 'Sala' : 'Bar'; 
+
+            colToDateMap.forEach(item => {
+                const shiftValue = row[item.colIndex];
+                const times = shiftValue?.match(/(\d{1,2}[:.]\d{2})[-: ]+(\d{1,2}[:.]\d{2})/);
+                
+                if (times) {
+                    if (!newData[item.dateStr]) newData[item.dateStr] = [];
+                    newData[item.dateStr].push({
+                        name: name,
+                        area: area,
+                        entry: times[1].replace('.', ':'),
+                        exit: times[2].replace('.', ':')
+                    });
+                }
+            });
+        }
+    });
+
+    appData = newData;
+    populateDateDropdown();
+    alert("Schedule loaded successfully!");
 }
 
-function populateDates() {
-  Object.keys(scheduleData).forEach(date => {
-    const option = document.createElement("option");
-    option.value = date;
-    option.textContent = date;
-    dateSelect.appendChild(option);
-  });
+function populateDateDropdown() {
+    const select = document.getElementById('dateSelect');
+    select.innerHTML = '';
+    const dates = Object.keys(appData).sort();
+    dates.forEach(date => {
+        const opt = document.createElement('option');
+        opt.value = date;
+        opt.textContent = date;
+        select.appendChild(opt);
+    });
 }
 
-generateBtn.onclick = () => {
-  const date = dateSelect.value;
-  if (!date) return;
-  briefingText.textContent = generateBriefing(date);
-  popup.style.display = "flex";
+// --- ORIGINAL BRIEFING GENERATION LOGIC ---
+document.getElementById('generateBtn').addEventListener('click', () => {
+    const date = document.getElementById('dateSelect').value;
+    if (!appData[date]) return;
+
+    const dayData = appData[date];
+    const sala = dayData.filter(s => s.area === 'Sala');
+    const bar = dayData.filter(s => s.area === 'Bar');
+
+    // 1. PORTA
+    let portaStaff = sala.find(s => s.name.toLowerCase() === 'ana') || 
+                     sala.reduce((earliest, s) => !earliest || s.entry < earliest.entry ? s : earliest, null);
+
+    // 2. BAR
+    const barSorted = [...bar].sort((a,b) => a.entry.localeCompare(b.entry));
+    let barLines = [];
+    if (barSorted.length > 0) {
+        barLines.push(`${roundTime(barSorted[0].entry)} Abertura Sala/Bar: ${barSorted[0].name}`);
+        barSorted.forEach((s, i) => {
+            barLines.push(`${roundTime(s.entry)} Bar ${String.fromCharCode(65 + i)}: ${s.name}`);
+        });
+    }
+
+    // 3. SELLERS & RUNNER (Julieta Logic)
+    let salaExclAna = sala.filter(s => s !== portaStaff);
+    const julieta = salaExclAna.find(s => s.name.toLowerCase() === 'julieta');
+    const otherSala = salaExclAna.filter(s => s.name.toLowerCase() !== 'julieta');
+
+    let sellers = [];
+    let runnerLine = '';
+    if (salaExclAna.length >= 3 && julieta) {
+        sellers = otherSala.sort((a,b) => a.entry.localeCompare(b.entry));
+        runnerLine = `Runner A e B: Julieta`;
+    } else {
+        sellers = salaExclAna.sort((a,b) => a.entry.localeCompare(b.entry));
+        runnerLine = `Runner A e B: Todos`;
+    }
+    const sellerLines = sellers.map((s, idx) => `${roundTime(s.entry)} Seller ${String.fromCharCode(65+idx)}: ${s.name}`);
+
+    // 4. HACCP & FECHO
+    const barHACCP = [...bar].sort((a,b) => a.exit.localeCompare(b.exit));
+    let haccpLines = [];
+    if (barHACCP[0]) haccpLines.push(`${roundTime(barHACCP[0].exit)} Preparações Bar: ${barHACCP[0].name}`);
+    
+    const fechoPriority = ['carlos','prabhu','ana'];
+    let fechoPerson = fechoPriority.find(p => bar.some(b => b.name.toLowerCase() === p)) || (barSorted[barSorted.length-1]?.name || "Staff");
+
+    // 5. COMPOSE FINAL TEXT
+    let briefing = `Bom dia a todos!\n\n*BRIEFING ${date}*\n\n`;
+    briefing += `${roundTime(portaStaff.entry)} Porta: ${portaStaff.name}\n\n`;
+    briefing += `BAR:\n${barLines.join('\n')}\n\n⸻⸻⸻⸻\n\n`;
+    briefing += `‼️ Loiça é responsabilidade de todos.\n——————————————\n\n`;
+    briefing += `SELLERS:\n${sellerLines.join('\n')}\n${runnerLine}\n\n`;
+    briefing += `HACCP:\n${haccpLines.join('\n')}\n\n`;
+    briefing += `${barSorted[barSorted.length-1]?.exit || ''} Fecho de Caixa: ${fechoPerson}\n\n`;
+    briefing += `Bom serviço a todos!`;
+
+    document.getElementById('briefingText').textContent = briefing;
+    document.getElementById('briefingPopup').style.display = 'flex';
+});
+
+// UI Controls
+document.getElementById('closeBtn').onclick = () => document.getElementById('briefingPopup').style.display = 'none';
+document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(document.getElementById('briefingText').textContent);
+    alert("Copied!");
 };
-
-document.getElementById("closeBtn").onclick = () => popup.style.display = "none";
-document.getElementById("copyBtn").onclick = () =>
-  navigator.clipboard.writeText(briefingText.textContent);
-
-function generateBriefing(date) {
-  const staff = scheduleData[date];
-
-  const salaAll = staff.filter(s => s.area === "Sala");
-  const salaOperational = salaAll.filter(
-    s => s.name.toLowerCase() !== "ana"
-  );
-  const bar = staff.filter(s => s.area === "Bar");
-
-  salaOperational.sort((a,b)=>a.entry.localeCompare(b.entry));
-  bar.sort((a,b)=>a.entry.localeCompare(b.entry));
-
-  // Porta
-  const porta =
-    salaAll.find(s => s.name.toLowerCase() === "ana") || salaOperational[0];
-
-  // BAR lines
-  let barLines = [`${bar[0].entry} Abertura Sala/Bar: ${bar[0].name}`];
-  bar.forEach((b,i)=>{
-    barLines.push(`${b.entry} Bar ${String.fromCharCode(65+i)}: ${b.name}`);
-  });
-
-  // BAR HACCP
-  const barExit = [...bar].sort((a,b)=>a.exit.localeCompare(b.exit));
-  let barHACCP = [];
-  barHACCP.push(`${barExit[0].exit} Preparações Bar: ${barExit[0].name}`);
-
-  if (barExit.length >= 3) {
-    barHACCP.push(`${barExit[1].exit} Reposição Bar: ${barExit[1].name}`);
-  } else {
-    barHACCP.push(`${barExit[0].exit} Reposição Bar: ${barExit[0].name}`);
-  }
-
-  barHACCP.push(`${barExit.at(-1).exit} Limpeza Máquina / Reposição de Leites: ${barExit.at(-1).name}`);
-  barHACCP.push(`${barExit.at(-1).exit} Fecho Bar: ${barExit.at(-1).name}`);
-
-  // SALA HACCP (NO ANA)
-  const salaExit = [...salaOperational].sort(
-    (a,b)=>a.exit.localeCompare(b.exit)
-  );
-
-  let salaHACCP = [];
-
-  if (salaExit.length === 1) {
-    const s = salaExit[0];
-    salaHACCP.push(`${s.exit} Fecho da sala de cima: ${s.name}`);
-    salaHACCP.push(`${s.exit} Limpeza e reposição aparador/ cadeira de bebés: ${s.name}`);
-    salaHACCP.push(`${s.exit} Repor papel (casa de banho): ${s.name}`);
-    salaHACCP.push(`${s.exit} Limpeza casa de banho (clientes e staff): ${s.name}`);
-    salaHACCP.push(`${s.exit} Limpeza vidros e Espelhos: ${s.name}`);
-    salaHACCP.push(`${s.exit} Fecho da sala: ${s.name}`);
-  }
-
-  if (salaExit.length === 2) {
-    salaHACCP.push(`${salaExit[0].exit} Fecho da sala de cima: ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[0].exit} Limpeza e reposição aparador/ cadeira de bebés: ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[0].exit} Repor papel (casa de banho): ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[0].exit} Limpeza casa de banho (clientes e staff): ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[1].exit} Limpeza vidros e Espelhos: ${salaExit[1].name}`);
-    salaHACCP.push(`${salaExit[1].exit} Fecho da sala: ${salaExit[1].name}`);
-  }
-
-  if (salaExit.length >= 3) {
-    salaHACCP.push(`${salaExit[0].exit} Fecho da sala de cima: ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[0].exit} Limpeza e reposição aparador/ cadeira de bebés: ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[0].exit} Repor papel (casa de banho): ${salaExit[0].name}`);
-    salaHACCP.push(`${salaExit[1].exit} Limpeza casa de banho (clientes e staff): ${salaExit[1].name}`);
-    salaHACCP.push(`${salaExit[1].exit} Limpeza vidros e Espelhos: ${salaExit[1].name}`);
-    salaHACCP.push(`${salaExit.at(-1).exit} Fecho da sala: ${salaExit.at(-1).name}`);
-  }
-
-  // FECHO CAIXA
-  const priority = ["carlos","prabhu","ana"];
-  const fecho =
-    priority.find(p => bar.some(b => b.name.toLowerCase() === p))
-    || barExit.at(-1).name;
-
-  return `Bom dia a todos!
-
-*BRIEFING ${date}*
-
-${porta.entry} Porta: ${porta.name}
-
-BAR:
-${barLines.join("\n")}
-
-⸻⸻⸻⸻
-
-‼️ Loiça é responsabilidade de todos.
-NÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO
-——————————————
-
-HACCP / LIMPEZA BAR:
-${barHACCP.join("\n")}
-
-HACCP / SALA:
-${salaHACCP.join("\n")}
-
-${barExit.at(-1).exit} Fecho de Caixa: ${fecho.charAt(0).toUpperCase()+fecho.slice(1)}`;
-}
