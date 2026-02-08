@@ -1,153 +1,161 @@
-let appData = {};
+// --- CONFIGURATION ---
+const SCRIPT_URL = https://script.google.com/macros/s/AKfycbzOQSfjL_ha6xDj1D9_qmbiFqpbnUCyh76OacM90nS8d06W_8TxGv_0BiJd-NKEaBte5Q/exec;
+const SCHEDULE_CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pub?gid=562624639&single=true&output=csv;
+const STAFF_CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pub?gid=581286590&single=true&output=csv;
 
-// --- 1. CSV PARSER LOGIC ---
-document.getElementById('csvUpload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+let staffDB = [];
+let scheduleData = {};
 
-    Papa.parse(file, {
-        skipEmptyLines: true,
+// --- INITIALIZE ---
+window.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+    // 1. Fetch Staff from Google Sheet CSV
+    Papa.parse(STAFF_CSV_URL, {
+        download: true,
         complete: function(results) {
-            parseZenithCSV(results.data);
-            document.getElementById('dateSection').style.display = 'block';
-        }
-    });
-});
-
-function parseZenithCSV(rows) {
-    const newData = {};
-    const headerRow = rows[2] || [];
-    const year = rows[1]?.[0]?.split(' ')[1] || new Date().getFullYear();
-    const monthMap = { 
-        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
-        'JANEIRO': '01', 'FEVEREIRO': '02', 'MARÇO': '03'
-    };
-
-    const colMap = [];
-    for (let j = 3; j < headerRow.length; j++) {
-        if (headerRow[j] && headerRow[j].includes('/')) {
-            const [d, m] = headerRow[j].split('/');
-            colMap.push({ col: j, date: `${d.padStart(2,'0')}/${monthMap[m] || '01'}/${year}` });
-        }
-    }
-
-    rows.forEach(row => {
-        if (row[1] === 'H/W' && row[2]) {
-            const name = row[2].trim();
-            const area = row[0] === '1' ? 'Sala' : 'Bar';
-            colMap.forEach(item => {
-                const shift = row[item.col];
-                const times = shift?.match(/(\d{1,2}[:.]\d{2})[-: ]+(\d{1,2}[:.]\d{2})/);
-                if (times) {
-                    if (!newData[item.date]) newData[item.date] = { sala: [], bar: [] };
-                    const entry = times[1].replace('.', ':');
-                    const exit = times[2].replace('.', ':');
-                    const staffObj = { name, entry, exit };
-                    if (area === 'Sala') newData[item.date].sala.push(staffObj);
-                    else newData[item.date].bar.push(staffObj);
-                }
+            staffDB = results.data.map(r => ({ name: r[0]?.trim(), area: r[1]?.trim() })).filter(s => s.name);
+            renderStaffList();
+            
+            // 2. Fetch Schedule after Staff is loaded
+            Papa.parse(SCHEDULE_CSV_URL, {
+                download: true,
+                complete: function(res) { processSchedule(res.data); }
             });
         }
     });
-
-    appData = newData;
-    const sel = document.getElementById('dateSelect');
-    sel.innerHTML = Object.keys(appData).sort().map(d => `<option value="${d}">${d}</option>`).join('');
-    alert("Schedule loaded successfully!");
 }
 
-// --- 2. GENERATOR LOGIC ---
-document.getElementById('generateBtn').addEventListener('click', () => {
+// --- NAVIGATION ---
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(pageId + 'Page').classList.add('active');
+    document.getElementById('pageTitle').innerText = pageId.toUpperCase();
+    const idx = (pageId === 'briefing') ? 0 : 1;
+    document.querySelectorAll('.nav-item')[idx].classList.add('active');
+}
+
+// --- MANAGE STAFF (WRITE) ---
+async function submitNewStaff() {
+    const name = document.getElementById('newStaffName').value.trim();
+    const area = document.getElementById('newStaffArea').value;
+    const btn = document.getElementById('addBtn');
+
+    if (!name) return alert("Enter a name");
+    
+    btn.disabled = true;
+    btn.innerText = "Saving...";
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Essential for Google Scripts
+            body: JSON.stringify({ action: 'add', name: name, area: area })
+        });
+        alert("Added! Refreshing...");
+        setTimeout(loadData, 2000); // Wait for Google to update
+    } catch (e) {
+        alert("Error saving staff");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Save to Cloud";
+        document.getElementById('newStaffName').value = "";
+    }
+}
+
+async function deleteStaff(name) {
+    if (!confirm(`Remove ${name} from database?`)) return;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'delete', name: name })
+        });
+        alert("Deleting... list will refresh.");
+        setTimeout(loadData, 2000);
+    } catch (e) {
+        alert("Delete failed");
+    }
+}
+
+function renderStaffList() {
+    const container = document.getElementById('staffListView');
+    container.innerHTML = staffDB.map(s => `
+        <div class="staff-row">
+            <span><strong>${s.name}</strong> <small>(${s.area})</small></span>
+            <button class="del-btn" onclick="deleteStaff('${s.name}')">✕</button>
+        </div>
+    `).join('');
+}
+
+// --- BRIEFING LOGIC ---
+function processSchedule(rows) {
+    const newData = {};
+    const header = rows[2] || [];
+    const dateCols = [];
+    header.forEach((cell, idx) => { if(cell && cell.includes('/')) dateCols.push({idx, date: cell}); });
+
+    rows.forEach(row => {
+        if (row[1] === 'H/W' && row[2]) {
+            const name = row[2].trim().toLowerCase();
+            const dbMatch = staffDB.find(s => s.name.toLowerCase() === name);
+            if (dbMatch) {
+                dateCols.forEach(c => {
+                    const times = row[c.idx]?.match(/(\d{1,2}[:.]\d{2})[-: ]+(\d{1,2}[:.]\d{2})/);
+                    if (times) {
+                        if (!newData[c.date]) newData[c.date] = { Sala: [], Bar: [] };
+                        newData[c.date][dbMatch.area].push({ name: dbMatch.name, entry: times[1].replace('.',':'), exit: times[2].replace('.',':') });
+                    }
+                });
+            }
+        }
+    });
+    scheduleData = newData;
+    const sel = document.getElementById('dateSelect');
+    sel.innerHTML = Object.keys(scheduleData).map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+document.getElementById('generateBtn').onclick = () => {
     const date = document.getElementById('dateSelect').value;
-    const dayData = appData[date];
-    if (!dayData) return;
+    const day = scheduleData[date];
+    if(!day) return alert("Data still loading or date not found.");
 
-    const { sala, bar } = dayData;
+    const sEntry = [...day.Sala].sort((a,b) => a.entry.localeCompare(b.entry));
+    const bEntry = [...day.Bar].sort((a,b) => a.entry.localeCompare(b.entry));
+    const sExit = [...day.Sala].sort((a,b) => a.exit.localeCompare(b.exit));
+    const bExit = [...day.Bar].sort((a,b) => a.exit.localeCompare(b.exit));
 
-    // PORTA Logic
-    let porta = sala.find(s => s.name.toLowerCase() === 'ana') || 
-                sala.reduce((a, b) => a.entry < b.entry ? a : b, sala[0]);
+    const porta = day.Sala.find(s => s.name.toLowerCase() === 'ana') || sEntry[0];
 
-    // BAR Logic
-    const barSorted = [...bar].sort((a,b) => a.entry.localeCompare(b.entry));
-    const bA = barSorted[0] || {name: "Staff", entry: "--:--"};
-    const bB = barSorted[1] || {name: "Staff", entry: "--:--"};
-    const bC = barSorted[2] || {name: "Staff", entry: "--:--"};
-    const bD = barSorted[3] || {name: "Staff", entry: "--:--"};
-
-    // SELLERS & RUNNER
-    let sExclPorta = sala.filter(s => s.name !== porta.name);
-    const jul = sExclPorta.find(s => s.name.toLowerCase() === 'julieta');
-    let runners = (sExclPorta.length >= 3 && jul) ? "Julieta" : "Todos";
-    let sellers = sExclPorta.filter(s => s.name.toLowerCase() !== 'julieta').sort((a,b) => a.entry.localeCompare(b.entry));
-
-    // HACCP BAR (Sorted by EXIT)
-    const bExit = [...bar].sort((a,b) => a.exit.localeCompare(b.exit));
-    const bLast = bExit[bExit.length - 1] || {name: "Staff", exit: "--:--"};
-
-    // HACCP SALA (Sorted by EXIT)
-    const sExit = [...sala].sort((a,b) => a.exit.localeCompare(b.exit));
-    const s1 = sExit[0] || {name: "Staff", exit: "--:--"};
-    const s2 = sExit[1] || {name: "Staff", exit: "--:--"};
-    const s3 = sExit[2] || {name: "Staff", exit: "--:--"};
-    const s4 = sExit[3] || s1;
-    const sLast = sExit[sExit.length - 1] || {name: "Staff", exit: "--:--"};
-
-    // FECHO DE CAIXA
-    const fp = ['carlos','prabhu','ana'];
-    let fName = fp.find(p => bar.some(b => b.name.toLowerCase() === p)) || bLast.name;
-
-    // --- 3. TEMPLATE CONSTRUCTION ---
-    let b = `BRIEFING ( ${date} )\n \n`;
-    b += `${porta.entry} Porta: ${porta.name}\n\n`;
+    let t = `BRIEFING ( ${date} )\n\n`;
+    t += `${porta?.entry || '--'} Porta: ${porta?.name || 'TBD'}\n\n`;
     
-    b += `BAR: \n`;
-    b += `${bA.entry} Abertura Sala/Bar: ${bA.name}\n`;
-    b += `${bA.entry} Bar A: ${bA.name} * Barista - Caixa/Bebidas\n`;
-    b += `${bB.entry} Bar B: ${bB.name} Barista - Bebidas /Smoothies\n`;
-    b += `${bC.entry} Bar C: ${bC.name} Barista - Bebidas /Smoothies\n`;
-    b += `${bD.entry} Bar D: ${bD.name} Barista- Cafés\n\n`;
+    t += `BAR:\n`;
+    bEntry.forEach((b, i) => {
+        const labs = ["(Caixa)", "(Smoothies)", "(Smoothies)", "(Cafés)"];
+        t += `${b.entry} Bar ${labs[i] || ''}: ${b.name}\n`;
+    });
 
-    b += `________\n‼️ Loiça é responsabilidade de todos.\n—————————————— \n\n`;
-    
-    b += `SELLERS:\n`;
-    if(sellers[0]) b += `${sellers[0].entry} Seller A: ${sellers[0].name}  Seller\n`;
-    if(sellers[1]) b += `${sellers[1].entry} Seller B: ${sellers[1].name}  Seller\n\n`;
+    t += `\nSELLERS:\n`;
+    const sellers = sEntry.filter(s => s.name !== porta?.name);
+    sellers.forEach((s, i) => {
+        t += `${s.entry} Seller ${String.fromCharCode(65+i)}: ${s.name}\n`;
+    });
 
-    b += `⚠Pastéis de Nata - Cada Seller na sua secção⚠\n`;
-    b += `——————————————\n`;
-    b += `Seller A: Mesa 20-30\n`;
-    b += `Seller B: Mesa 1-12\n`;
-    b += `Seller C: Sala de cima \n`;
-    b += `——————————————\n`;
-    b += `RUNNERS:\n`;
-    b += `${sellers[0]?.entry || porta.entry} Runner A e B: ${runners}\n`;
-    b += `——————————————\n\n`;
+    t += `\nFECHO:\n`;
+    t += `${bExit[bExit.length-1]?.exit || '--'} Fecho Bar: ${bExit[bExit.length-1]?.name || ''}\n`;
+    t += `${sExit[sExit.length-1]?.exit || '--'} Fecho Sala: ${sExit[sExit.length-1]?.name || ''}\n`;
 
-    b += `‼️Loiça é responsabilidade de todos!\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n——————————————\n\n`;
-
-    b += `HACCP/LIMPEZA BAR:\n`;
-    b += `${bExit[0]?.exit || ''} Preparações Bar: ${bExit[0]?.name || ''}\n`;
-    b += `${bExit[1]?.exit || ''} Reposição Bar: ${bExit[1]?.name || ''}\n`;
-    b += `${bLast.exit} Limpeza Máquina de Café/Reposição de Leites: ${bLast.name}\n`;
-    b += `${bLast.exit} Fecho Bar: ${bLast.name}\n\n\n`;
-
-    b += `HACCP/ SALA:\n`;
-    b += `${s1.exit} Limpeza da sala de cima: ${s1.name}\n`;
-    b += `${s2.exit} Limpeza e reposição aparador/cadeira de bebés: ${s2.name}\n`;
-    b += `${s3.exit} Repor papel (casa de banho): ${s3.name}\n`;
-    b += `17:30 Limpeza de Espelhos e vidros: ${s4.name}\n`;
-    b += `${sLast.exit} Limpeza da casa de banho (clientes e staff): ${sLast.name}\n`;
-    b += `${sLast.exit} Fecho da sala: ${sLast.name}\n`;
-    b += `${bLast.exit} Fecho de Caixa: ${fName}`;
-
-    document.getElementById('briefingText').textContent = b;
+    document.getElementById('briefingText').textContent = t;
     document.getElementById('briefingPopup').style.display = 'flex';
-});
+    document.getElementById('briefingText').scrollTop = 0;
+};
 
-// UI Controls
+// UI BUTTONS
 document.getElementById('closeBtn').onclick = () => document.getElementById('briefingPopup').style.display = 'none';
 document.getElementById('copyBtn').onclick = () => {
     navigator.clipboard.writeText(document.getElementById('briefingText').textContent);
-    alert("Briefing copied to clipboard!");
+    alert("Copied to clipboard!");
 };
