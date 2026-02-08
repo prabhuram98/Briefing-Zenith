@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOQSfjL_ha6xDj1D9_qmbiFqpbnUCyh76OacM90nS8d06W_8TxGv_0BiJd-NKEaBte5Q/exec';
-const SCHEDULE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pub?gid=562624639&single=true&output=csv';
-const STAFF_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ53rk57QQry1NKD6vCmGvVLdmS3t5A1jdAlK2jGuPWGyI9p7deBTTmro0ecJ6ITUB1egChi1PLaVyb/pub?gid=581286590&single=true&output=csv';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu-igrPqxd6OvW7ibRg9uoNRSSFr2aD_OieZPjTty6aR88gCPIA/exec';
+const SCHEDULE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=0&single=true&output=csv';
+const STAFF_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=609693221&single=true&output=csv';
 
 let staffDB = [];
 let scheduleData = {};
