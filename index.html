@@ -1,37 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZENITH – Briefing Generator</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZENITH – Briefing Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
 
 <header class="app-header">
-  <h1 class="brand">ZENITH</h1>
-  <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
+    <h1 class="brand">ZENITH</h1>
+    <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
 </header>
 
 <div id="mainForm">
-  <h3>Briefing Generator</h3>
+    <h3>Briefing Generator</h3>
+    
+    <div style="margin: 20px auto; padding: 15px; border: 2px dashed #7a4f2c; border-radius: 10px; max-width: 320px;">
+        <label for="csvUpload">Upload Schedule CSV:</label>
+        <input type="file" id="csvUpload" accept=".csv">
+    </div>
 
-  <label for="dateSelect">Select date:</label>
-  <select id="dateSelect">
-    <option value="">— Choose date —</option>
-  </select>
-
-  <button class="option-btn" id="generateBtn">Generate Briefing</button>
+    <label for="dateSelect">Select date to generate:</label>
+    <select id="dateSelect">
+        <option value="">Upload a file first...</option>
+    </select>
+    <button class="option-btn" id="generateBtn">Generate Briefing</button>
 </div>
 
 <div id="briefingPopup">
-  <div id="popupContent">
-    <pre id="briefingText"></pre>
-    <div class="popup-buttons">
-      <button class="option-btn" id="copyBtn">Copy</button>
-      <button class="option-btn" id="closeBtn">Close</button>
+    <div id="popupContent">
+        <pre id="briefingText"></pre>
+        <div class="popup-buttons">
+            <button class="option-btn" id="copyBtn">Copy</button>
+            <button class="option-btn" id="closeBtn">Close</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <p class="developer-credit">Developed by PRABHU</p>
