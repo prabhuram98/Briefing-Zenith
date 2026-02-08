@@ -1,11 +1,12 @@
 let scheduleData = {};
 
-fetch("data.json")
+fetch("./data.json")
   .then(res => res.json())
   .then(data => {
     scheduleData = data;
     populateDates();
-  });
+  })
+  .catch(err => console.error("Failed to load data.json", err));
 
 const dateSelect = document.getElementById("dateSelect");
 const generateBtn = document.getElementById("generateBtn");
@@ -29,7 +30,10 @@ generateBtn.addEventListener("click", () => {
   popup.style.display = "flex";
 });
 
-document.getElementById("closeBtn").onclick = () => popup.style.display = "none";
+document.getElementById("closeBtn").onclick = () => {
+  popup.style.display = "none";
+};
+
 document.getElementById("copyBtn").onclick = () => {
   navigator.clipboard.writeText(briefingText.textContent);
 };
@@ -37,40 +41,40 @@ document.getElementById("copyBtn").onclick = () => {
 function generateBriefing(date) {
   const staff = scheduleData[date];
 
-  const sala = staff.filter(s => s.area === "Sala");
-  const bar = staff.filter(s => s.area === "Bar");
-
-  sala.sort((a,b)=>a.entry.localeCompare(b.entry));
-  bar.sort((a,b)=>a.entry.localeCompare(b.entry));
+  const sala = staff.filter(s => s.area === "Sala")
+                    .sort((a,b)=>a.entry.localeCompare(b.entry));
+  const bar = staff.filter(s => s.area === "Bar")
+                   .sort((a,b)=>a.entry.localeCompare(b.entry));
 
   // Porta
-  let porta = sala.find(s => s.name.toLowerCase() === "ana") || sala[0];
+  const porta = sala.find(s => s.name.toLowerCase() === "ana") || sala[0];
 
-  // BAR stations
-  let barLines = [];
+  // BAR lines
+  let barLines = [`${bar[0].entry} Abertura Sala/Bar: ${bar[0].name}`];
   bar.forEach((b,i)=>{
     barLines.push(`${b.entry} Bar ${String.fromCharCode(65+i)}: ${b.name}`);
   });
-  barLines.unshift(`${bar[0].entry} Abertura Sala/Bar: ${bar[0].name}`);
 
   // HACCP BAR
-  const barByExit = [...bar].sort((a,b)=>a.exit.localeCompare(b.exit));
+  const barExit = [...bar].sort((a,b)=>a.exit.localeCompare(b.exit));
   let barHACCP = [];
-  if (barByExit[0])
-    barHACCP.push(`${barByExit[0].exit} Preparações Bar: ${barByExit[0].name}`);
-  if (barByExit.length >= 3)
-    barHACCP.push(`${barByExit[1].exit} Reposição Bar: ${barByExit[1].name}`);
-  else
-    barHACCP.push(`${barByExit[0].exit} Reposição Bar: ${barByExit[0].name}`);
-  barHACCP.push(`${barByExit.at(-1).exit} Limpeza Máquina de Café / Reposição de Leites: ${barByExit.at(-1).name}`);
-  barHACCP.push(`${barByExit.at(-1).exit} Fecho Bar: ${barByExit.at(-1).name}`);
+  barHACCP.push(`${barExit[0].exit} Preparações Bar: ${barExit[0].name}`);
+
+  if (barExit.length >= 3) {
+    barHACCP.push(`${barExit[1].exit} Reposição Bar: ${barExit[1].name}`);
+  } else {
+    barHACCP.push(`${barExit[0].exit} Reposição Bar: ${barExit[0].name}`);
+  }
+
+  barHACCP.push(`${barExit.at(-1).exit} Limpeza Máquina de Café / Reposição de Leites: ${barExit.at(-1).name}`);
+  barHACCP.push(`${barExit.at(-1).exit} Fecho Bar: ${barExit.at(-1).name}`);
 
   // HACCP SALA
-  const salaByExit = [...sala].sort((a,b)=>a.exit.localeCompare(b.exit));
+  const salaExit = [...sala].sort((a,b)=>a.exit.localeCompare(b.exit));
   let salaHACCP = [];
 
-  if (salaByExit.length === 1) {
-    const s = salaByExit[0];
+  if (salaExit.length === 1) {
+    const s = salaExit[0];
     salaHACCP.push(`${s.exit} Fecho da sala de cima: ${s.name}`);
     salaHACCP.push(`${s.exit} Limpeza e reposição aparador/ cadeira de bebés: ${s.name}`);
     salaHACCP.push(`${s.exit} Repor papel (casa de banho): ${s.name}`);
@@ -79,27 +83,27 @@ function generateBriefing(date) {
     salaHACCP.push(`${s.exit} Fecho da sala: ${s.name}`);
   }
 
-  if (salaByExit.length === 2) {
-    salaHACCP.push(`${salaByExit[0].exit} Fecho da sala de cima: ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[0].exit} Limpeza e reposição aparador/ cadeira de bebés: ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[0].exit} Repor papel (casa de banho): ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[0].exit} Limpeza casa de banho (clientes e staff): ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[1].exit} Limpeza vidros e Espelhos: ${salaByExit[1].name}`);
-    salaHACCP.push(`${salaByExit[1].exit} Fecho da sala: ${salaByExit[1].name}`);
+  if (salaExit.length === 2) {
+    salaHACCP.push(`${salaExit[0].exit} Fecho da sala de cima: ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[0].exit} Limpeza e reposição aparador/ cadeira de bebés: ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[0].exit} Repor papel (casa de banho): ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[0].exit} Limpeza casa de banho (clientes e staff): ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[1].exit} Limpeza vidros e Espelhos: ${salaExit[1].name}`);
+    salaHACCP.push(`${salaExit[1].exit} Fecho da sala: ${salaExit[1].name}`);
   }
 
-  if (salaByExit.length >= 3) {
-    salaHACCP.push(`${salaByExit[0].exit} Fecho da sala de cima: ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[0].exit} Limpeza e reposição aparador/ cadeira de bebés: ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[0].exit} Repor papel (casa de banho): ${salaByExit[0].name}`);
-    salaHACCP.push(`${salaByExit[1].exit} Limpeza casa de banho (clientes e staff): ${salaByExit[1].name}`);
-    salaHACCP.push(`${salaByExit[1].exit} Limpeza vidros e Espelhos: ${salaByExit[1].name}`);
-    salaHACCP.push(`${salaByExit.at(-1).exit} Fecho da sala: ${salaByExit.at(-1).name}`);
+  if (salaExit.length >= 3) {
+    salaHACCP.push(`${salaExit[0].exit} Fecho da sala de cima: ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[0].exit} Limpeza e reposição aparador/ cadeira de bebés: ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[0].exit} Repor papel (casa de banho): ${salaExit[0].name}`);
+    salaHACCP.push(`${salaExit[1].exit} Limpeza casa de banho (clientes e staff): ${salaExit[1].name}`);
+    salaHACCP.push(`${salaExit[1].exit} Limpeza vidros e Espelhos: ${salaExit[1].name}`);
+    salaHACCP.push(`${salaExit.at(-1).exit} Fecho da sala: ${salaExit.at(-1).name}`);
   }
 
-  // Fecho Caixa
+  // Fecho de Caixa
   const priority = ["carlos","prabhu","ana"];
-  let fecho = priority.find(p => bar.some(b=>b.name.toLowerCase()===p)) || bar.at(-1).name;
+  let fecho = priority.find(p => bar.some(b => b.name.toLowerCase() === p)) || barExit.at(-1).name;
 
   return `Bom dia a todos!
 
@@ -122,5 +126,5 @@ ${barHACCP.join("\n")}
 HACCP / SALA:
 ${salaHACCP.join("\n")}
 
-${bar.at(-1).exit} Fecho de Caixa: ${fecho.charAt(0).toUpperCase()+fecho.slice(1)}`;
+${barExit.at(-1).exit} Fecho de Caixa: ${fecho.charAt(0).toUpperCase()+fecho.slice(1)}`;
 }
