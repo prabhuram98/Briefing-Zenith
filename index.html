@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZENITH – Briefing Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZENITH Portal</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
@@ -11,23 +11,42 @@
 
 <header class="app-header">
     <h1 class="brand">ZENITH</h1>
-    <h2 class="subtitle">BRUNCH AND COCKTAILS</h2>
+    <h2 id="pageTitle">BRIEFING</h2>
 </header>
 
-<div id="mainForm">
-    <h3>Briefing Generator</h3>
-    
-    <div style="margin-bottom: 20px;">
-        <label>1. Upload Schedule (CSV):</label>
-        <input type="file" id="csvUpload" accept=".csv">
-    </div>
+<main id="appContent">
+    <section id="briefingPage" class="page active">
+        <div class="card">
+            <label>1. Select Date:</label>
+            <select id="dateSelect"><option>Loading...</option></select>
+            <button class="main-btn" id="generateBtn">View Briefing</button>
+        </div>
+    </section>
 
-    <div id="dateSection" style="display:none;">
-        <label for="dateSelect">2. Select date:</label>
-        <select id="dateSelect"></select>
-        <button class="option-btn" id="generateBtn">Generate Briefing</button>
-    </div>
-</div>
+    <section id="managePage" class="page">
+        <div class="card">
+            <h3>Add New Staff</h3>
+            <div class="input-row">
+                <input type="text" id="newStaffName" placeholder="First Name">
+                <select id="newStaffArea">
+                    <option value="Sala">Sala</option>
+                    <option value="Bar">Bar</option>
+                </select>
+            </div>
+            <button onclick="submitNewStaff()" class="main-btn" id="addBtn">Save to Cloud</button>
+        </div>
+
+        <div class="card">
+            <h3>Staff Database</h3>
+            <div id="staffListView"></div>
+        </div>
+    </section>
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('briefing')"><span>📋</span><small>Briefing</small></button>
+    <button class="nav-item" onclick="showPage('manage')"><span>👥</span><small>Manage</small></button>
+</nav>
 
 <div id="briefingPopup" style="display:none;">
     <div id="popupContent">
@@ -38,8 +57,6 @@
         </div>
     </div>
 </div>
-
-<p class="developer-credit">Developed by PRABHU</p>
 
 <script src="app.js"></script>
 </body>
