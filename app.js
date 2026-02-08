@@ -5,8 +5,7 @@ fetch("./data.json")
   .then(data => {
     scheduleData = data;
     populateDates();
-  })
-  .catch(err => console.error("Failed to load data.json", err));
+  });
 
 const dateSelect = document.getElementById("dateSelect");
 const generateBtn = document.getElementById("generateBtn");
@@ -41,15 +40,23 @@ document.getElementById("copyBtn").onclick = () => {
 function generateBriefing(date) {
   const staff = scheduleData[date];
 
-  const sala = staff.filter(s => s.area === "Sala")
-                    .sort((a,b)=>a.entry.localeCompare(b.entry));
-  const bar = staff.filter(s => s.area === "Bar")
-                   .sort((a,b)=>a.entry.localeCompare(b.entry));
+  // SALA
+  const salaAll = staff.filter(s => s.area === "Sala");
+  const salaOperational = salaAll.filter(
+    s => s.name.toLowerCase() !== "ana"
+  );
 
-  // Porta
-  const porta = sala.find(s => s.name.toLowerCase() === "ana") || sala[0];
+  // BAR
+  const bar = staff.filter(s => s.area === "Bar");
 
-  // BAR lines
+  salaOperational.sort((a,b)=>a.entry.localeCompare(b.entry));
+  bar.sort((a,b)=>a.entry.localeCompare(b.entry));
+
+  // Porta (Ana only)
+  const porta =
+    salaAll.find(s => s.name.toLowerCase() === "ana") || salaOperational[0];
+
+  // BAR LINES
   let barLines = [`${bar[0].entry} Abertura Sala/Bar: ${bar[0].name}`];
   bar.forEach((b,i)=>{
     barLines.push(`${b.entry} Bar ${String.fromCharCode(65+i)}: ${b.name}`);
@@ -69,8 +76,11 @@ function generateBriefing(date) {
   barHACCP.push(`${barExit.at(-1).exit} Limpeza Máquina de Café / Reposição de Leites: ${barExit.at(-1).name}`);
   barHACCP.push(`${barExit.at(-1).exit} Fecho Bar: ${barExit.at(-1).name}`);
 
-  // HACCP SALA
-  const salaExit = [...sala].sort((a,b)=>a.exit.localeCompare(b.exit));
+  // HACCP SALA (NO ANA)
+  const salaExit = [...salaOperational].sort(
+    (a,b)=>a.exit.localeCompare(b.exit)
+  );
+
   let salaHACCP = [];
 
   if (salaExit.length === 1) {
@@ -101,9 +111,11 @@ function generateBriefing(date) {
     salaHACCP.push(`${salaExit.at(-1).exit} Fecho da sala: ${salaExit.at(-1).name}`);
   }
 
-  // Fecho de Caixa
+  // FECHO DE CAIXA
   const priority = ["carlos","prabhu","ana"];
-  let fecho = priority.find(p => bar.some(b => b.name.toLowerCase() === p)) || barExit.at(-1).name;
+  let fecho =
+    priority.find(p => bar.some(b => b.name.toLowerCase() === p))
+    || barExit.at(-1).name;
 
   return `Bom dia a todos!
 
