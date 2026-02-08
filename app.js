@@ -1,31 +1,45 @@
-// CONFIGURATION
-const SCRIPT_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
-const SCHEDULE_URL = 'PASTE_SCHEDULE_CSV_HERE';
-const STAFF_URL = 'PASTE_STAFF_CSV_HERE';
+// --- CONFIGURATION ---
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu-igrPqxd6OvW7ibRg9uoNRSSFr2aD_OieZPjTty6aR88gCPIA/exec';
+const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=0&single=true&output=csv';
+const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=609693221&single=true&output=csv';
 
 let staffData = [];
 let scheduleData = {};
 
-// NAVIGATION
+// --- NAVIGATION ---
 function switchPage(pageId, btn) {
+    const pageTitle = document.getElementById('pageTitle');
+    const briefingPage = document.getElementById('briefingPage');
+    const managePage = document.getElementById('managePage');
+
+    // Remove active classes
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(pageId + 'Page').classList.add('active');
+
+    // Show selected page
+    if (pageId === 'briefing') {
+        briefingPage.classList.add('active');
+    } else {
+        managePage.classList.add('active');
+    }
+
+    // Update UI
     btn.classList.add('active');
-    document.getElementById('pageTitle').innerText = pageId.toUpperCase();
+    if (pageTitle) pageTitle.innerText = pageId.toUpperCase();
 }
 
-// LOADING DATA
+// --- DATA LOADING ---
 async function loadStaff() {
     Papa.parse(STAFF_URL, {
         download: true,
         complete: (results) => {
             staffData = results.data
-                .filter(r => r[0] && r[0] !== "Name")
+                .filter(r => r[0] && r[0].toLowerCase() !== "name")
                 .map(r => ({ name: r[0].trim(), area: r[1] || 'Sala' }));
-            renderStaff();
+            renderStaffList();
             loadSchedule();
-        }
+        },
+        error: (err) => console.error("Staff CSV Error:", err)
     });
 }
 
@@ -34,7 +48,7 @@ function loadSchedule() {
         download: true,
         complete: (results) => {
             const dates = {};
-            const header = results.data[0] || []; // Change to results.data[2] if dates are in Row 3
+            const header = results.data[0] || []; 
             const dateCols = [];
             
             header.forEach((cell, idx) => {
@@ -56,12 +70,26 @@ function loadSchedule() {
             });
             scheduleData = dates;
             const sel = document.getElementById('dateSelect');
-            sel.innerHTML = Object.keys(dates).map(d => `<option value="${d}">${d}</option>`).join('');
+            if (sel) {
+                sel.innerHTML = Object.keys(dates).map(d => `<option value="${d}">${d}</option>`).join('') || '<option>No dates</option>';
+            }
         }
     });
 }
 
-// ACTIONS
+// --- ACTIONS ---
+function renderStaffList() {
+    const list = document.getElementById('staffList');
+    if (!list) return; // Safety check for the 'null' error
+
+    list.innerHTML = staffData.length ? staffData.map(s => `
+        <div class="staff-item" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+            <span>${s.name} (${s.area})</span>
+            <button onclick="deleteStaff('${s.name}')" style="color:red; background:none; border:none; cursor:pointer;">✕</button>
+        </div>
+    `).join('') : "No staff in list.";
+}
+
 async function handleAddStaff() {
     const nameInput = document.getElementById('staffName');
     const area = document.getElementById('staffArea').value;
@@ -78,25 +106,14 @@ async function handleAddStaff() {
             mode: 'no-cors',
             body: JSON.stringify({ action: 'add', name: nameInput.value.trim(), area: area })
         });
-        alert("Success! Wait 2 seconds for update.");
         nameInput.value = "";
         setTimeout(loadStaff, 2000);
     } catch (e) {
-        alert("Error connecting to Google.");
+        alert("Error connecting.");
     } finally {
         btn.disabled = false;
         btn.innerText = "Save to Google Sheets";
     }
-}
-
-function renderStaff() {
-    const list = document.getElementById('staffList');
-    list.innerHTML = staffData.length ? staffData.map(s => `
-        <div class="staff-item">
-            <span>${s.name} (${s.area})</span>
-            <button onclick="deleteStaff('${s.name}')" style="color:red;border:none;background:none">✕</button>
-        </div>
-    `).join('') : "No staff found.";
 }
 
 async function deleteStaff(name) {
@@ -112,11 +129,11 @@ async function deleteStaff(name) {
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
-    if (!day) return alert("No schedule for this date.");
+    if (!day) return alert("No schedule data.");
 
     let text = `*ZENITH BRIEFING - ${date}*\n\n`;
-    text += `*BAR:*\n` + day.Bar.sort((a,b)=>a.in.localeCompare(b.in)).map(s=>`${s.in} - ${s.name}`).join('\n');
-    text += `\n\n*SALA:*\n` + day.Sala.sort((a,b)=>a.in.localeCompare(b.in)).map(s=>`${s.in} - ${s.name}`).join('\n');
+    text += `*BAR:*\n` + (day.Bar.length ? day.Bar.sort((a,b)=>a.in.localeCompare(b.in)).map(s=>`${s.in} - ${s.name}`).join('\n') : "None");
+    text += `\n\n*SALA:*\n` + (day.Sala.length ? day.Sala.sort((a,b)=>a.in.localeCompare(b.in)).map(s=>`${s.in} - ${s.name}`).join('\n') : "None");
 
     document.getElementById('briefingResult').innerText = text;
     document.getElementById('modal').style.display = 'flex';
@@ -124,8 +141,9 @@ function generateBriefing() {
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function copyText() {
-    navigator.clipboard.writeText(document.getElementById('briefingResult').innerText);
-    alert("Copied!");
+    const text = document.getElementById('briefingResult').innerText;
+    navigator.clipboard.writeText(text).then(() => alert("Copied!"));
 }
 
+// Initial Run
 window.onload = loadStaff;
