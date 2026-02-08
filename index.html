@@ -10,51 +10,48 @@
 <body>
 
 <header class="app-header">
-    <h1 class="brand">ZENITH</h1>
+    <h1>ZENITH</h1>
     <h2 id="pageTitle">BRIEFING</h2>
 </header>
 
-<main id="appContent">
+<main>
     <section id="briefingPage" class="page active">
         <div class="card">
-            <label>1. Select Date:</label>
+            <label>Select Date:</label>
             <select id="dateSelect"><option>Loading...</option></select>
-            <button class="main-btn" id="generateBtn">View Briefing</button>
+            <button class="main-btn" onclick="generateBriefing()">View Briefing</button>
         </div>
     </section>
 
     <section id="managePage" class="page">
         <div class="card">
-            <h3>Add New Staff</h3>
-            <div class="input-row">
-                <input type="text" id="newStaffName" placeholder="First Name">
-                <select id="newStaffArea">
+            <h3>Add Staff</h3>
+            <div class="input-group">
+                <input type="text" id="staffName" placeholder="Name">
+                <select id="staffArea">
                     <option value="Sala">Sala</option>
                     <option value="Bar">Bar</option>
                 </select>
             </div>
-            <button onclick="submitNewStaff()" class="main-btn" id="addBtn">Save to Cloud</button>
+            <button class="main-btn" id="saveBtn" onclick="handleAddStaff()">Save to Google Sheets</button>
         </div>
-
         <div class="card">
-            <h3>Staff Database</h3>
-            <div id="staffListView"></div>
+            <h3>Staff List</h3>
+            <div id="staffList">Loading...</div>
         </div>
     </section>
 </main>
 
 <nav class="bottom-nav">
-    <button class="nav-item active" onclick="showPage('briefing')"><span>📋</span><small>Briefing</small></button>
-    <button class="nav-item" onclick="showPage('manage')"><span>👥</span><small>Manage</small></button>
+    <button class="nav-btn active" onclick="switchPage('briefing', this)">📋 Briefing</button>
+    <button class="nav-btn" onclick="switchPage('manage', this)">👥 Manage</button>
 </nav>
 
-<div id="briefingPopup" style="display:none;">
-    <div id="popupContent">
-        <pre id="briefingText"></pre>
-        <div class="popup-buttons">
-            <button class="option-btn" id="copyBtn">Copy</button>
-            <button class="option-btn" id="closeBtn">Close</button>
-        </div>
+<div id="modal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <pre id="briefingResult"></pre>
+        <button class="main-btn" onclick="copyText()">Copy Text</button>
+        <button class="secondary-btn" onclick="closeModal()">Close</button>
     </div>
 </div>
 
