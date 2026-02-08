@@ -6,6 +6,7 @@ const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6w
 
 
 
+
 let staffData = [];
 let scheduleData = {};
 
@@ -23,7 +24,7 @@ async function loadStaff() {
     });
 }
 
-// 2. Load Schedule - DATES ARE PRIMARY
+// 2. Load Schedule - FORCED DATE DISCOVERY
 function loadSchedule() {
     const freshScheduleUrl = SCHEDULE_URL + (SCHEDULE_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
 
@@ -31,33 +32,34 @@ function loadSchedule() {
         download: true,
         complete: (results) => {
             const rows = results.data;
-            if (!rows || rows.length === 0) return;
+            if (!rows || rows.length === 0) {
+                alert("Erro: O ficheiro Google Sheets parece estar vazio.");
+                return;
+            }
 
             const dates = {};
-            const row1 = rows[0]; // The very first row
+            const headerRow = rows[0]; // ROW 1
             const dateCols = [];
 
-            // Grab everything from Column D (Index 3) onwards
-            for (let i = 3; i < row1.length; i++) {
-                let dateVal = row1[i] ? row1[i].trim() : "";
-                if (dateVal !== "") {
-                    dateCols.push({ idx: i, label: dateVal });
-                    dates[dateVal] = { Sala: [], Bar: [] };
+            // Scan Row 1 starting from Column D (Index 3)
+            for (let i = 3; i < headerRow.length; i++) {
+                let cellText = headerRow[i] ? headerRow[i].trim() : "";
+                if (cellText !== "") {
+                    dateCols.push({ index: i, label: cellText });
+                    dates[cellText] = { Sala: [], Bar: [] };
                 }
             }
 
-            // Fill the dates with staff found in Column C (Index 2)
+            // Fill with Staff from Column C (Index 2)
             for (let i = 1; i < rows.length; i++) {
                 let nameInSheet = rows[i][2] ? rows[i][2].trim() : "";
                 if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
 
-                // Match with Manage list to get the Area (Sala/Bar)
                 const match = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
                 const role = match ? match.area : 'Sala';
 
                 dateCols.forEach(col => {
-                    let shift = rows[i][col.idx] ? rows[i][col.idx].trim() : "";
-                    // If there is a shift and it's not "OFF"
+                    let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
                     if (shift !== "" && !["OFF", "FOLGA", "F", "-"].includes(shift.toUpperCase())) {
                         dates[col.label][role].push({
                             name: match ? match.name : nameInSheet,
@@ -77,13 +79,13 @@ function loadSchedule() {
 function updateDateDropdown(dateKeys) {
     const sel = document.getElementById('dateSelect');
     if (dateKeys.length === 0) {
-        sel.innerHTML = '<option>No dates found in Row 1</option>';
+        sel.innerHTML = '<option>Não foram encontradas datas na Linha 1</option>';
     } else {
         sel.innerHTML = dateKeys.map(d => `<option value="${d}">${d}</option>`).join('');
     }
 }
 
-// 3. Briefing Generation (Your exact template)
+// 3. Exact Briefing Template
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
@@ -97,7 +99,7 @@ function generateBriefing() {
                 style="flex-grow:1; padding:5px; border:1px solid #ccc; border-radius:4px;">
         </div>`).join('');
 
-    let html = `<h3>Briefing: ${date}</h3>`;
+    let html = `<h3>${date}</h3>`;
     html += `<h4>BAR</h4>` + (day.Bar.length ? renderRows(day.Bar, 'Bar') : "Sem staff");
     html += `<h4 style="margin-top:15px;">SALA</h4>` + (day.Sala.length ? renderRows(day.Sala, 'Sala') : "Sem staff");
 
@@ -113,13 +115,16 @@ function copyText() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
     
+    // Exact format: Header, Bar list, Sala list
     let text = `*ZENITH BRIEFING - ${date.toUpperCase()}*\n\n`;
+    
     text += `*BAR:*\n`;
     text += day.Bar.length ? day.Bar.map(s => `${s.in} ${s.name} ${s.task}`).join('\n') : "Sem staff";
+    
     text += `\n\n*SALA:*\n`;
     text += day.Sala.length ? day.Sala.map(s => `${s.in} ${s.name} ${s.task}`).join('\n') : "Sem staff";
 
-    navigator.clipboard.writeText(text).then(() => alert("Copiado!"));
+    navigator.clipboard.writeText(text).then(() => alert("Copiado com sucesso!"));
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
