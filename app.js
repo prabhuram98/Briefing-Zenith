@@ -33,12 +33,13 @@ function loadSchedule() {
             const dates = {};
             let dateCols = [];
             
-            // 1. FIND THE DATE ROW
+            // 1. FIND THE DATE ROW (Looking for 01/jan, 02/fev, etc.)
             const ptMonths = /jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez/i;
             let headerRowIndex = -1;
 
-            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+            for (let i = 0; i < Math.min(rows.length, 5); i++) {
                 const row = rows[i];
+                // Check if any cell in columns D onwards looks like a date
                 for (let j = 3; j < row.length; j++) {
                     if (ptMonths.test(row[j] || "")) {
                         headerRowIndex = i;
@@ -48,8 +49,9 @@ function loadSchedule() {
                 if (headerRowIndex !== -1) break;
             }
 
+            // If we didn't find the date row, the app will fail
             if (headerRowIndex === -1) {
-                console.error("No dates found in Portuguese format (jan, fev...)");
+                console.error("No dates found in Portuguese format.");
                 return;
             }
 
@@ -58,14 +60,15 @@ function loadSchedule() {
                 let cellText = headerRow[j] ? headerRow[j].trim() : "";
                 if (cellText !== "") {
                     dateCols.push({ index: j, label: cellText });
+                    // Initialize the container for this date
                     dates[cellText] = { Sala: [], Bar: [] };
                 }
             }
 
-            // 2. LOAD STAFF DATA WITH SAFETY CHECK
+            // 2. LOAD STAFF DATA
             for (let i = headerRowIndex + 1; i < rows.length; i++) {
-                let nameInSheet = rows[i][2] ? rows[i][2].trim() : "";
-                if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
+                let nameInSheet = rows[i][2] ? rows[i][2].trim() : ""; // Column C
+                if (!nameInSheet || nameInSheet.toLowerCase() === 'name') continue;
 
                 const match = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
                 const role = match ? match.area : 'Sala';
@@ -73,9 +76,9 @@ function loadSchedule() {
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
                     
-                    // FIXED: Check if the date actually exists in our 'dates' object before pushing
+                    // The Fix: Only push if the date was properly initialized in the header
                     if (shift !== "" && !["OFF", "FOLGA", "F", "-", "X"].includes(shift.toUpperCase())) {
-                        if (dates[col.label]) { 
+                        if (dates[col.label]) {
                             dates[col.label][role].push({
                                 name: match ? match.name : nameInSheet,
                                 in: shift.split('-')[0].trim().replace('.', ':'),
@@ -95,7 +98,7 @@ function loadSchedule() {
 function updateDateDropdown(dateKeys) {
     const sel = document.getElementById('dateSelect');
     if (dateKeys.length === 0) {
-        sel.innerHTML = '<option>A carregar datas...</option>';
+        sel.innerHTML = '<option>Datas não encontradas</option>';
     } else {
         sel.innerHTML = dateKeys.map(d => `<option value="${d}">${d}</option>`).join('');
     }
