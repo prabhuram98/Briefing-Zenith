@@ -3,10 +3,6 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=0&single=true&output=csv'; 
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=609693221&single=true&output=csv';
 
-
-
-
-
 let staffData = [];
 let scheduleData = {};
 
@@ -17,7 +13,7 @@ async function loadStaff() {
         download: true,
         complete: (results) => {
             staffData = results.data
-                .filter(r => r[0] && !['name', 'nome'].includes(r[0].toLowerCase().trim()))
+                .filter(r => r[0] && !['name', 'nome', ''].includes(r[0].toLowerCase().trim()))
                 .map(r => ({ name: r[0].trim(), area: r[1] ? r[1].trim() : 'Sala' }));
             loadSchedule(); 
         }
@@ -37,11 +33,11 @@ function loadSchedule() {
             const dates = {};
             let dateCols = [];
             
-            // 1. FIND THE DATE ROW (Scanning for PT months: jan, fev, mar, abr, mai, jun, jul, ago, set, out, nov, dez)
+            // 1. FIND THE DATE ROW
             const ptMonths = /jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez/i;
             let headerRowIndex = -1;
 
-            for (let i = 0; i < Math.min(rows.length, 5); i++) {
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
                 const row = rows[i];
                 for (let j = 3; j < row.length; j++) {
                     if (ptMonths.test(row[j] || "")) {
@@ -52,9 +48,12 @@ function loadSchedule() {
                 if (headerRowIndex !== -1) break;
             }
 
-            const finalHeaderIdx = headerRowIndex === -1 ? 0 : headerRowIndex;
-            const headerRow = rows[finalHeaderIdx];
+            if (headerRowIndex === -1) {
+                console.error("No dates found in Portuguese format (jan, fev...)");
+                return;
+            }
 
+            const headerRow = rows[headerRowIndex];
             for (let j = 3; j < headerRow.length; j++) {
                 let cellText = headerRow[j] ? headerRow[j].trim() : "";
                 if (cellText !== "") {
@@ -63,22 +62,26 @@ function loadSchedule() {
                 }
             }
 
-            // 2. LOAD STAFF DATA
-            for (let i = finalHeaderIdx + 1; i < rows.length; i++) {
+            // 2. LOAD STAFF DATA WITH SAFETY CHECK
+            for (let i = headerRowIndex + 1; i < rows.length; i++) {
                 let nameInSheet = rows[i][2] ? rows[i][2].trim() : "";
-                if (!nameInSheet) continue;
+                if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
 
                 const match = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
                 const role = match ? match.area : 'Sala';
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
+                    
+                    // FIXED: Check if the date actually exists in our 'dates' object before pushing
                     if (shift !== "" && !["OFF", "FOLGA", "F", "-", "X"].includes(shift.toUpperCase())) {
-                        dates[col.label][role].push({
-                            name: match ? match.name : nameInSheet,
-                            in: shift.split('-')[0].trim().replace('.', ':'),
-                            task: ""
-                        });
+                        if (dates[col.label]) { 
+                            dates[col.label][role].push({
+                                name: match ? match.name : nameInSheet,
+                                in: shift.split('-')[0].trim().replace('.', ':'),
+                                task: ""
+                            });
+                        }
                     }
                 });
             }
@@ -123,22 +126,15 @@ function updateTask(date, area, index, value) {
     scheduleData[date][area][index].task = value;
 }
 
-// THE FINAL BRIEFING TEXT FORMAT
 function copyText() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
     
     let text = `*ZENITH BRIEFING - ${date.toUpperCase()}*\n\n`;
-    
     text += `*BAR:*\n`;
-    text += day.Bar.length 
-        ? day.Bar.map(s => `${s.in} ${s.name}${s.task ? ' ' + s.task : ''}`).join('\n') 
-        : "Sem staff";
-    
+    text += day.Bar.length ? day.Bar.map(s => `${s.in} ${s.name} ${s.task}`).join('\n') : "Sem staff";
     text += `\n\n*SALA:*\n`;
-    text += day.Sala.length 
-        ? day.Sala.map(s => `${s.in} ${s.name}${s.task ? ' ' + s.task : ''}`).join('\n') 
-        : "Sem staff";
+    text += day.Sala.length ? day.Sala.map(s => `${s.in} ${s.name} ${s.task}`).join('\n') : "Sem staff";
 
     navigator.clipboard.writeText(text).then(() => alert("Copiado!"));
 }
