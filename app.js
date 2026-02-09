@@ -10,9 +10,9 @@ const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6w
 let staffData = [];
 let scheduleData = {};
 
-// 1. Load Staff Roles
 async function loadStaff() {
-    const freshStaffUrl = STAFF_URL + (STAFF_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+    const timestamp = new Date().getTime();
+    const freshStaffUrl = `${STAFF_URL}${STAFF_URL.includes('?') ? '&' : '?'}cache=${timestamp}`;
     Papa.parse(freshStaffUrl, {
         download: true,
         complete: (results) => {
@@ -24,43 +24,56 @@ async function loadStaff() {
     });
 }
 
-// 2. Load Schedule - FORCED DATE DISCOVERY
 function loadSchedule() {
-    const freshScheduleUrl = SCHEDULE_URL + (SCHEDULE_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+    const timestamp = new Date().getTime();
+    const freshScheduleUrl = `${SCHEDULE_URL}${SCHEDULE_URL.includes('?') ? '&' : '?'}cache=${timestamp}`;
 
     Papa.parse(freshScheduleUrl, {
         download: true,
         complete: (results) => {
             const rows = results.data;
-            if (!rows || rows.length === 0) {
-                alert("Erro: O ficheiro Google Sheets parece estar vazio.");
-                return;
-            }
+            if (!rows || rows.length === 0) return;
 
             const dates = {};
-            const headerRow = rows[0]; // ROW 1
-            const dateCols = [];
+            let dateCols = [];
+            
+            // 1. FIND THE DATE ROW (Scanning for PT months: jan, fev, mar, abr, mai, jun, jul, ago, set, out, nov, dez)
+            const ptMonths = /jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez/i;
+            let headerRowIndex = -1;
 
-            // Scan Row 1 starting from Column D (Index 3)
-            for (let i = 3; i < headerRow.length; i++) {
-                let cellText = headerRow[i] ? headerRow[i].trim() : "";
+            for (let i = 0; i < Math.min(rows.length, 5); i++) {
+                const row = rows[i];
+                for (let j = 3; j < row.length; j++) {
+                    if (ptMonths.test(row[j] || "")) {
+                        headerRowIndex = i;
+                        break;
+                    }
+                }
+                if (headerRowIndex !== -1) break;
+            }
+
+            const finalHeaderIdx = headerRowIndex === -1 ? 0 : headerRowIndex;
+            const headerRow = rows[finalHeaderIdx];
+
+            for (let j = 3; j < headerRow.length; j++) {
+                let cellText = headerRow[j] ? headerRow[j].trim() : "";
                 if (cellText !== "") {
-                    dateCols.push({ index: i, label: cellText });
+                    dateCols.push({ index: j, label: cellText });
                     dates[cellText] = { Sala: [], Bar: [] };
                 }
             }
 
-            // Fill with Staff from Column C (Index 2)
-            for (let i = 1; i < rows.length; i++) {
+            // 2. LOAD STAFF DATA
+            for (let i = finalHeaderIdx + 1; i < rows.length; i++) {
                 let nameInSheet = rows[i][2] ? rows[i][2].trim() : "";
-                if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
+                if (!nameInSheet) continue;
 
                 const match = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
                 const role = match ? match.area : 'Sala';
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
-                    if (shift !== "" && !["OFF", "FOLGA", "F", "-"].includes(shift.toUpperCase())) {
+                    if (shift !== "" && !["OFF", "FOLGA", "F", "-", "X"].includes(shift.toUpperCase())) {
                         dates[col.label][role].push({
                             name: match ? match.name : nameInSheet,
                             in: shift.split('-')[0].trim().replace('.', ':'),
@@ -79,13 +92,12 @@ function loadSchedule() {
 function updateDateDropdown(dateKeys) {
     const sel = document.getElementById('dateSelect');
     if (dateKeys.length === 0) {
-        sel.innerHTML = '<option>Não foram encontradas datas na Linha 1</option>';
+        sel.innerHTML = '<option>A carregar datas...</option>';
     } else {
         sel.innerHTML = dateKeys.map(d => `<option value="${d}">${d}</option>`).join('');
     }
 }
 
-// 3. Exact Briefing Template
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
@@ -111,20 +123,24 @@ function updateTask(date, area, index, value) {
     scheduleData[date][area][index].task = value;
 }
 
+// THE FINAL BRIEFING TEXT FORMAT
 function copyText() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
     
-    // Exact format: Header, Bar list, Sala list
     let text = `*ZENITH BRIEFING - ${date.toUpperCase()}*\n\n`;
     
     text += `*BAR:*\n`;
-    text += day.Bar.length ? day.Bar.map(s => `${s.in} ${s.name} ${s.task}`).join('\n') : "Sem staff";
+    text += day.Bar.length 
+        ? day.Bar.map(s => `${s.in} ${s.name}${s.task ? ' ' + s.task : ''}`).join('\n') 
+        : "Sem staff";
     
     text += `\n\n*SALA:*\n`;
-    text += day.Sala.length ? day.Sala.map(s => `${s.in} ${s.name} ${s.task}`).join('\n') : "Sem staff";
+    text += day.Sala.length 
+        ? day.Sala.map(s => `${s.in} ${s.name}${s.task ? ' ' + s.task : ''}`).join('\n') 
+        : "Sem staff";
 
-    navigator.clipboard.writeText(text).then(() => alert("Copiado com sucesso!"));
+    navigator.clipboard.writeText(text).then(() => alert("Copiado!"));
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
