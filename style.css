@@ -1,17 +1,17 @@
 :root { --accent: #7a4f2c; --bg: #fdf8f4; }
-body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
-.app-header { background: #fff; text-align: center; padding: 10px; border-bottom: 3px solid var(--accent); }
-.card { background: #fff; margin: 15px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: #333; }
+.app-header { background: #fff; text-align: center; padding: 10px; border-bottom: 3px solid var(--accent); position: sticky; top:0; z-index: 10; }
+.app-header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+.app-header h2 { margin: 0; font-size: 12px; color: #888; }
+.card { background: #fff; margin: 15px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .page { display: none; }
 .page.active { display: block; }
-.input-group { display: flex; gap: 5px; margin-bottom: 10px; }
-input, select { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
-.main-btn { width: 100%; background: var(--accent); color: white; border: none; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-.secondary-btn { width: 100%; background: #eee; margin-top: 5px; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
-.bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #fff; border-top: 1px solid #ddd; z-index: 100; }
-.nav-btn { flex: 1; padding: 20px; border: none; background: none; font-size: 14px; cursor: pointer; }
-.nav-btn.active { color: var(--accent); font-weight: bold; border-top: 3px solid var(--accent); }
-.staff-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-.modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index: 1000; }
-.modal-content { background:white; width:90%; padding:20px; border-radius:10px; max-height:80vh; overflow-y:auto; }
-pre { white-space: pre-wrap; font-size: 14px; background: #f4f4f4; padding: 10px; border-radius: 5px; }
+.input-group { display: flex; gap: 8px; margin-bottom: 12px; }
+input, select { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; }
+.main-btn { width: 100%; background: var(--accent); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.secondary-btn { width: 100%; background: #f0f0f0; margin-top: 10px; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+.bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #fff; border-top: 1px solid #eee; padding-bottom: env(safe-area-inset-bottom); }
+.nav-btn { flex: 1; padding: 15px; border: none; background: none; font-size: 14px; color: #999; }
+.nav-btn.active { color: var(--accent); font-weight: bold; }
+.modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; z-index: 1000; }
+.modal-content { background:white; width:90%; padding:20px; border-radius:12px; max-height:85vh; overflow-y:auto; }
