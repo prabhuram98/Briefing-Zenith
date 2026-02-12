@@ -3,9 +3,9 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRabV2A5AGC6wm3FQPUi7Uy49QYlVpgMaFNUeGcFszNSGIx0sjts8_hsTKP1xOjR8Y-mTH4nBWDXb7b/pub?gid=0&single=true&output=csv'; 
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKuZ37JznuRBr5xNhzky3jZ83-3EoZVqjlHS8qXeGcU3J1mZ5K3tPS59FH90eSZxl65G9O8DwNmPrk/pub?output=csv';
 
-let staffData = [];        // Clean list of staff {name, area}
-let scheduleData = {};     // Grouped by Date: { "12/02": { Sala: [], Bar: [] } }
-let employeeSchedules = {}; // Grouped by Name: { "John": [ {date, shift}, ... ] }
+let staffData = [];
+let scheduleData = {};
+let employeeSchedules = {};
 
 // --- NAVIGATION ---
 function switchPage(pageId, btn) {
@@ -19,9 +19,7 @@ function switchPage(pageId, btn) {
 // --- DATA LOADING ---
 async function loadStaff() {
     const timestamp = new Date().getTime();
-    const freshUrl = `${STAFF_URL}${STAFF_URL.includes('?') ? '&' : '?'}t=${timestamp}`;
-    
-    Papa.parse(freshUrl, {
+    Papa.parse(`${STAFF_URL}&t=${timestamp}`, {
         download: true,
         complete: (results) => {
             staffData = results.data
@@ -30,16 +28,14 @@ async function loadStaff() {
                     name: r[0].trim(), 
                     area: (r[1] && r[1].trim().toLowerCase() === 'bar') ? 'Bar' : 'Sala' 
                 }));
-            loadSchedule(); // Load schedule after staff is ready
+            loadSchedule();
         }
     });
 }
 
 function loadSchedule() {
     const timestamp = new Date().getTime();
-    const freshUrl = `${SCHEDULE_URL}${SCHEDULE_URL.includes('?') ? '&' : '?'}t=${timestamp}`;
-
-    Papa.parse(freshUrl, {
+    Papa.parse(`${SCHEDULE_URL}&t=${timestamp}`, {
         download: true,
         complete: (results) => {
             const rows = results.data;
@@ -48,9 +44,8 @@ function loadSchedule() {
             const dates = {};
             const empSchedules = {};
             let dateCols = [];
-            
-            // 1. Map Dates from Header
             const headerRow = rows[0]; 
+
             for (let j = 3; j < headerRow.length; j++) {
                 let cellValue = headerRow[j] ? headerRow[j].trim() : "";
                 if (cellValue !== "") {
@@ -59,35 +54,32 @@ function loadSchedule() {
                 }
             }
 
-            // 2. Process Rows
             for (let i = 1; i < rows.length; i++) {
                 let nameInSheet = rows[i][2] ? rows[i][2].trim() : "";
                 if (!nameInSheet) continue;
 
-                const employee = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
-                const role = employee ? employee.area : 'Sala';
-                
+                const emp = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
+                const role = emp ? emp.area : 'Sala';
                 empSchedules[nameInSheet] = [];
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
-                    
                     if (shift !== "" && !["OFF", "FOLGA", "F", "-"].includes(shift.toUpperCase())) {
-                        // For the Daily Briefing
-                        let startTime = shift.split('-')[0].trim().replace('.', ':');
+                        let times = shift.split('-');
+                        let start = times[0]?.trim().replace('.', ':') || "--:--";
+                        let end = times[1]?.trim().replace('.', ':') || "--:--";
+
                         dates[col.label][role].push({
-                            name: employee ? employee.name : nameInSheet,
-                            time: startTime,
+                            name: emp ? emp.name : nameInSheet,
+                            time: start,
+                            endTime: end,
                             task: ""
                         });
-
-                        // For the Individual List
                         empSchedules[nameInSheet].push({ date: col.label, shift: shift });
                     }
                 });
             }
 
-            // 3. Sort Daily Briefings by Time
             Object.keys(dates).forEach(d => {
                 dates[d].Sala.sort((a, b) => a.time.localeCompare(b.time));
                 dates[d].Bar.sort((a, b) => a.time.localeCompare(b.time));
@@ -95,93 +87,73 @@ function loadSchedule() {
 
             scheduleData = dates;
             employeeSchedules = empSchedules;
-            updateDateDropdown(Object.keys(dates));
-            renderStaffSchedules();
+            updateDateDropdowns(Object.keys(dates));
+            renderStaffList();
         }
     });
 }
 
-// --- UI RENDERING ---
-function updateDateDropdown(dateKeys) {
-    const sel = document.getElementById('dateSelect');
-    sel.innerHTML = dateKeys.length 
-        ? dateKeys.map(d => `<option value="${d}">${d}</option>`).join('')
-        : '<option>No dates found...</option>';
+function updateDateDropdowns(keys) {
+    const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+    document.getElementById('dateSelect').innerHTML = options;
+    document.getElementById('manageDateSelect').innerHTML = options;
 }
 
-function renderStaffSchedules() {
-    const list = document.getElementById('staffList');
-    let html = "";
-    
-    for (const [name, shifts] of Object.entries(employeeSchedules)) {
-        html += `
-            <div style="padding: 12px 0; border-bottom: 1px solid #eee;">
-                <strong>${name}</strong>
-                <div style="font-size: 13px; color: #666; margin-top:4px;">
-                    ${shifts.length ? shifts.map(s => `• ${s.date}: ${s.shift}`).join('<br>') : 'No shifts'}
-                </div>
-            </div>`;
-    }
-    list.innerHTML = html || "No staff found.";
-}
-
+// --- CORE FUNCTIONS ---
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
-    if (!day) return;
+    document.getElementById('copyBtn').style.display = 'block';
 
-    const renderRows = (list, area) => list.map((s, i) => `
-        <div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
-            <div style="min-width:140px; font-size: 14px;">
-                <span style="color:#666;">${s.time}</span> <strong>${s.name}</strong>
-            </div>
-            <input type="text" placeholder="Tarefa..." 
-                onchange="updateTask('${date}','${area}',${i},this.value)" 
-                style="flex-grow:1; padding:8px; border:1px solid #ddd; border-radius:4px;">
+    const render = (list, area) => list.map((s, i) => `
+        <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:8px;">
+            <div style="font-size:14px;"><strong>${s.name}</strong> (${s.time} - ${s.endTime})</div>
+            <input type="text" placeholder="Assign Task..." onchange="updateTask('${date}','${area}',${i},this.value)" 
+                   style="width:90%; margin-top:5px; padding:6px; font-size:13px;">
         </div>`).join('');
 
-    let html = `<h2 style="margin-bottom:20px;">Briefing: ${date}</h2>`;
-    html += `<div style="background:#fdf2f2; padding:15px; border-radius:8px; margin-bottom:15px;">
-                <h4 style="margin-top:0; color:#d9534f;">BAR</h4>
-                ${day.Bar.length ? renderRows(day.Bar, 'Bar') : "Sem staff"}
-             </div>`;
-    html += `<div style="background:#f2f7fd; padding:15px; border-radius:8px;">
-                <h4 style="margin-top:0; color:#337ab7;">SALA</h4>
-                ${day.Sala.length ? renderRows(day.Sala, 'Sala') : "Sem staff"}
-             </div>`;
+    let html = `<h2>Briefing: ${date}</h2>`;
+    html += `<h4 style="color:#d9534f;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'No Staff'}`;
+    html += `<h4 style="color:#337ab7; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'No Staff'}`;
 
-    document.getElementById('briefingResult').innerHTML = html;
+    document.getElementById('modalResult').innerHTML = html;
     document.getElementById('modal').style.display = 'flex';
 }
 
-function updateTask(date, area, index, value) {
-    scheduleData[date][area][index].task = value;
+function viewToday() {
+    const date = document.getElementById('manageDateSelect').value;
+    const day = scheduleData[date];
+    document.getElementById('copyBtn').style.display = 'none';
+
+    const renderTable = (list, color) => `
+        <table style="width:100%; text-align:left; font-size:14px; margin-bottom:15px;">
+            <tr style="color:#888;"><th>Name</th><th>In</th><th>Out</th></tr>
+            ${list.map(s => `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px 0;">${s.name}</td><td>${s.time}</td><td>${s.endTime}</td></tr>`).join('')}
+        </table>`;
+
+    let html = `<h2>Schedule: ${date}</h2>`;
+    html += `<h4 style="color:#d9534f; border-bottom:1px solid #d9534f;">BAR</h4>` + (day.Bar.length ? renderTable(day.Bar, '#d9534f') : 'None');
+    html += `<h4 style="color:#337ab7; border-bottom:1px solid #337ab7; margin-top:20px;">SALA</h4>` + (day.Sala.length ? renderTable(day.Sala, '#337ab7') : 'None');
+
+    document.getElementById('modalResult').innerHTML = html;
+    document.getElementById('modal').style.display = 'flex';
 }
+
+function updateTask(date, area, index, val) { scheduleData[date][area][index].task = val; }
 
 function copyText() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
-    let text = `*ZENITH BRIEFING - ${date.toUpperCase()}*\n\n*BAR:*\n`;
-    text += day.Bar.length ? day.Bar.map(s => `${s.time} ${s.name} ${s.task}`).join('\n') : "Sem staff";
-    text += `\n\n*SALA:*\n`;
-    text += day.Sala.length ? day.Sala.map(s => `${s.time} ${s.name} ${s.task}`).join('\n') : "Sem staff";
-    navigator.clipboard.writeText(text).then(() => alert("Copiado!"));
+    let txt = `*ZENITH BRIEFING - ${date}*\n\n*BAR:*\n`;
+    txt += day.Bar.map(s => `${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
+    txt += `\n\n*SALA:*\n`;
+    txt += day.Sala.map(s => `${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
+    navigator.clipboard.writeText(txt).then(() => alert("Copied!"));
 }
 
-async function handleAddStaff() {
-    const name = document.getElementById('staffName').value;
-    const area = document.getElementById('staffArea').value;
-    if(!name) return alert("Enter name");
-    
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true; btn.innerText = "Saving...";
-
-    try {
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name, area }) });
-        alert("Sent to Sheet!");
-        document.getElementById('staffName').value = "";
-    } catch (e) { alert("Error saving"); }
-    btn.disabled = false; btn.innerText = "Save to Google Sheets";
+function renderStaffList() {
+    const html = Object.keys(employeeSchedules).map(name => `<div><strong>${name}</strong></div>`).join('');
+    document.getElementById('staffList').innerHTML = html;
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
