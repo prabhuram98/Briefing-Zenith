@@ -18,7 +18,7 @@
     <section id="briefingPage" class="page active">
         <div class="card">
             <label>Select Date:</label>
-            <select id="dateSelect"><option>Loading...</option></select>
+            <select id="dateSelect"><option>Loading dates...</option></select>
             <button class="main-btn" onclick="generateBriefing()">View Briefing</button>
         </div>
     </section>
@@ -35,22 +35,23 @@
             </div>
             <button class="main-btn" id="saveBtn" onclick="handleAddStaff()">Save to Google Sheets</button>
         </div>
-        <div class="card">
-            <h3>Staff List</h3>
-            <div id="staffList">Loading staff...</div>
+        
+        <div id="staffListContainer" class="card">
+            <h3>Employee Schedules</h3>
+            <div id="staffList">Loading data...</div>
         </div>
     </section>
 </main>
 
 <nav class="bottom-nav">
     <button class="nav-btn active" id="btn-briefing" onclick="switchPage('briefing', this)">📋 Briefing</button>
-    <button class="nav-btn" id="btn-manage" onclick="switchPage('manage', this)">👥 Manage</button>
+    <button class="nav-btn" id="btn-manage" onclick="switchPage('manage', this)">👥 Staff</button>
 </nav>
 
 <div id="modal" class="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <pre id="briefingResult"></pre>
-        <button class="main-btn" onclick="copyText()">Copy Text</button>
+        <div id="briefingResult"></div>
+        <button class="main-btn" onclick="copyText()" style="margin-top: 20px;">Copy Text</button>
         <button class="secondary-btn" onclick="closeModal()">Close</button>
     </div>
 </div>
