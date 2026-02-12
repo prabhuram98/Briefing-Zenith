@@ -17,13 +17,20 @@
 <main>
     <section id="briefingPage" class="page active">
         <div class="card">
-            <label>Select Date:</label>
-            <select id="dateSelect"><option>Loading dates...</option></select>
-            <button class="main-btn" onclick="generateBriefing()">View Briefing</button>
+            <label>Select Briefing Date:</label>
+            <select id="dateSelect"><option>Loading...</option></select>
+            <button class="main-btn" onclick="generateBriefing()" style="margin-top:10px;">Generate Briefing</button>
         </div>
     </section>
 
     <section id="managePage" class="page">
+        <div class="card">
+            <h3>Quick Look: View Today</h3>
+            <label style="font-size: 12px; color:#666;">Check shifts for:</label>
+            <select id="manageDateSelect"></select>
+            <button class="main-btn" onclick="viewToday()" style="margin-top: 10px; background: #4a4a4a;">View Staff & Times</button>
+        </div>
+
         <div class="card">
             <h3>Add Staff</h3>
             <div class="input-group">
@@ -33,25 +40,25 @@
                     <option value="Bar">Bar</option>
                 </select>
             </div>
-            <button class="main-btn" id="saveBtn" onclick="handleAddStaff()">Save to Google Sheets</button>
+            <button class="main-btn" id="saveBtn" onclick="handleAddStaff()">Save to Sheets</button>
         </div>
         
-        <div id="staffListContainer" class="card">
-            <h3>Employee Schedules</h3>
-            <div id="staffList">Loading data...</div>
+        <div class="card">
+            <h3>Staff History</h3>
+            <div id="staffList">Loading...</div>
         </div>
     </section>
 </main>
 
 <nav class="bottom-nav">
     <button class="nav-btn active" id="btn-briefing" onclick="switchPage('briefing', this)">📋 Briefing</button>
-    <button class="nav-btn" id="btn-manage" onclick="switchPage('manage', this)">👥 Staff</button>
+    <button class="nav-btn" id="btn-manage" onclick="switchPage('manage', this)">👥 Manage</button>
 </nav>
 
 <div id="modal" class="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="briefingResult"></div>
-        <button class="main-btn" onclick="copyText()" style="margin-top: 20px;">Copy Text</button>
+        <div id="modalResult"></div>
+        <button class="main-btn" id="copyBtn" onclick="copyText()" style="margin-top: 20px;">Copy Text</button>
         <button class="secondary-btn" onclick="closeModal()">Close</button>
     </div>
 </div>
