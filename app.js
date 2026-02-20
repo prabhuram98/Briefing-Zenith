@@ -46,7 +46,8 @@ function loadSchedule() {
             let dateCols = [];
             const headerRow = rows[0]; 
 
-            for (let j = 3; j < headerRow.length; j++) {
+            // Dates now start at index 1 (Column B)
+            for (let j = 1; j < headerRow.length; j++) {
                 let cellValue = headerRow[j] ? headerRow[j].trim() : "";
                 if (cellValue !== "") {
                     dateCols.push({ index: j, label: cellValue });
@@ -55,8 +56,9 @@ function loadSchedule() {
             }
 
             for (let i = 1; i < rows.length; i++) {
-                let nameInSheet = rows[i][2] ? rows[i][2].trim() : "";
-                if (!nameInSheet) continue;
+                // Name is now in index 0 (Column A)
+                let nameInSheet = rows[i][0] ? rows[i][0].trim() : "";
+                if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
 
                 const emp = staffData.find(s => s.name.toLowerCase() === nameInSheet.toLowerCase());
                 const role = emp ? emp.area : 'Sala';
@@ -64,13 +66,16 @@ function loadSchedule() {
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
-                    if (shift !== "" && !["OFF", "FOLGA", "F", "-"].includes(shift.toUpperCase())) {
+                    
+                    // Filter out non-working shifts
+                    const ignoreList = ["OFF", "FOLGA", "F", "-", "COMPENSAÇÃO", "BAIXA", "BAIXA MÉDICA"];
+                    if (shift !== "" && !ignoreList.includes(shift.toUpperCase())) {
                         let times = shift.split('-');
                         let start = times[0]?.trim().replace('.', ':') || "--:--";
                         let end = times[1]?.trim().replace('.', ':') || "--:--";
 
                         dates[col.label][role].push({
-                            name: emp ? emp.name : nameInSheet,
+                            name: nameInSheet,
                             time: start,
                             endTime: end,
                             task: ""
@@ -103,6 +108,7 @@ function updateDateDropdowns(keys) {
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
+    if(!day) return;
     document.getElementById('copyBtn').style.display = 'block';
 
     const render = (list, area) => list.map((s, i) => `
@@ -123,17 +129,18 @@ function generateBriefing() {
 function viewToday() {
     const date = document.getElementById('manageDateSelect').value;
     const day = scheduleData[date];
+    if(!day) return;
     document.getElementById('copyBtn').style.display = 'none';
 
-    const renderTable = (list, color) => `
+    const renderTable = (list) => `
         <table style="width:100%; text-align:left; font-size:14px; margin-bottom:15px;">
             <tr style="color:#888;"><th>Name</th><th>In</th><th>Out</th></tr>
             ${list.map(s => `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px 0;">${s.name}</td><td>${s.time}</td><td>${s.endTime}</td></tr>`).join('')}
         </table>`;
 
     let html = `<h2>Schedule: ${date}</h2>`;
-    html += `<h4 style="color:#d9534f; border-bottom:1px solid #d9534f;">BAR</h4>` + (day.Bar.length ? renderTable(day.Bar, '#d9534f') : 'None');
-    html += `<h4 style="color:#337ab7; border-bottom:1px solid #337ab7; margin-top:20px;">SALA</h4>` + (day.Sala.length ? renderTable(day.Sala, '#337ab7') : 'None');
+    html += `<h4 style="color:#d9534f; border-bottom:1px solid #d9534f;">BAR</h4>` + (day.Bar.length ? renderTable(day.Bar) : 'None');
+    html += `<h4 style="color:#337ab7; border-bottom:1px solid #337ab7; margin-top:20px;">SALA</h4>` + (day.Sala.length ? renderTable(day.Sala) : 'None');
 
     document.getElementById('modalResult').innerHTML = html;
     document.getElementById('modal').style.display = 'flex';
@@ -148,12 +155,12 @@ function copyText() {
     txt += day.Bar.map(s => `${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
     txt += `\n\n*SALA:*\n`;
     txt += day.Sala.map(s => `${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
-    navigator.clipboard.writeText(txt).then(() => alert("Copied!"));
+    navigator.clipboard.writeText(txt).then(() => alert("Copied to Clipboard!"));
 }
 
 function renderStaffList() {
-    const html = Object.keys(employeeSchedules).map(name => `<div><strong>${name}</strong></div>`).join('');
-    document.getElementById('staffList').innerHTML = html;
+    const html = Object.keys(employeeSchedules).map(name => `<div style="padding:5px 0; border-bottom:1px solid #f0f0f0;">${name}</div>`).join('');
+    document.getElementById('staffList').innerHTML = html || "No staff found in schedule.";
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
