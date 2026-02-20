@@ -27,7 +27,7 @@
     </div>
 
     <div id="managePage" class="page">
-        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
+        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
         <h2 class="page-title">Manage</h2>
         <div class="icon-grid">
@@ -43,7 +43,7 @@
     </div>
 
     <div id="briefingPage" class="page">
-        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
+        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
         <h2 class="page-title">Briefing</h2>
         <div class="filter-card">
@@ -54,7 +54,7 @@
     </div>
 
     <div id="showStaffPage" class="page">
-        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
+        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Daily Staff</h2>
         <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
@@ -62,7 +62,7 @@
     </div>
 
     <div id="editStaffPage" class="page">
-        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
+        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Directory</h2>
         <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
@@ -81,7 +81,7 @@
 
     <div id="staffModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle">Staff Details</h3>
+            <h3 id="modalTitle" style="margin-top:0;">Staff Details</h3>
             <input type="hidden" id="editOriginalKey">
             <div class="form-group">
                 <label class="field-label">Full Name</label>
@@ -93,7 +93,14 @@
             </div>
             <div class="form-group" style="margin-top:15px;">
                 <label class="field-label">Position</label>
-                <select id="formPosition" class="styled-select"></select>
+                <select id="formPosition" class="styled-select">
+                    <option value="MANAGER">MANAGER</option>
+                    <option value="BAR MANAGER">BAR MANAGER</option>
+                    <option value="HEAD SELLER">HEAD SELLER</option>
+                    <option value="BAR STAFF">BAR STAFF</option>
+                    <option value="SALA STAFF">SALA STAFF</option>
+                    <option value="STAFF">STAFF</option>
+                </select>
             </div>
             <div class="modal-buttons-vertical">
                 <button class="btn-primary" onclick="confirmSave()">SAVE CHANGES</button>
