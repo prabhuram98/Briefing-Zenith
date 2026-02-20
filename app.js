@@ -55,7 +55,7 @@ function loadSchedule(icons, startTime) {
 
             for (let i = 1; i < rows.length; i++) {
                 let nameInSched = rows[i][0]?.toString().toLowerCase().trim();
-                if (!nameInSched || nameInSched === "name") continue;
+                if (!nameInSched) continue;
                 
                 const info = staffMap[nameInSched];
                 if (!info) continue;
@@ -63,12 +63,13 @@ function loadSchedule(icons, startTime) {
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index]?.toString().trim() || "";
                     
-                    // STRICT CHECK: Only include if the cell has a number (time) 
-                    // and does NOT contain OFF or FOLGA
-                    const hasNumber = /\d/.test(shift);
-                    const isOff = /OFF|FOLGA|VACATION|FERIAS/i.test(shift);
+                    // NEW STRICT VALIDATION: 
+                    // Does it look like "00:00-00:00" or "00h00-00h00"?
+                    // If it contains "OFF", "FOLGA", or NO numbers, it is REJECTED.
+                    const timePattern = /\d{1,2}[:h]\d{2}/; 
+                    const isExplicitlyOff = /OFF|FOLGA|VACATION|FERIAS|X/i.test(shift);
 
-                    if (hasNumber && !isOff) {
+                    if (timePattern.test(shift) && !isExplicitlyOff) {
                         dates[col.label][info.area].push({ 
                             ...info, 
                             shiftRaw: shift, 
@@ -82,7 +83,6 @@ function loadSchedule(icons, startTime) {
             const dateKeys = Object.keys(dates);
             if(dateKeys.length > 0) {
                 document.getElementById('dateSelect').innerHTML = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
-                document.getElementById('manageDateSelect').innerHTML = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
             }
             const elapsed = Date.now() - startTime;
             setTimeout(() => icons.forEach(i => i.classList.remove('spinning')), Math.max(0, 600 - elapsed));
@@ -96,8 +96,9 @@ function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
 
+    // Final safety check: If the pool is empty, stop.
     if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) {
-        return alert("No staff working on " + selectedDate + " (Everyone is OFF)");
+        return alert("Error: No working staff detected for " + selectedDate + ". Check if shifts are entered as '09:00-18:00'.");
     }
 
     const parseTime = (t) => {
@@ -105,7 +106,7 @@ function generateBriefing() {
         return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
     };
 
-    // Filter list for TODAY ONLY (Strictly those with numeric times in schedule)
+    // Build the "Active Only" list
     let todayStaff = [...dayData.Bar, ...dayData.Sala].map(s => {
         const pts = s.shiftRaw.split(/[-–]/);
         return {
@@ -122,19 +123,17 @@ function generateBriefing() {
     const exitingBar = [...barStaff].sort((a,b) => a.exitMin - b.exitMin);
     const exitingSala = [...salaStaff].sort((a,b) => a.exitMin - b.exitMin);
 
-    // PORTA: Manager -> Head Seller -> Earliest Sala Present
+    // --- TASK ASSIGNMENT RULES ---
+
+    // Porta: Manager -> Head Seller -> Earliest Sala
     const manager = todayStaff.find(s => s.position === "MANAGER");
     const headSeller = todayStaff.find(s => s.position === "HEAD SELLER");
     const porta = manager || headSeller || salaStaff[0] || todayStaff[0];
 
-    // SELLERS: Rule - Manager never assigned if other Sala staff present
+    // Sellers: No Managers allowed if others present. No "Ana" if others present.
     let sPool = salaStaff.filter(s => s.position !== 'MANAGER');
-    
-    // Ana exclusion rule (Only name-based check per instruction)
     const filteredPool = sPool.filter(s => s.displayName.toLowerCase() !== 'ana');
     if (filteredPool.length > 0) sPool = filteredPool;
-
-    // Emergency Fallback: If only Manager working Sala, use Sala list
     if (sPool.length === 0) sPool = salaStaff;
 
     const sA = sPool[0] || { displayName: "---", entryLabel: "09:00" };
@@ -175,31 +174,6 @@ function generateBriefing() {
 
     document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
-}
-
-// --- UTILS ---
-function openPage(p) {
-    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-    document.getElementById(p).classList.add('active');
-    if (p === 'editStaffPage') renderStaffList();
-    if (p === 'showStaffPage') showStaffTable();
-}
-
-function showStaffTable() {
-    const d = document.getElementById('manageDateSelect').value, day = scheduleData[d];
-    if(!day) return;
-    const all = [...(day.Bar || []), ...(day.Sala || [])].sort((a,b) => a.priority - b.priority);
-    document.getElementById('scheduleTableWrapper').innerHTML = `<div style="padding:10px; display:grid; grid-template-columns:2fr 1fr 1fr; font-size:10px; font-weight:bold;"><span>NAME</span><span>AREA</span><span>SHIFT</span></div>` + 
-        all.map(s => `<div class="staff-row"><div>${s.displayName}<br><small>${s.position}</small></div><div>${s.area}</div><div>${s.shiftRaw}</div></div>`).join('');
-}
-
-function renderStaffList() {
-    const keys = Object.keys(staffMap).sort((a,b) => staffMap[a].priority - staffMap[b].priority);
-    document.getElementById('staffListContainer').innerHTML = keys.map(k => `
-        <div class="staff-edit-card" onclick="openStaffForm('${k}')">
-            <div><strong>${staffMap[k].alias}</strong><br><small>${staffMap[k].position}</small></div>
-            <div>✏️</div>
-        </div>`).join('');
 }
 
 function copyBriefing() {
