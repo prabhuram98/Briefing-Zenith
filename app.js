@@ -56,24 +56,14 @@ function loadSchedule(icons, startTime) {
             for (let i = 1; i < rows.length; i++) {
                 let nameInSched = rows[i][0]?.toString().toLowerCase().trim();
                 if (!nameInSched) continue;
-                
                 const info = staffMap[nameInSched];
                 if (!info) continue;
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index]?.toString().trim() || "";
-                    
-                    // STRICT FILTER: Check if shift STARTS with a number. 
-                    // This blocks "OFF.1", "FOLGA", "OFF", etc.
-                    const startsWithNumber = /^\d/.test(shift);
-                    const isOff = /OFF|FOLGA|VACATION|FERIAS|X/i.test(shift);
-
-                    if (startsWithNumber && !isOff) {
-                        dates[col.label][info.area].push({ 
-                            ...info, 
-                            shiftRaw: shift, 
-                            displayName: info.alias 
-                        });
+                    // STRICTOR FILTER: Must start with a number. Rejects "OFF", "OFF.1", "FOLGA".
+                    if (/^\d/.test(shift) && !/OFF|FOLGA|FERIAS|X/i.test(shift)) {
+                        dates[col.label][info.area].push({ ...info, shiftRaw: shift, displayName: info.alias });
                     }
                 });
             }
@@ -94,73 +84,84 @@ function loadSchedule(icons, startTime) {
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
-
-    if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) {
-        return alert("No staff working on " + selectedDate);
-    }
+    if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) return alert("No staff working today.");
 
     const parseTime = (t) => {
         const m = t.match(/(\d{1,2})[:h](\d{2})/);
         return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
     };
 
-    // Filter list for TODAY ONLY
-    let todayStaff = [...dayData.Bar, ...dayData.Sala].map(s => {
+    // Prepare Working Staff Pools
+    const barStaff = dayData.Bar.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
+    const salaStaff = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
+    const allStaff = [...barStaff, ...salaStaff];
+
+    function processShift(s) {
         const pts = s.shiftRaw.split(/[-–]/);
         return {
             ...s,
-            entryMin: parseTime(pts[0] || "00:00"),
-            exitMin: parseTime(pts[1] || "00:00"),
-            entryLabel: (pts[0] || "00:00").trim().replace('h', ':'),
-            exitLabel: (pts[1] || "00:00").trim().replace('h', ':')
+            entryMin: parseTime(pts[0] || "09:00"),
+            exitMin: parseTime(pts[1] || "17:30"),
+            entryLabel: (pts[0] || "09:00").trim().replace('h', ':'),
+            exitLabel: (pts[1] || "17:30").trim().replace('h', ':')
         };
-    });
+    }
 
-    const barStaff = todayStaff.filter(s => s.area === 'Bar').sort((a,b) => a.entryMin - b.entryMin);
-    const salaStaff = todayStaff.filter(s => s.area === 'Sala').sort((a,b) => a.entryMin - b.entryMin);
-    const exitingBar = [...barStaff].sort((a,b) => a.exitMin - b.exitMin);
-    const exitingSala = [...salaStaff].sort((a,b) => a.exitMin - b.exitMin);
+    // --- ASSIGNMENT LOGIC ---
 
-    // PORTA: Manager -> Head Seller -> Earliest Sala
-    const manager = todayStaff.find(s => s.position === "MANAGER");
-    const headSeller = todayStaff.find(s => s.position === "HEAD SELLER");
-    const porta = manager || headSeller || salaStaff[0] || todayStaff[0];
+    // Porta: Manager -> Head Seller -> Earliest Sala
+    const manager = allStaff.find(s => s.position === "MANAGER");
+    const headSeller = allStaff.find(s => s.position === "HEAD SELLER");
+    const porta = manager || headSeller || salaStaff[0] || barStaff[0];
 
-    // SELLERS: No Manager if others exist. No "Ana" if others exist.
+    // Bar: Strict Bar Staff Priority
+    const barA = barStaff[0] || salaStaff[0]; 
+    const barB = barStaff[1] || (barStaff.length > 0 ? barStaff[0] : salaStaff[1] || salaStaff[0]);
+
+    // Sellers: Sala Staff only (Exclude Manager/Ana if others present)
     let sPool = salaStaff.filter(s => s.position !== 'MANAGER');
     const filteredPool = sPool.filter(s => s.displayName.toLowerCase() !== 'ana');
     if (filteredPool.length > 0) sPool = filteredPool;
-    if (sPool.length === 0) sPool = salaStaff;
+    if (sPool.length === 0) sPool = salaStaff; // Emergency fallback to Sala
 
-    const sA = sPool[0];
+    const sA = sPool[0] || barStaff[0];
     const sB = sPool[1] || sA;
     const sC = sPool[2];
 
-    // FECHO DE CAIXA Priority
-    const caixa = headSeller || todayStaff.find(s => s.position === "BAR MANAGER") || manager || exitingBar[exitingBar.length-1];
+    // Fecho de Caixa: Hierarchy
+    const caixa = headSeller || allStaff.find(s => s.position === "BAR MANAGER") || manager || [...barStaff].sort((a,b) => b.exitMin - a.exitMin)[0] || salaStaff[0];
+
+    // HACCP Assignments (Bar tasks to Bar staff, Sala to Sala)
+    const exitingBar = [...barStaff].sort((a,b) => a.exitMin - b.exitMin);
+    const exitingSala = [...salaStaff].sort((a,b) => a.exitMin - b.exitMin);
+
+    const eb1 = exitingBar[0] || barA;
+    const eb2 = exitingBar[1] || eb1;
+    const lb = exitingBar[exitingBar.length-1] || eb1;
+
+    const es1 = exitingSala[0] || sA;
+    const es2 = exitingSala[1] || es1;
+    const ls = exitingSala[exitingSala.length-1] || es1;
 
     // --- TEMPLATE ---
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
-    b += `${porta?.entryLabel || '09:00'} Porta: ${porta?.displayName || '---'}\n\n`;
+    b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
     
     b += `BAR:\n`;
-    b += `${barStaff[0]?.entryLabel || '07:30'} Abertura: *${barStaff[0]?.displayName || '---'}*\n`;
-    b += `${barStaff[0]?.entryLabel || '07:30'} Bar A: *${barStaff[0]?.displayName || '---'}*\n`;
-    b += `${barStaff[1]?.entryLabel || '08:00'} Bar B: *${barStaff[1]?.displayName || '---'}*\n\n`;
+    b += `${barA.entryLabel} Abertura: *${barA.displayName}*\n`;
+    b += `${barA.entryLabel} Bar A: *${barA.displayName}* (Bebidas)\n`;
+    b += `${barB.entryLabel} Bar B: *${barB.displayName}* (Cafés/Caixa)\n\n`;
 
     b += `⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\n——————————————\n\nSELLERS:\n`;
-    if(sA) b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n`;
-    if(sB && sB !== sA) b += `${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
+    b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n`;
+    b += `${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
     if(sC) b += `${sC.entryLabel} Seller C: *${sC.displayName}*\n`;
     
     b += `\n⚠ Pastéis de Nata ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
 
-    const eb1 = exitingBar[0], eb2 = exitingBar[1] || eb1, lb = exitingBar[exitingBar.length-1];
-    const es1 = exitingSala[0], es2 = exitingSala[1] || es1, ls = exitingSala[exitingSala.length-1];
-
-    b += `HACCP BAR:\n16:00 Preparações: *${eb1?.displayName || '---'}*\n16:00 Reposição: *${eb2?.displayName || '---'}*\n17:30 Fecho: *${lb?.displayName || '---'}*\n\n`;
-    b += `HACCP SALA:\n16:00- Fecho cima: *${es1?.displayName || '---'}*\n17:30- Vidros: *${ls?.displayName || '---'}*\n`;
-    b += `${exitingBar[exitingBar.length-1]?.exitLabel || '17:30'} Fecho Caixa: *${caixa?.displayName || '---'}*`;
+    b += `HACCP BAR:\n16:00 Preparações: *${eb1.displayName}*\n16:00 Reposição: *${eb2.displayName}*\n17:30 Fecho: *${lb.displayName}*\n\n`;
+    b += `HACCP SALA:\n16:00- Fecho cima: *${es1.displayName}*\n16:00- Repor papel: *${es2.displayName}*\n17:30- Limpeza WC: *${eb2.displayName}*\n17:30- Vidros/Espelhos: *${ls.displayName}*\nFecho Sala: *${ls.displayName}*\n`;
+    b += `${caixa.exitLabel} Fecho Caixa: *${caixa.displayName}*`;
 
     document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
