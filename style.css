@@ -1,44 +1,59 @@
 :root {
-    --primary: #2563eb;
-    --bg: #f3f4f6;
-    --card: #ffffff;
-    --text: #1f2937;
+    --primary: #6366f1;
+    --secondary: #ec4899;
+    --dark: #1e293b;
+    --bg: #f1f5f9;
 }
 
-body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+body { font-family: 'Inter', system-ui; background: var(--bg); margin: 0; overflow: hidden; }
 
-.app-container { max-width: 600px; margin: 0 auto; height: 100vh; position: relative; }
+.app-shell { height: 100vh; display: flex; flex-direction: column; }
+.page { display: none; flex: 1; padding: 25px; overflow-y: auto; padding-bottom: 100px; }
+.page.active { display: block; animation: fadeIn 0.4s ease; }
 
-.app-header { display: flex; justify-content: space-between; align-items: center; padding: 25px 20px; }
-.app-header h1 { font-size: 24px; margin: 0; }
+/* Dashboard Big Icons */
+.hero-section { padding: 20px 0; margin-bottom: 20px; }
+.hero-section h1 { font-size: 32px; color: var(--dark); margin: 0; }
 
-.dashboard-grid { display: grid; gap: 15px; padding: 0 20px; }
-.card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.main-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 
-.action-card { text-align: center; border: 2px solid transparent; transition: 0.3s; cursor: pointer; }
-.action-card:active { transform: scale(0.98); border-color: var(--primary); }
-.icon-lg { font-size: 48px; color: var(--primary); margin-bottom: 10px; }
+.big-card { 
+    background: white; padding: 30px; border-radius: 28px; 
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    transition: 0.3s; cursor: pointer;
+}
 
-.selector-card select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; font-size: 16px; }
+.big-card.primary { background: var(--primary); color: white; }
+.big-card:active { transform: scale(0.95); }
 
-/* Bottom Nav */
-.bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 600px; height: 70px; background: white; display: flex; border-top: 1px solid #e5e7eb; }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; cursor: pointer; transition: 0.2s; }
-.nav-item.active { color: var(--primary); }
-.nav-item span:first-child { font-size: 28px; }
-.nav-item span:last-child { font-size: 10px; font-weight: 600; margin-top: 4px; }
+.icon-circle { 
+    width: 70px; height: 70px; background: rgba(255,255,255,0.2); 
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 15px;
+}
+.icon-circle span { font-size: 36px; }
 
-/* Modal */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
-.modal-window { background: white; width: 90%; max-width: 500px; border-radius: 20px; overflow: hidden; animation: slideUp 0.3s ease-out; }
-.modal-header { padding: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
-.modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+.ghost-select { 
+    width: 100%; border: none; background: #f8fafc; padding: 12px; 
+    border-radius: 12px; font-weight: bold; color: var(--dark);
+}
 
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+/* Nav Bar */
+.dock-nav { 
+    position: fixed; bottom: 20px; left: 20px; right: 20px; 
+    height: 70px; background: var(--dark); border-radius: 25px;
+    display: flex; align-items: center; box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+.dock-item { flex: 1; text-align: center; color: #64748b; transition: 0.3s; }
+.dock-item.active { color: white; transform: translateY(-5px); }
+.dock-item span { font-size: 32px; }
 
-/* Staff List */
-.list-container { padding: 0 20px 100px; }
-.staff-row { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+/* CRUD UI */
+.list-view { display: flex; flex-direction: column; gap: 12px; }
+.staff-item { 
+    background: white; padding: 18px; border-radius: 18px;
+    display: flex; justify-content: space-between; align-items: center;
+}
 
-.spinning { animation: rotate 1s linear infinite; }
-@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
