@@ -6,16 +6,19 @@ let staffMap = {};
 let scheduleData = {}; 
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "RUNNER": 6, "STAFF": 7 };
 
-// --- UI NAVIGATION ---
+// --- NAVIGATION (FIXED) ---
 function openPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const target = document.getElementById(pageId);
-    if (target) target.classList.add('active');
+    if (target) {
+        target.classList.add('active');
+        if (pageId === 'dailyViewPage') renderDailyView(); // Re-render if switching to view
+    }
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-// --- DATA LOADING ---
+// --- DATA HANDLING ---
 async function loadData() {
     const syncIcons = document.querySelectorAll('.sync-small');
     syncIcons.forEach(i => i.classList.add('spinning'));
@@ -76,7 +79,7 @@ function loadSchedule(icons) {
     });
 }
 
-// --- BRIEFING GENERATION ---
+// --- BRIEFING LOGIC (FIXED ASSIGNMENTS) ---
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
@@ -102,19 +105,19 @@ function generateBriefing() {
     const salaActive = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
     const allActive = [...barActive, ...salaActive];
 
-    // --- SELLER / RUNNER LOGIC ---
-    let runnerObj = allActive.find(s => s.position.includes('RUNNER'));
-    let salaSellers = salaActive.filter(s => (s.position.includes('STAFF') || s.position.includes('SELLER')) && s.position !== 'MANAGER' && s.displayName.toLowerCase() !== 'ana');
-    let headSellers = salaActive.filter(s => s.position === 'HEAD SELLER');
+    // ROLE-BASED POOLS
+    const runners = allActive.filter(s => s.position === 'RUNNER');
+    const headSellers = salaActive.filter(s => s.position === 'HEAD SELLER');
+    const salaStaff = salaActive.filter(s => (s.position.includes('STAFF') || s.position.includes('SELLER')) && s.position !== 'MANAGER' && s.displayName.toLowerCase() !== 'ana' && s.position !== 'RUNNER');
     
-    let totalMainSellers = salaSellers.length + headSellers.length;
-    let finalRunnerDisplay = runnerObj ? runnerObj.displayName : "Todos";
-    let finalSellers = [...headSellers, ...salaSellers];
+    // SELLER ASSIGNMENT
+    let runnerForBriefing = runners.length > 0 ? runners[0].displayName : "Todos";
+    let finalSellers = [...headSellers, ...salaStaff];
 
-    // Rule: If <= 1 Seller (including Head), Runner becomes a Seller
-    if (totalMainSellers <= 1 && runnerObj) {
-        finalSellers.push(runnerObj);
-        finalRunnerDisplay = "Todos";
+    // If Head + Regular < 2, pull runner into sellers
+    if (finalSellers.length < 2 && runners.length > 0) {
+        finalSellers.push(runners[0]);
+        runnerForBriefing = "Todos";
     }
 
     const sA = finalSellers[0] || { displayName: "N/A", entryLabel: "--:--" };
@@ -123,12 +126,11 @@ function generateBriefing() {
 
     // PORTA & BAR
     const manager = allActive.find(s => s.position === "MANAGER");
-    const headSeller = allActive.find(s => s.position === "HEAD SELLER");
-    const porta = manager || headSeller || (salaActive.length > 0 ? salaActive[0] : allActive[0]);
+    const porta = manager || headSellers[0] || salaActive[0] || allActive[0];
     const barA = barActive[0] || { displayName: "N/A", entryLabel: "--:--", exitLabel: "--:--" };
     const barB = barActive[1] || barA;
 
-    // --- HACCP (STRICT SEPARATION, NO MANAGER) ---
+    // HACCP (STRICT SEPARATION)
     const bHPool = barActive.filter(s => s.position !== 'MANAGER');
     const bExit = (bHPool.length > 0 ? bHPool : barActive).sort((a,b) => a.exitMin - b.exitMin);
     const eb1 = bExit[0] || barA;
@@ -141,9 +143,9 @@ function generateBriefing() {
     const es2 = sExit[1] || es1;
     const ls = sExit[sExit.length-1] || es1;
 
-    const caixa = headSeller || allActive.find(s => s.position === "BAR MANAGER") || manager || lb || ls;
+    const caixa = headSellers[0] || allActive.find(s => s.position === "BAR MANAGER") || manager || lb || ls;
 
-    // --- TEMPLATE ---
+    // TEMPLATE RESTORED
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
     b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
     b += `BAR:\n${barA.entryLabel} Abertura Sala/Bar: *${barA.displayName}*\n${barA.entryLabel} Bar A: *${barA.displayName}* Barista – Bebidas\n${barB.entryLabel} Bar B: *${barB.displayName}* Barista – Cafés / Caixa\n`;
@@ -151,7 +153,7 @@ function generateBriefing() {
     b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
     if(sC) b += `${sC.entryLabel} Seller C: *${sC.displayName}*\n`;
     b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
-    b += `RUNNERS:\n${runnerObj ? runnerObj.entryLabel : '09:00'} Runner A e B: ${finalRunnerDisplay}\n——————————————\n\n`;
+    b += `RUNNERS:\n${runners[0] ? runners[0].entryLabel : '09:00'} Runner A e B: ${runnerForBriefing}\n——————————————\n\n`;
     b += `HACCP / LIMPEZA BAR:\n${eb1.exitLabel} Preparações Bar: *${eb1.displayName}*\n${eb2.exitLabel} Reposição Bar: *${eb2.displayName}*\n${lb.exitLabel} Fecho Bar: *${lb.displayName}*\n\n`;
     b += `HACCP / SALA:\n${es1.exitLabel} Fecho do sala de cima: *${es1.displayName}*\n${es1.exitLabel} Limpeza e reposição aparador: *${es1.displayName}*\n${es2.exitLabel} Repor papel (WC): *${es2.displayName}*\n${eb2.exitLabel} Limpeza WC (clientes/staff): *${eb2.displayName}*\n${ls.exitLabel} Limpeza de vidros: *${ls.displayName}*\n${ls.exitLabel} Fecho Sala: *${ls.displayName}*\n`;
     b += `${caixa.exitLabel} Fecho de Caixa: *${caixa.displayName}*`;
