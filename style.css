@@ -1,90 +1,22 @@
-:root { 
-    --accent: #7a4f2c; 
-    --bg: #fdf8f4; 
-    --bar-color: #d9534f;
-    --sala-color: #337ab7;
+.icon-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px;
 }
-
-body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg); 
-    margin: 0; 
-    padding-bottom: 90px; 
-    color: #333; 
+.big-icon {
+    background: white; border-radius: 20px; padding: 40px 10px;
+    display: flex; flex-direction: column; align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer;
 }
-
-.app-header { 
-    background: #fff; 
-    text-align: center; 
-    padding: 15px; 
-    border-bottom: 3px solid var(--accent); 
-    position: sticky; top:0; z-index: 100; 
+.icon-circle { font-size: 50px; margin-bottom: 10px; }
+.close-btn {
+    position: absolute; top: 15px; right: 15px; background: #333;
+    color: white; border: none; width: 35px; height: 35px; border-radius: 50%;
 }
-.app-header h1 { margin: 0; font-size: 20px; color: var(--accent); letter-spacing: 2px; }
-.app-header h2 { margin: 0; font-size: 10px; color: #bbb; text-transform: uppercase; }
-
-.card { 
-    background: #fff; 
-    margin: 12px; 
-    padding: 15px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+.staff-edit-card {
+    background: white; margin: 10px; padding: 15px; border-radius: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-
-.page { display: none; }
-.page.active { display: block; }
-
-label { font-size: 12px; font-weight: bold; color: #999; text-transform: uppercase; margin-left: 5px; }
-
-select { 
-    width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; 
-    font-size: 16px; margin-top: 5px; background-color: #fff; appearance: none;
+.save-banner {
+    position: fixed; bottom: 0; width: 100%; background: #27ae60;
+    color: white; padding: 15px; text-align: center; font-weight: bold;
 }
-
-.main-btn { 
-    width: 100%; background: var(--accent); color: white; border: none; 
-    padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; 
-}
-
-/* Manage Grid */
-.staff-grid-header {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr;
-    padding: 10px;
-    background: #f8f9fa;
-    font-weight: bold;
-    font-size: 11px;
-    color: #888;
-    border-radius: 6px;
-}
-
-.staff-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr;
-    align-items: center;
-    padding: 12px 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.staff-name { font-weight: 700; font-size: 13px; text-transform: uppercase; }
-.staff-hours { font-family: monospace; font-size: 13px; font-weight: bold; text-align: right; color: #2c3e50; }
-
-.area-tag { font-size: 9px; padding: 3px 6px; border-radius: 4px; font-weight: bold; color: white; text-align: center; display: inline-block; width: 35px; }
-.tag-bar { background-color: var(--bar-color); }
-.tag-sala { background-color: var(--sala-color); }
-
-/* Navigation */
-.bottom-nav { 
-    position: fixed; bottom: 0; width: 100%; display: flex; 
-    background: #fff; border-top: 1px solid #eee; padding-bottom: env(safe-area-inset-bottom);
-}
-.nav-btn { flex: 1; padding: 15px 0; border: none; background: none; font-size: 11px; color: #bbb; }
-.nav-btn i { font-size: 18px; margin-bottom: 4px; }
-.nav-btn.active { color: var(--accent); }
-
-/* Modal */
-.modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index: 1000; }
-.modal-content { background:white; width:90%; padding:20px; border-radius:15px; max-height:80vh; overflow-y:auto; }
-
-.briefing-item { border-bottom: 1px solid #eee; padding: 10px 0; }
-.briefing-item input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; }
