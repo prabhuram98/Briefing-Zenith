@@ -1,4 +1,4 @@
-// app.js - Combined Data, UI, and Briefing Logic
+// app.js - Robust Sequential Loading
 window.staffMap = {}; 
 window.scheduleData = {}; 
 
@@ -8,31 +8,27 @@ const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhoj
 
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "RUNNER": 6, "STAFF": 7 };
 
-// --- UI NAVIGATION ---
-function openPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const target = document.getElementById(pageId);
-    if (target) {
-        target.classList.add('active');
-        if (pageId === 'manageStaffPage') renderStaffList();
+// --- INITIALIZATION ---
+window.onload = function() {
+    console.log("App started. Initializing load...");
+    if (typeof Papa === 'undefined') {
+        alert("External library (PapaParse) failed to load. Please check your internet connection.");
+    } else {
+        loadData();
     }
-}
+};
 
-function closeModal() {
-    const modal = document.getElementById('modal');
-    if (modal) modal.style.display = 'none';
-}
-
-// --- DATA INITIALIZATION ---
 async function loadData() {
     const syncIcons = document.querySelectorAll('.sync-small');
     syncIcons.forEach(i => i.classList.add('spinning'));
     
+    // Step 1: Load Staff Database
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
         download: true,
         header: false,
         skipEmptyLines: true,
         complete: function(results) {
+            console.log("Staff Data Received:", results.data.length, "rows");
             window.staffMap = {}; 
             results.data.forEach((row, i) => {
                 if (i === 0 || !row[0]) return;
@@ -47,7 +43,12 @@ async function loadData() {
                     priority: POSITION_ORDER[pos] || 99 
                 };
             });
+            // Step 2: Load Schedule (Only after staff is mapped)
             loadSchedule(syncIcons);
+        },
+        error: function(err) {
+            console.error("Staff Parse Error:", err);
+            alert("Failed to load Staff Database.");
         }
     });
 }
@@ -58,12 +59,14 @@ function loadSchedule(icons) {
         header: false,
         skipEmptyLines: true,
         complete: function(results) {
+            console.log("Schedule Data Received:", results.data.length, "rows");
             const dates = {}; 
             const rows = results.data;
             if (rows.length < 1) return;
             const header = rows[0]; 
             let dateCols = [];
 
+            // Detect date columns
             for (let j = 1; j < header.length; j++) {
                 const colName = header[j]?.trim();
                 if (colName && !colName.toLowerCase().includes("total")) {
@@ -72,6 +75,7 @@ function loadSchedule(icons) {
                 }
             }
 
+            // Map shifts to staff
             for (let i = 1; i < rows.length; i++) {
                 let nameInSched = rows[i][0]?.toString().toLowerCase().trim();
                 const info = window.staffMap[nameInSched];
@@ -85,21 +89,68 @@ function loadSchedule(icons) {
                 });
             }
             window.scheduleData = dates;
-            const select = document.getElementById('dateSelect');
-            if (select) {
-                select.innerHTML = Object.keys(dates).map(k => `<option value="${k}">${k}</option>`).join('');
-            }
-            icons.forEach(i => i.classList.remove('spinning'));
+            
+            // Step 3: Populate UI
+            updateUI(icons);
+        },
+        error: function(err) {
+            console.error("Schedule Parse Error:", err);
+            alert("Failed to load Schedule.");
         }
     });
 }
 
-// --- STAFF LIST (CRUD VIEW) ---
+function updateUI(icons) {
+    const select = document.getElementById('dateSelect');
+    if (select) {
+        const dateKeys = Object.keys(window.scheduleData);
+        if (dateKeys.length > 0) {
+            select.innerHTML = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+            console.log("Dropdown updated with", dateKeys.length, "dates.");
+        } else {
+            select.innerHTML = '<option>No Dates Found</option>';
+        }
+    }
+    icons.forEach(i => i.classList.remove('spinning'));
+}
+
+// --- NAVIGATION & VIEWS ---
+function openPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(pageId);
+    if (target) {
+        target.classList.add('active');
+        if (pageId === 'manageStaffPage') renderStaffList();
+        if (pageId === 'dailyViewPage') renderDailyView();
+    }
+}
+
+function renderDailyView() {
+    const container = document.getElementById('dailyViewContainer');
+    const selectedDate = document.getElementById('dateSelect').value;
+    const dayData = window.scheduleData ? window.scheduleData[selectedDate] : null;
+
+    if (!container) return;
+    if (!dayData) {
+        container.innerHTML = "<p>Please select a valid date.</p>";
+        return;
+    }
+
+    const allStaff = [...dayData.Bar, ...dayData.Sala];
+    let html = `<h3>Schedule for ${selectedDate}</h3><table style="width:100%; border-collapse: collapse;">`;
+    html += '<tr style="background:#eee; text-align:left;"><th>Name</th><th>Dept</th><th>Shift</th></tr>';
+    allStaff.forEach(s => {
+        html += `<tr style="border-bottom:1px solid #ddd;"><td>${s.alias}</td><td>${s.area}</td><td>${s.shiftRaw}</td></tr>`;
+    });
+    html += '</table>';
+    container.innerHTML = html;
+}
+
 function renderStaffList() {
     const listDiv = document.getElementById('staffListContainer');
     if (!listDiv) return;
-    let html = '<table style="width:100%; border-collapse: collapse; margin-top:10px; font-size:14px;">';
-    html += '<tr style="background:#f4f4f4; text-align:left;"><th>Alias</th><th>Dept</th><th>Role</th></tr>';
+    let html = '<h3>Staff Directory</h3><table style="width:100%; border-collapse: collapse;">';
+    html += '<tr style="background:#eee; text-align:left;"><th>Alias</th><th>Dept</th><th>Role</th></tr>';
     Object.values(window.staffMap).forEach(s => {
         html += `<tr style="border-bottom:1px solid #ddd;"><td>${s.alias}</td><td>${s.area}</td><td>${s.position}</td></tr>`;
     });
@@ -107,11 +158,11 @@ function renderStaffList() {
     listDiv.innerHTML = html;
 }
 
-// --- BRIEFING ENGINE ---
+// --- BRIEFING LOGIC (Same as before) ---
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
-    const dayData = window.scheduleData ? window.scheduleData[selectedDate] : null;
-    if (!dayData) return alert("Please wait for data to load.");
+    const dayData = window.scheduleData[selectedDate];
+    if (!dayData) return alert("Select a date!");
 
     const parseTime = (t) => {
         const m = t.match(/(\d{1,2})[:h](\d{2})/);
@@ -133,15 +184,14 @@ function generateBriefing() {
     const salaPool = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
     const allActive = [...barPool, ...salaPool];
 
-    // --- LOGIC: RUNNER & SELLERS ---
+    // Assignment Logic
     const runners = allActive.filter(s => s.position === 'RUNNER');
     const headSellers = salaPool.filter(s => s.position === 'HEAD SELLER');
     const regularSellers = salaPool.filter(s => (s.position.includes('STAFF') || s.position.includes('SELLER')) && s.position !== 'MANAGER' && s.alias.toLowerCase() !== 'ana' && s.position !== 'RUNNER');
     
     let finalSellers = [...headSellers, ...regularSellers];
-    let runnerDisplay = (runners.length > 0) ? runners[0].alias : "Todos";
+    let runnerDisplay = runners.length > 0 ? runners[0].alias : "Todos";
 
-    // Rule: If Head + regular Sellers < 2, Runner moves to Seller B position
     if (finalSellers.length < 2 && runners.length > 0) {
         finalSellers.push(runners[0]);
         runnerDisplay = "Todos";
@@ -156,7 +206,6 @@ function generateBriefing() {
     const barA = barPool[0] || { alias: "N/A", entryLabel: "--:--", exitLabel: "--:--" };
     const barB = barPool[1] || barA;
 
-    // --- LOGIC: HACCP (STRICT SEPARATION) ---
     const bHPool = barPool.filter(s => s.position !== 'MANAGER');
     const bExit = (bHPool.length > 0 ? bHPool : barPool).sort((a,b) => a.exitMin - b.exitMin);
     const eb1 = bExit[0] || barA;
@@ -171,7 +220,6 @@ function generateBriefing() {
 
     const caixa = headSellers[0] || allActive.find(s => s.position === "BAR MANAGER") || manager || lb || ls;
 
-    // --- OUTPUT TEMPLATE ---
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
     b += `${porta.entryLabel} Porta: ${porta.alias}\n\n`;
     b += `BAR:\n${barA.entryLabel} Abertura Sala/Bar: *${barA.alias}*\n${barA.entryLabel} Bar A: *${barA.alias}* Barista – Bebidas\n${barB.entryLabel} Bar B: *${barB.alias}* Barista – Cafés / Caixa\n`;
@@ -189,8 +237,5 @@ function generateBriefing() {
 }
 
 function copyBriefing() {
-    const text = document.getElementById('modalResult').innerText;
-    navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+    navigator.clipboard.writeText(document.getElementById('modalResult').innerText).then(() => alert("Copied!"));
 }
-
-window.onload = loadData;
