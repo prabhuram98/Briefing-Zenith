@@ -12,53 +12,82 @@
     <div id="dashboardPage" class="page active">
         <h1 class="app-logo">ZENITH</h1>
         
-        <div class="zenith-grid">
-            <div class="zen-card briefing-card" onclick="generateBriefing()">
-                <div class="zen-icon">☕</div>
-                <div class="zen-card-content">
-                    <h3>Briefing</h3>
-                    <p>Generate daily tasks</p>
-                </div>
+        <div class="icon-grid">
+            <div class="big-icon" onclick="openPage('briefingPage')">
+                <div class="icon-circle">☕</div>
+                <span>Briefing</span>
             </div>
-
-            <div class="zen-card date-card">
-                <div class="zen-icon">📅</div>
-                <div class="zen-card-content">
-                    <h3>Select Date</h3>
-                    <select id="dateSelect" class="zen-select"></select>
-                </div>
+            <div id="refreshBtn" class="big-icon" onclick="loadData()">
+                <div class="icon-circle">🔄</div>
+                <span>Sync Data</span>
             </div>
-        </div>
-
-        <div style="padding: 20px; text-align: center;">
-            <button id="refreshBtn" class="sync-link" onclick="loadData()">🔄 Sync Spreadsheet Data</button>
+            <div class="big-icon" onclick="openPage('showStaffPage')">
+                <div class="icon-circle">📅</div>
+                <span>Daily Staff</span>
+            </div>
+            <div class="big-icon" onclick="openPage('editStaffPage')">
+                <div class="icon-circle">👤</div>
+                <span>Directory</span>
+            </div>
         </div>
     </div>
 
-    <nav class="zen-dock">
-        <div class="dock-item active" onclick="openPage('dashboardPage', this)">Home</div>
-        <div class="dock-item" onclick="openPage('showStaffPage', this)">Daily</div>
-        <div class="dock-item" onclick="openPage('editStaffPage', this)">Directory</div>
-    </nav>
-
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div id="modalResult"></div>
-            <button class="btn-primary" onclick="copyBriefing()">Copy to WhatsApp</button>
-            <button class="btn-secondary" onclick="closeModal()">Close</button>
+    <div id="briefingPage" class="page">
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Briefing</h2>
+        <div class="filter-card">
+            <label class="field-label">Select Date</label>
+            <select id="dateSelect" class="styled-select"></select>
+            <button class="btn-primary" style="margin-top: 25px;" onclick="generateBriefing()">Generate briefing</button>
         </div>
     </div>
 
     <div id="showStaffPage" class="page">
-        <h2 class="page-title">Daily Shifts</h2>
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Daily Staff</h2>
         <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
-        <div id="scheduleTableWrapper"></div>
+        <div id="scheduleTableWrapper" style="margin-top:20px;"></div>
     </div>
 
     <div id="editStaffPage" class="page">
-        <h2 class="page-title">Staff Directory</h2>
-        <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Directory</h2>
+        <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
         <div id="staffListContainer"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div id="modalResult"></div>
+            <div class="modal-buttons-vertical">
+                <button class="btn-primary" onclick="copyBriefing()">Copy</button>
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Staff Details</h3>
+            <input type="hidden" id="editOriginalKey">
+            <div class="form-group">
+                <label class="field-label">Full Name</label>
+                <input type="text" id="formFullName">
+            </div>
+            <div class="form-group" style="margin-top:15px;">
+                <label class="field-label">Alias</label>
+                <input type="text" id="formAlias">
+            </div>
+            <div class="form-group" style="margin-top:15px;">
+                <label class="field-label">Position</label>
+                <select id="formPosition" class="styled-select"></select>
+            </div>
+            <div class="modal-buttons-vertical">
+                <button class="btn-primary" onclick="confirmSave()">SAVE CHANGES</button>
+                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE</button>
+                <button class="btn-secondary" onclick="closeStaffModal()">CANCEL</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
