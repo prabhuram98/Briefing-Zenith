@@ -5,11 +5,7 @@ const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhoj
 let staffMap = {}, scheduleData = {}, uniquePositions = new Set();
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "STAFF": 6 };
 
-// --- DATA INITIALIZATION ---
 async function loadData() {
-    const btn = document.getElementById('refreshBtn');
-    if(btn) btn.classList.add('spinning');
-    
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
         download: true,
         complete: (results) => {
@@ -27,12 +23,12 @@ async function loadData() {
             });
             const posDropdown = document.getElementById('formPosition');
             if(posDropdown) posDropdown.innerHTML = Array.from(uniquePositions).sort().map(p => `<option value="${p}">${p}</option>`).join('');
-            loadSchedule(btn);
+            loadSchedule();
         }
     });
 }
 
-function loadSchedule(refreshBtn) {
+function loadSchedule() {
     Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
         download: true,
         complete: (results) => {
@@ -67,12 +63,10 @@ function loadSchedule(refreshBtn) {
                 document.getElementById('dateSelect').innerHTML = opt;
                 document.getElementById('manageDateSelect').innerHTML = opt;
             }
-            if(refreshBtn) refreshBtn.classList.remove('spinning');
         }
     });
 }
 
-// --- UI NAVIGATION ---
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -119,9 +113,8 @@ function openStaffForm(k = null) {
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
-// PLACEHOLDER FOR BRIEFING
 function generateBriefing() {
-    alert("Ready to build the briefing logic!");
+    alert("System ready. How would you like to structure the briefing message?");
 }
 
 window.onload = loadData;
