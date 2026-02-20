@@ -3,74 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenith Staff Portal</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <title>Zenith Manager</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
 
-    <div class="zenith-app">
-        <div id="briefingPage" class="page active">
-            <div class="brand-header">
-                <h1 class="logo-text">ZENITH</h1>
-                <p class="subtitle">BRUNCH & COCKTAILS</p>
+    <div id="dashboardPage" class="page active">
+        <h1 class="app-logo">ZENITH</h1>
+        
+        <div class="zenith-grid">
+            <div class="zen-card briefing-card" onclick="generateBriefing()">
+                <div class="zen-icon">☕</div>
+                <div class="zen-card-content">
+                    <h3>Briefing</h3>
+                    <p>Generate daily tasks</p>
+                </div>
             </div>
 
-            <div class="zenith-grid">
-                <div class="zen-card briefing-card" onclick="generateBriefing()">
-                    <div class="zen-icon">
-                        <span class="material-symbols-outlined">description</span>
-                    </div>
-                    <div class="zen-card-content">
-                        <h3>Briefing</h3>
-                        <p>Generate daily tasks</p>
-                    </div>
-                </div>
-
-                <div class="zen-card date-card">
-                    <div class="zen-icon">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                    </div>
-                    <div class="zen-card-content">
-                        <h3>Date</h3>
-                        <select id="dateSelect" class="zen-select"></select>
-                    </div>
+            <div class="zen-card date-card">
+                <div class="zen-icon">📅</div>
+                <div class="zen-card-content">
+                    <h3>Select Date</h3>
+                    <select id="dateSelect" class="zen-select"></select>
                 </div>
             </div>
         </div>
 
-        <div id="manageStaffPage" class="page">
-            <div class="zen-header">
-                <h2>Staff Directory</h2>
-                <span class="material-symbols-outlined add-icon" onclick="openStaffForm()">person_add</span>
-            </div>
-            <div id="staffListContainer" class="zen-list"></div>
+        <div style="padding: 20px; text-align: center;">
+            <button id="refreshBtn" class="sync-link" onclick="loadData()">🔄 Sync Spreadsheet Data</button>
         </div>
-
-        <div id="dailyViewPage" class="page">
-            <div class="zen-header"><h2>Daily Shifts</h2></div>
-            <div id="dailyViewContainer" class="zen-list"></div>
-        </div>
-
-        <nav class="zen-dock">
-            <div class="dock-item active" onclick="openPage('briefingPage', this)">
-                <span class="material-symbols-outlined">home</span>
-            </div>
-            <div class="dock-item" onclick="openPage('dailyViewPage', this)">
-                <span class="material-symbols-outlined">list_alt</span>
-            </div>
-            <div class="dock-item" onclick="openPage('manageStaffPage', this)">
-                <span class="material-symbols-outlined">badge</span>
-            </div>
-        </nav>
     </div>
 
-    <div id="modal" class="zen-modal">
+    <nav class="zen-dock">
+        <div class="dock-item active" onclick="openPage('dashboardPage', this)">Home</div>
+        <div class="dock-item" onclick="openPage('showStaffPage', this)">Daily</div>
+        <div class="dock-item" onclick="openPage('editStaffPage', this)">Directory</div>
+    </nav>
+
+    <div id="modal" class="modal">
         <div class="modal-content">
             <div id="modalResult"></div>
-            <button class="zen-btn-close" onclick="closeModal()">Close</button>
+            <button class="btn-primary" onclick="copyBriefing()">Copy to WhatsApp</button>
+            <button class="btn-secondary" onclick="closeModal()">Close</button>
         </div>
+    </div>
+
+    <div id="showStaffPage" class="page">
+        <h2 class="page-title">Daily Shifts</h2>
+        <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
+        <div id="scheduleTableWrapper"></div>
+    </div>
+
+    <div id="editStaffPage" class="page">
+        <h2 class="page-title">Staff Directory</h2>
+        <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
+        <div id="staffListContainer"></div>
     </div>
 
     <script src="app.js"></script>
