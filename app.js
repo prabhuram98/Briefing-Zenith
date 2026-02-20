@@ -1,5 +1,4 @@
 // --- CONFIGURATION ---
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu-igrPqxd6OvW7ibRg9uoNRSSFr2aD_OieZPjTty6aR88gCPIA/exec'; 
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv'; 
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
@@ -10,19 +9,17 @@ let rawRows = [];
 // --- NAVIGATION ---
 function switchPage(pageId, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const targetPage = document.getElementById(pageId + 'Page');
-    if (targetPage) targetPage.classList.add('active');
+    const target = document.getElementById(pageId + 'Page');
+    if (target) target.classList.add('active');
     
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     
     document.getElementById('pageTitle').innerText = pageId.toUpperCase();
-    if (pageId === 'briefing') closeStaffTable();
 }
 
 // --- DATA LOADING ---
 async function loadStaff() {
-    console.log("Fetching Staff List...");
     const timestamp = new Date().getTime();
     Papa.parse(`${STAFF_URL}&t=${timestamp}`, {
         download: true,
@@ -33,15 +30,12 @@ async function loadStaff() {
                     name: r[0].trim(), 
                     area: (r[1] && r[1].trim().toLowerCase().includes('bar')) ? 'Bar' : 'Sala' 
                 }));
-            console.log("Staff Loaded:", staffData.length, "people");
             loadSchedule();
-        },
-        error: (err) => console.error("Error loading staff sheet:", err)
+        }
     });
 }
 
 function loadSchedule() {
-    console.log("Fetching Schedule Data...");
     const timestamp = new Date().getTime();
     Papa.parse(`${SCHEDULE_URL}&t=${timestamp}`, {
         download: true,
@@ -49,17 +43,13 @@ function loadSchedule() {
         skipEmptyLines: true,
         complete: (results) => {
             rawRows = results.data;
-            if (!rawRows || rawRows.length < 1) {
-                console.error("Schedule CSV is empty.");
-                return;
-            }
+            if (!rawRows || rawRows.length < 1) return;
 
             const dates = {};
-            // Look for the header in the first 2 rows (in case row 1 is empty)
-            let headerRow = rawRows[0].some(cell => cell.trim() !== "") ? rawRows[0] : rawRows[1];
+            const headerRow = rawRows[0]; // Row 1: A1 is empty, B1, C1... are dates
             let dateCols = [];
 
-            // Identify Date Columns
+            // 1. Identify Dates: Start from Index 1 (Column B)
             for (let j = 1; j < headerRow.length; j++) {
                 let label = headerRow[j] ? headerRow[j].trim() : "";
                 if (label !== "" && !label.toLowerCase().includes("total")) {
@@ -68,9 +58,9 @@ function loadSchedule() {
                 }
             }
 
-            // Process shifts for the Briefing
+            // 2. Process Staff: Start from Row 2 (Index 1)
             for (let i = 1; i < rawRows.length; i++) {
-                let name = rawRows[i][0] ? rawRows[i][0].trim() : "";
+                let name = rawRows[i][0] ? rawRows[i][0].trim() : ""; // Column A
                 if (!name || name.toLowerCase() === 'name') continue;
 
                 const emp = staffData.find(s => s.name.toLowerCase() === name.toLowerCase());
@@ -78,7 +68,7 @@ function loadSchedule() {
 
                 dateCols.forEach(col => {
                     let shift = rawRows[i][col.index] ? rawRows[i][col.index].trim() : "";
-                    const ignore = ["OFF", "FOLGA", "FÉRIAS", "FÃ‰RIAS", "COMPENSAÇÃO", "BAIXA", "-"];
+                    const ignore = ["OFF", "FOLGA", "FÉRIAS", "FÃ‰RIAS", "COMPENSAÇÃO", "BAIXA", "-", "0"];
                     const isWorking = shift !== "" && !ignore.some(k => shift.toUpperCase().includes(k));
 
                     if (isWorking) {
@@ -94,67 +84,40 @@ function loadSchedule() {
             }
 
             scheduleData = dates;
-            const dateKeys = Object.keys(dates);
-            if (dateKeys.length > 0) {
-                updateDateDropdowns(dateKeys);
-                console.log("Successfully loaded dates:", dateKeys);
-            } else {
-                console.warn("No dates found in CSV. Check APP_DATA Row 1.");
-            }
+            updateDropdowns(Object.keys(dates));
         }
     });
 }
 
-function updateDateDropdowns(keys) {
-    const briefingSelect = document.getElementById('dateSelect');
-    const manageSelect = document.getElementById('manageDateSelect');
-    
+function updateDropdowns(keys) {
     const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-    
-    if(briefingSelect) briefingSelect.innerHTML = options;
-    if(manageSelect) manageSelect.innerHTML = options;
+    document.getElementById('dateSelect').innerHTML = options;
+    document.getElementById('manageDateSelect').innerHTML = options;
 }
 
-// --- MANAGE PAGE: MOBILE GRID VIEW (Active Staff Only) ---
+// --- MANAGE PAGE: MOBILE GRID ---
 function showStaffTable() {
-    const select = document.getElementById('manageDateSelect');
-    if (!select) return;
-    
-    const selectedDate = select.value;
-    const container = document.getElementById('staffTableContainer');
+    const selectedDate = document.getElementById('manageDateSelect').value;
     const wrapper = document.getElementById('scheduleTableWrapper');
-    const header = document.getElementById('tableHeaderDate');
+    const headerRow = rawRows[0];
+    const dateIndex = headerRow.findIndex(cell => cell && cell.trim() === selectedDate);
 
-    // Find correct column for selected date
-    let headerRow = rawRows[0].some(cell => cell.includes('/')) ? rawRows[0] : rawRows[1];
-    const dateIndex = headerRow.findIndex(cell => cell.trim() === selectedDate);
+    if (dateIndex === -1) return;
 
-    if (dateIndex === -1) {
-        alert("Could not find data for this date.");
-        return;
-    }
+    document.getElementById('staffTableContainer').style.display = 'block';
+    document.getElementById('tableHeaderDate').innerText = selectedDate;
 
-    container.style.display = 'block';
-    header.innerText = selectedDate;
+    let html = `<div class="staff-grid-header"><span>NAME</span><span>AREA</span><span>HOURS</span></div>`;
+    let count = 0;
 
-    let html = `
-        <div class="staff-grid-header">
-            <span>NAME</span>
-            <span>AREA</span>
-            <span>HOURS</span>
-        </div>
-    `;
-
-    let activeCount = 0;
     for (let i = 1; i < rawRows.length; i++) {
-        let name = rawRows[i][0] ? rawRows[i][0].trim() : "";
+        let name = rawRows[i][0] ? rawRows[i][0].trim() : ""; 
         let shift = rawRows[i][dateIndex] ? rawRows[i][dateIndex].trim() : "";
-        
         const ignore = ["OFF", "FOLGA", "FÉRIAS", "FÃ‰RIAS", "BAIXA", "-", ""];
         const isOff = ignore.some(k => shift.toUpperCase().includes(k)) || shift === "";
 
-        if (name && name.toLowerCase() !== 'name' && !isOff) {
-            activeCount++;
+        if (name && !isOff) {
+            count++;
             const emp = staffData.find(s => s.name.toLowerCase() === name.toLowerCase());
             const area = emp ? emp.area.toUpperCase() : 'SALA';
             const areaClass = area === 'BAR' ? 'tag-bar' : 'tag-sala';
@@ -168,41 +131,32 @@ function showStaffTable() {
             `;
         }
     }
-
-    wrapper.innerHTML = activeCount > 0 ? html : "<p style='padding:20px; text-align:center; color:#999;'>No active staff found for this day.</p>";
-    container.scrollIntoView({ behavior: 'smooth' });
+    wrapper.innerHTML = count > 0 ? html : "<p style='text-align:center; padding:10px;'>No staff scheduled.</p>";
 }
 
-function closeStaffTable() {
-    const container = document.getElementById('staffTableContainer');
-    if (container) container.style.display = 'none';
-}
+function closeStaffTable() { document.getElementById('staffTableContainer').style.display = 'none'; }
 
-// --- BRIEFING LOGIC ---
+// --- BRIEFING ---
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
     if(!day) return;
 
-    const renderItems = (list, area) => list.map((s, i) => `
+    const render = (list, area) => list.map((s, i) => `
         <div class="briefing-item">
             <div class="briefing-info"><strong>${s.name}</strong> (${s.time}-${s.endTime})</div>
             <input type="text" placeholder="Task..." onchange="updateTask('${date}','${area}',${i},this.value)">
         </div>`).join('');
 
-    let html = `<h2>Briefing: ${date}</h2>`;
-    html += `<h4 class="label-bar">BAR</h4>${day.Bar.length ? renderItems(day.Bar, 'Bar') : '<p>Empty</p>'}`;
-    html += `<h4 class="label-sala">SALA</h4>${day.Sala.length ? renderItems(day.Sala, 'Sala') : '<p>Empty</p>'}`;
-
-    document.getElementById('modalResult').innerHTML = html;
+    document.getElementById('modalResult').innerHTML = `
+        <h2 style="color:var(--accent);">${date}</h2>
+        <h4 style="color:var(--bar-color); border-bottom:1px solid #eee;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'None'}
+        <h4 style="color:var(--sala-color); border-bottom:1px solid #eee; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'None'}
+    `;
     document.getElementById('modal').style.display = 'flex';
 }
 
-function updateTask(date, area, index, val) { 
-    if(scheduleData[date] && scheduleData[date][area][index]) {
-        scheduleData[date][area][index].task = val; 
-    }
-}
+function updateTask(date, area, index, val) { scheduleData[date][area][index].task = val; }
 
 function copyText() {
     const date = document.getElementById('dateSelect').value;
@@ -211,13 +165,8 @@ function copyText() {
     txt += day.Bar.map(s => `• ${s.name} (${s.time}-${s.endTime}) ${s.task || ''}`).join('\n') || "None";
     txt += `\n\n*SALA:*\n`;
     txt += day.Sala.map(s => `• ${s.name} (${s.time}-${s.endTime}) ${s.task || ''}`).join('\n') || "None";
-    
-    navigator.clipboard.writeText(txt).then(() => alert("Copied to clipboard!"));
+    navigator.clipboard.writeText(txt).then(() => alert("Copied!"));
 }
 
-function closeModal() { 
-    document.getElementById('modal').style.display = 'none'; 
-}
-
-// Run on Start
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 window.onload = loadStaff;
