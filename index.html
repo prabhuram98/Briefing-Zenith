@@ -29,15 +29,15 @@
             <h2 class="page-title">Manage</h2>
             <button class="header-btn sync-small" onclick="loadData()">🔄</button>
         </div>
-        <div class="vertical-menu">
-            <button class="menu-item-card" onclick="openPage('showStaffPage')">
-                <span>📅 Daily Staff View</span>
-                <small>Check shifts and positions</small>
-            </button>
-            <button class="menu-item-card" onclick="openPage('editStaffPage')">
-                <span>👤 Staff Directory</span>
-                <small>Add or edit staff details</small>
-            </button>
+        <div class="icon-grid">
+            <div class="big-icon" onclick="openPage('showStaffPage')">
+                <div class="icon-circle">📅</div>
+                <span>Daily View</span>
+            </div>
+            <div class="big-icon" onclick="openPage('editStaffPage')">
+                <div class="icon-circle">👤</div>
+                <span>Directory</span>
+            </div>
         </div>
     </div>
 
@@ -60,11 +60,11 @@
             <h2 class="page-title">Daily Staff</h2>
             <button class="header-btn sync-small" onclick="loadData()">🔄</button>
         </div>
-        <div class="filter-card" style="margin-bottom:15px;">
+        <div class="filter-card">
             <label class="field-label">Viewing Date</label>
             <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
         </div>
-        <div id="scheduleTableWrapper"></div>
+        <div id="scheduleTableWrapper" class="scroll-container"></div>
     </div>
 
     <div id="editStaffPage" class="page">
@@ -74,7 +74,7 @@
             <button class="header-btn sync-small" onclick="loadData()">🔄</button>
         </div>
         <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
-        <div id="staffListContainer"></div>
+        <div id="staffListContainer" class="scroll-container"></div>
     </div>
 
     <div id="modal" class="modal">
