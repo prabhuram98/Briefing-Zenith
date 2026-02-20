@@ -1,4 +1,3 @@
-// --- CONFIGURATION ---
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaDta8Pm4GyYT-rtbbFrkYrGSE74KWq6wpnJ8qOn_5JL4V6d8-pg/exec'; 
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv';
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
@@ -8,11 +7,10 @@ let scheduleData = {};
 let uniquePositions = new Set();
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "STAFF": 6 };
 
-// --- 1. DATA LOADING ---
 async function loadData() {
-    const btn = document.getElementById('refreshBtn');
-    if(btn) btn.classList.add('spinning');
-    
+    const icons = document.querySelectorAll('.sync-small');
+    icons.forEach(i => i.classList.add('spinning'));
+
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
         download: true,
         header: false,
@@ -20,14 +18,12 @@ async function loadData() {
         complete: function(results) {
             staffMap = {}; 
             uniquePositions.clear();
-            
             results.data.forEach((row, i) => {
                 if (i === 0 || !row[0]) return;
                 const rawName = row[0].toString().toLowerCase().trim();
                 const area = row[1] ? row[1].toString().trim() : "Sala";
                 const pos = row[2] ? row[2].toString().trim().toUpperCase() : "STAFF";
                 const alias = row[3] ? row[3].toString().trim() : row[0].trim();
-                
                 uniquePositions.add(pos);
                 staffMap[rawName] = { 
                     alias: alias, 
@@ -36,15 +32,14 @@ async function loadData() {
                     priority: POSITION_ORDER[pos] || 99 
                 };
             });
-
             const sortedPos = Array.from(uniquePositions).sort();
             document.getElementById('formPosition').innerHTML = sortedPos.map(p => `<option value="${p}">${p}</option>`).join('');
-            loadSchedule(btn);
+            loadSchedule(icons);
         }
     });
 }
 
-function loadSchedule(refreshBtn) {
+function loadSchedule(icons) {
     Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
         download: true,
         header: false,
@@ -53,10 +48,8 @@ function loadSchedule(refreshBtn) {
             const dates = {}; 
             const rows = results.data;
             if (rows.length < 1) return;
-            
             const header = rows[0]; 
             let dateCols = [];
-
             for (let j = 1; j < header.length; j++) {
                 const colName = header[j] ? header[j].trim() : "";
                 if (colName && !colName.toLowerCase().includes("total")) {
@@ -64,18 +57,10 @@ function loadSchedule(refreshBtn) {
                     dates[colName] = { Sala: [], Bar: [] };
                 }
             }
-
             for (let i = 1; i < rows.length; i++) {
                 let nameInSchedule = rows[i][0] ? rows[i][0].toString().toLowerCase().trim() : "";
                 if (!nameInSchedule || nameInSchedule === "name") continue;
-
-                const info = staffMap[nameInSchedule] || { 
-                    alias: nameInSchedule.toUpperCase(), 
-                    area: 'Sala', 
-                    position: 'EXTERNAL', 
-                    priority: 99 
-                };
-
+                const info = staffMap[nameInSchedule] || { alias: nameInSchedule.toUpperCase(), area: 'Sala', position: 'EXTERNAL', priority: 99 };
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].toString().trim() : "";
                     if (shift && /\d/.test(shift) && !["OFF", "FOLGA"].includes(shift.toUpperCase())) {
@@ -89,7 +74,6 @@ function loadSchedule(refreshBtn) {
                     }
                 });
             }
-            
             scheduleData = dates;
             const dateKeys = Object.keys(dates);
             if(dateKeys.length > 0) {
@@ -98,27 +82,16 @@ function loadSchedule(refreshBtn) {
                 document.getElementById('manageDateSelect').innerHTML = optHtml;
                 showStaffTable();
             }
-
-            if(refreshBtn) refreshBtn.classList.remove('spinning');
+            icons.forEach(i => i.classList.remove('spinning'));
         }
     });
-}
-
-// --- 2. NAVIGATION & RENDERING ---
-function openPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    if (pageId === 'editStaffPage') renderStaffList();
-    if (pageId === 'showStaffPage') showStaffTable();
 }
 
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
     const day = scheduleData[date];
     if(!day) return;
-    
     const present = [...(day.Bar || []), ...(day.Sala || [])].sort((a,b) => a.priority - b.priority);
-    
     document.getElementById('scheduleTableWrapper').innerHTML = `
         <div class="staff-grid-header"><span>NAME</span><span>AREA</span><span>HOURS</span></div>
         ` + present.map(s => `
@@ -129,40 +102,38 @@ function showStaffTable() {
         </div>`).join('');
 }
 
-function renderStaffList() {
-    const container = document.getElementById('staffListContainer');
-    const sortedKeys = Object.keys(staffMap).sort((a,b) => staffMap[a].priority - staffMap[b].priority);
-    container.innerHTML = sortedKeys.map(k => `
-        <div class="staff-edit-card" onclick="openStaffForm('${k}')" style="background:white; padding:15px; border-radius:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
-            <div><strong>${staffMap[k].alias}</strong><br><span class="role-subtitle">${staffMap[k].position}</span></div>
-            <div style="color:#7a4f2c">✏️</div>
-        </div>`).join('');
+function openPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if (pageId === 'editStaffPage') renderStaffList();
+    if (pageId === 'showStaffPage') showStaffTable();
 }
 
-// --- 3. BRIEFING & MODALS ---
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
-    document.getElementById('modalResult').innerHTML = `
-        <div style="text-align:center;">
-            <h3 style="color:#3e2723; margin:0;">${date}</h3>
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <p style="color:#666;">Briefing content logic will be added here.</p>
-        </div>
-    `;
+    document.getElementById('modalResult').innerHTML = `<h3>${date}</h3><p>Briefing content logic here.</p>`;
     document.getElementById('modal').style.display = 'flex';
 }
 
 function copyBriefing() {
     const text = document.getElementById('modalResult').innerText;
-    navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+    navigator.clipboard.writeText(text).then(() => alert("Copied!"));
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
-// --- 4. CRUD ---
+function renderStaffList() {
+    const container = document.getElementById('staffListContainer');
+    const sortedKeys = Object.keys(staffMap).sort((a,b) => staffMap[a].priority - staffMap[b].priority);
+    container.innerHTML = sortedKeys.map(k => `
+        <div class="staff-edit-card" onclick="openStaffForm('${k}')" style="background:white; padding:15px; border-radius:15px; margin-bottom:10px; display:flex; justify-content:space-between;">
+            <div><strong>${staffMap[k].alias}</strong><br><span class="role-subtitle">${staffMap[k].position}</span></div>
+            <div style="color:#7a4f2c">✏️</div>
+        </div>`).join('');
+}
+
 function openStaffForm(key = null) {
-    const delBtn = document.getElementById('deleteBtn');
     if (key) {
         const s = staffMap[key];
         document.getElementById('modalTitle').innerText = "Edit Staff";
@@ -170,13 +141,13 @@ function openStaffForm(key = null) {
         document.getElementById('formFullName').value = key.toUpperCase();
         document.getElementById('formAlias').value = s.alias;
         document.getElementById('formPosition').value = s.position;
-        delBtn.style.display = "block";
+        document.getElementById('deleteBtn').style.display = "block";
     } else {
         document.getElementById('modalTitle').innerText = "New Staff";
         document.getElementById('editOriginalKey').value = "";
         document.getElementById('formFullName').value = ""; 
         document.getElementById('formAlias').value = "";
-        delBtn.style.display = "none";
+        document.getElementById('deleteBtn').style.display = "none";
     }
     document.getElementById('staffModal').style.display = 'flex';
 }
@@ -186,25 +157,15 @@ async function processCRUD(action) {
     const name = document.getElementById('formFullName').value.trim().toLowerCase();
     const alias = document.getElementById('formAlias').value.trim();
     const pos = document.getElementById('formPosition').value;
-
     if (action === 'save') {
-        if (!name || !alias) return alert("Please fill Name and Alias.");
         if (orig && orig !== name) delete staffMap[orig];
         staffMap[name] = { alias, area: pos.includes("BAR") ? "Bar" : "Sala", position: pos, priority: POSITION_ORDER[pos] || 99 };
-    } else {
-        delete staffMap[orig];
-    }
-    
+    } else { delete staffMap[orig]; }
     closeStaffModal(); 
     const list = Object.keys(staffMap).map(k => [k.toUpperCase(), staffMap[k].area, staffMap[k].position, staffMap[k].alias]);
-    
-    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStaff", staffList: list }) })
-    .then(() => { 
-        alert("Synced to Cloud"); 
-        loadData(); 
-    });
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStaff", staffList: list }) }).then(() => loadData());
 }
 
-function confirmSave() { if(confirm("Save and Sync?")) processCRUD('save'); }
-function confirmDelete() { if(confirm("Permanently delete?")) processCRUD('delete'); }
+function confirmSave() { if(confirm("Save?")) processCRUD('save'); }
+function confirmDelete() { if(confirm("Delete?")) processCRUD('delete'); }
 window.onload = loadData;
