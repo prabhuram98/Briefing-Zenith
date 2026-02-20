@@ -18,6 +18,17 @@
                 <div class="icon-circle">☕</div>
                 <span>Briefing</span>
             </div>
+            <div class="big-icon" onclick="openPage('managePage')">
+                <div class="icon-circle">⚙️</div>
+                <span>Manage</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="managePage" class="page">
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Manage</h2>
+        <div class="icon-grid">
             <div class="big-icon" onclick="openPage('showStaffPage')">
                 <div class="icon-circle">📅</div>
                 <span>Daily Staff</span>
@@ -40,14 +51,14 @@
     </div>
 
     <div id="showStaffPage" class="page">
-        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Daily Staff</h2>
         <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
         <div id="scheduleTableWrapper" style="margin-top:20px;"></div>
     </div>
 
     <div id="editStaffPage" class="page">
-        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Directory</h2>
         <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
         <div id="staffListContainer"></div>
