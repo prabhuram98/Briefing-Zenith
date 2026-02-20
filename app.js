@@ -9,8 +9,6 @@ let rawRows = [];
 // --- DATA INITIALIZATION ---
 async function loadData() {
     const timestamp = new Date().getTime();
-    
-    // 1. Load Staff Roles & Positions (A: Name, B: Area, C: Position)
     Papa.parse(`${STAFF_URL}&t=${timestamp}`, {
         download: true,
         complete: (results) => {
@@ -41,8 +39,6 @@ function loadSchedule() {
 
             const dates = {};
             const headerRow = rawRows[0]; 
-
-            // Map Date Columns
             let dateCols = [];
             for (let j = 1; j < headerRow.length; j++) {
                 let label = headerRow[j] ? headerRow[j].trim() : "";
@@ -52,11 +48,9 @@ function loadSchedule() {
                 }
             }
 
-            // Map Schedule Data
             for (let i = 1; i < rawRows.length; i++) {
                 let nameInSheet = rawRows[i][0] ? rawRows[i][0].trim() : "";
                 if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
-
                 const info = staffMap[nameInSheet.toLowerCase()] || { area: 'Sala', position: 'Staff' };
                 
                 dateCols.forEach(col => {
@@ -82,50 +76,65 @@ function loadSchedule() {
     });
 }
 
-// --- UI LOGIC ---
 function updateDropdowns(keys) {
     const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
     document.getElementById('dateSelect').innerHTML = options;
     document.getElementById('manageDateSelect').innerHTML = options;
 }
 
+// --- MANAGE VIEW: SORTED BY AREA & FILTERED ---
 function showStaffTable() {
     const selectedDate = document.getElementById('manageDateSelect').value;
     const wrapper = document.getElementById('scheduleTableWrapper');
     const headerRow = rawRows[0];
-    
     const colIdx = headerRow.findIndex(cell => cell && cell.trim() === selectedDate);
+    
     if (colIdx === -1) return;
 
     document.getElementById('staffTableContainer').style.display = 'block';
     document.getElementById('tableHeaderDate').innerText = selectedDate;
 
-    let html = `<div class="staff-grid-header"><span>NAME / POSITION</span><span>AREA</span><span>HOURS</span></div>`;
-    let count = 0;
+    let presentStaff = [];
 
+    // 1. Collect and filter only staff present that day
     for (let i = 1; i < rawRows.length; i++) {
         let name = rawRows[i][0] ? rawRows[i][0].trim() : "";
         let shift = rawRows[i][colIdx] ? rawRows[i][colIdx].trim() : "";
+        
         const isOff = ["OFF", "FOLGA", "FÉRIAS", "BAIXA", "-", ""].includes(shift.toUpperCase());
+        const hasNumbers = /\d/.test(shift);
 
-        if (name && name.toLowerCase() !== 'name' && !isOff) {
-            count++;
-            // LOOKUP POSITION FROM STAFF MAP
-            const info = staffMap[name.toLowerCase()] || { area: 'SALA', position: 'General' };
-            const areaClass = info.area.toUpperCase() === 'BAR' ? 'tag-bar' : 'tag-sala';
-            
-            html += `
-                <div class="staff-row">
-                    <div class="staff-name">
-                        ${name}<br>
-                        <span style="color:#888; font-size:10px; font-weight:normal;">${info.position.toUpperCase()}</span>
-                    </div>
-                    <div class="staff-area"><span class="area-tag ${areaClass}">${info.area.toUpperCase()}</span></div>
-                    <div class="staff-hours">${shift.replace('-', ' - ')}</div>
-                </div>`;
+        if (name && name.toLowerCase() !== 'name' && !isOff && hasNumbers) {
+            const info = staffMap[name.toLowerCase()] || { area: 'Sala', position: 'Staff' };
+            presentStaff.push({
+                name: name,
+                shift: shift,
+                area: info.area,
+                position: info.position
+            });
         }
     }
-    wrapper.innerHTML = count > 0 ? html : "<p style='text-align:center; padding:20px;'>No staff scheduled.</p>";
+
+    // 2. Sort staff by area (Bar first, then Sala)
+    presentStaff.sort((a, b) => a.area.localeCompare(b.area));
+
+    // 3. Build HTML
+    let html = `<div class="staff-grid-header"><span>NAME / POSITION</span><span>AREA</span><span>HOURS</span></div>`;
+
+    presentStaff.forEach(s => {
+        const areaClass = s.area.toLowerCase() === 'bar' ? 'tag-bar' : 'tag-sala';
+        html += `
+            <div class="staff-row">
+                <div class="staff-name">
+                    ${s.name}<br>
+                    <span style="color:#888; font-size:10px; font-weight:normal;">${s.position.toUpperCase()}</span>
+                </div>
+                <div class="staff-area"><span class="area-tag ${areaClass}">${s.area.toUpperCase()}</span></div>
+                <div class="staff-hours">${s.shift}</div>
+            </div>`;
+    });
+
+    wrapper.innerHTML = presentStaff.length > 0 ? html : "<p style='text-align:center; padding:20px; color:#999;'>No staff scheduled for this day.</p>";
 }
 
 // NAVIGATION & UTILS
