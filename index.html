@@ -9,8 +9,6 @@
 </head>
 <body>
 
-    <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
-
     <div id="dashboardPage" class="page active">
         <h1 class="app-logo">ZENITH</h1>
         <div class="icon-grid">
@@ -26,6 +24,7 @@
     </div>
 
     <div id="managePage" class="page">
+        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
         <h2 class="page-title">Manage</h2>
         <div class="icon-grid">
@@ -41,6 +40,7 @@
     </div>
 
     <div id="briefingPage" class="page">
+        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
         <h2 class="page-title">Briefing</h2>
         <div class="filter-card">
@@ -51,6 +51,7 @@
     </div>
 
     <div id="showStaffPage" class="page">
+        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Daily Staff</h2>
         <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
@@ -58,6 +59,7 @@
     </div>
 
     <div id="editStaffPage" class="page">
+        <button id="refreshBtn" class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Directory</h2>
         <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
