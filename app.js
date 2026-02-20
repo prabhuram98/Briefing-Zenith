@@ -6,6 +6,15 @@ let staffMap = {};
 let scheduleData = {}; 
 let rawRows = [];      
 
+const POSITION_ORDER = {
+    "MANAGER": 1,
+    "BAR MANAGER": 2,
+    "HEAD SELLER": 3,
+    "BAR STAFF": 4,
+    "SALA STAFF": 5,
+    "STAFF": 6
+};
+
 // --- DATA INITIALIZATION ---
 async function loadData() {
     const timestamp = new Date().getTime();
@@ -15,10 +24,14 @@ async function loadData() {
             for (let i = 1; i < results.data.length; i++) {
                 let row = results.data[i];
                 if (row[0] && row[0].trim() !== "") {
-                    const nameKey = row[0].trim().toLowerCase();
-                    staffMap[nameKey] = {
+                    const fullNameKey = row[0].trim().toLowerCase();
+                    const rawPos = row[2] ? row[2].trim().toUpperCase() : "STAFF";
+                    
+                    staffMap[fullNameKey] = {
+                        alias: row[3] ? row[3].trim() : row[0].trim(), // Column D for Alias
                         area: (row[1] && row[1].toLowerCase().includes('bar')) ? 'Bar' : 'Sala',
-                        position: row[2] ? row[2].trim() : "Staff"
+                        position: rawPos,
+                        priority: POSITION_ORDER[rawPos] || 99
                     };
                 }
             }
@@ -51,7 +64,9 @@ function loadSchedule() {
             for (let i = 1; i < rawRows.length; i++) {
                 let nameInSheet = rawRows[i][0] ? rawRows[i][0].trim() : "";
                 if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
-                const info = staffMap[nameInSheet.toLowerCase()] || { area: 'Sala', position: 'Staff' };
+                
+                // Fetch info using Full Name, but we'll store the Alias
+                const info = staffMap[nameInSheet.toLowerCase()] || { alias: nameInSheet, area: 'Sala', position: 'STAFF', priority: 99 };
                 
                 dateCols.forEach(col => {
                     let shift = rawRows[i][col.index] ? rawRows[i][col.index].trim() : "";
@@ -61,8 +76,9 @@ function loadSchedule() {
                     if (hasNumbers && !isOff) {
                         let parts = shift.split(/[- ]+/);
                         dates[col.label][info.area].push({
-                            name: nameInSheet,
+                            displayName: info.alias, // Store the Alias for display
                             position: info.position,
+                            priority: info.priority,
                             time: parts[0] ? parts[0].replace('.', ':') : "--:--",
                             endTime: parts[1] ? parts[1].replace('.', ':') : "--:--",
                             task: ""
@@ -76,13 +92,7 @@ function loadSchedule() {
     });
 }
 
-function updateDropdowns(keys) {
-    const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-    document.getElementById('dateSelect').innerHTML = options;
-    document.getElementById('manageDateSelect').innerHTML = options;
-}
-
-// --- MANAGE VIEW: SORTED BY AREA & FILTERED ---
+// --- MANAGE VIEW: SHOWING ALIAS ---
 function showStaffTable() {
     const selectedDate = document.getElementById('manageDateSelect').value;
     const wrapper = document.getElementById('scheduleTableWrapper');
@@ -96,29 +106,27 @@ function showStaffTable() {
 
     let presentStaff = [];
 
-    // 1. Collect and filter only staff present that day
     for (let i = 1; i < rawRows.length; i++) {
-        let name = rawRows[i][0] ? rawRows[i][0].trim() : "";
+        let fullName = rawRows[i][0] ? rawRows[i][0].trim() : "";
         let shift = rawRows[i][colIdx] ? rawRows[i][colIdx].trim() : "";
         
         const isOff = ["OFF", "FOLGA", "FÉRIAS", "BAIXA", "-", ""].includes(shift.toUpperCase());
         const hasNumbers = /\d/.test(shift);
 
-        if (name && name.toLowerCase() !== 'name' && !isOff && hasNumbers) {
-            const info = staffMap[name.toLowerCase()] || { area: 'Sala', position: 'Staff' };
+        if (fullName && fullName.toLowerCase() !== 'name' && !isOff && hasNumbers) {
+            const info = staffMap[fullName.toLowerCase()] || { alias: fullName, area: 'Sala', position: 'STAFF', priority: 99 };
             presentStaff.push({
-                name: name,
+                alias: info.alias,
                 shift: shift,
                 area: info.area,
-                position: info.position
+                position: info.position,
+                priority: info.priority
             });
         }
     }
 
-    // 2. Sort staff by area (Bar first, then Sala)
-    presentStaff.sort((a, b) => a.area.localeCompare(b.area));
+    presentStaff.sort((a, b) => a.priority - b.priority);
 
-    // 3. Build HTML
     let html = `<div class="staff-grid-header"><span>NAME / POSITION</span><span>AREA</span><span>HOURS</span></div>`;
 
     presentStaff.forEach(s => {
@@ -126,18 +134,50 @@ function showStaffTable() {
         html += `
             <div class="staff-row">
                 <div class="staff-name">
-                    ${s.name}<br>
-                    <span style="color:#888; font-size:10px; font-weight:normal;">${s.position.toUpperCase()}</span>
+                    ${s.alias}<br>
+                    <span style="color:#ce8d5a; font-size:10px; font-weight:bold;">${s.position}</span>
                 </div>
                 <div class="staff-area"><span class="area-tag ${areaClass}">${s.area.toUpperCase()}</span></div>
                 <div class="staff-hours">${s.shift}</div>
             </div>`;
     });
 
-    wrapper.innerHTML = presentStaff.length > 0 ? html : "<p style='text-align:center; padding:20px; color:#999;'>No staff scheduled for this day.</p>";
+    wrapper.innerHTML = presentStaff.length > 0 ? html : "<p style='text-align:center; padding:20px;'>No staff working.</p>";
 }
 
-// NAVIGATION & UTILS
+// --- BRIEFING & COPY: USING ALIAS ---
+function generateBriefing() {
+    const date = document.getElementById('dateSelect').value;
+    const day = scheduleData[date];
+    if(!day) return;
+    const render = (list, area) => list.sort((a,b) => a.priority - b.priority).map((s, i) => `
+        <div class="briefing-item">
+            <div class="briefing-info">
+                <strong>${s.displayName}</strong> <small style="color:#666;">(${s.position})</small><br>
+                <span>${s.time} - ${s.endTime}</span>
+            </div>
+            <input type="text" placeholder="Task..." onchange="updateTask('${date}','${area}',${i},this.value)">
+        </div>`).join('');
+
+    document.getElementById('modalResult').innerHTML = `
+        <h2 style="color:#7a4f2c;">${date}</h2>
+        <h4 style="color:#d9534f; border-bottom:1px solid #eee;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'None'}
+        <h4 style="color:#337ab7; border-bottom:1px solid #eee; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'None'}`;
+    document.getElementById('modal').style.display = 'flex';
+}
+
+function copyText() {
+    const date = document.getElementById('dateSelect').value;
+    const day = scheduleData[date];
+    const sortFn = (a,b) => a.priority - b.priority;
+    let txt = `*ZENITH BRIEFING - ${date}*\n\n*BAR:*\n` + 
+              (day.Bar.sort(sortFn).map(s => `• ${s.displayName} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None") + 
+              `\n\n*SALA:*\n` + 
+              (day.Sala.sort(sortFn).map(s => `• ${s.displayName} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None");
+    navigator.clipboard.writeText(txt).then(() => alert("Copied!"));
+}
+
+// Navigation & Modal Closing
 function switchPage(pageId, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId + 'Page').classList.add('active');
@@ -145,38 +185,12 @@ function switchPage(pageId, btn) {
     btn.classList.add('active');
     document.getElementById('pageTitle').innerText = pageId.toUpperCase();
 }
-
-function generateBriefing() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    if(!day) return;
-    const render = (list, area) => list.map((s, i) => `
-        <div class="briefing-item">
-            <div class="briefing-info">
-                <strong>${s.name}</strong> <small style="color:#666;">(${s.position})</small><br>
-                <span>${s.time} - ${s.endTime}</span>
-            </div>
-            <input type="text" placeholder="Assign task..." onchange="updateTask('${date}','${area}',${i},this.value)">
-        </div>`).join('');
-    document.getElementById('modalResult').innerHTML = `
-        <h2 style="color:#7a4f2c; margin-bottom:5px;">${date}</h2>
-        <h4 style="color:#d9534f; border-bottom:1px solid #eee; margin-top:15px;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'None'}
-        <h4 style="color:#337ab7; border-bottom:1px solid #eee; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'None'}`;
-    document.getElementById('modal').style.display = 'flex';
-}
-
 function updateTask(date, area, index, val) { if(scheduleData[date]) scheduleData[date][area][index].task = val; }
-
-function copyText() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    let txt = `*ZENITH BRIEFING - ${date}*\n\n*BAR:*\n` + 
-              (day.Bar.map(s => `• ${s.name} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None") + 
-              `\n\n*SALA:*\n` + 
-              (day.Sala.map(s => `• ${s.name} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None");
-    navigator.clipboard.writeText(txt).then(() => alert("Copied!"));
+function updateDropdowns(keys) {
+    const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+    document.getElementById('dateSelect').innerHTML = options;
+    document.getElementById('manageDateSelect').innerHTML = options;
 }
-
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function closeStaffTable() { document.getElementById('staffTableContainer').style.display = 'none'; }
 window.onload = loadData;
