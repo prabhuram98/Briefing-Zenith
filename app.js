@@ -1,37 +1,32 @@
-// --- CONFIGURATION ---
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv'; 
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTXbTbHrr8p3Cc87CIYx6B0wEQdybQoOeWKcna6ED63jr9BBXolLuHLyn_vvv1SVj7fw/exec'; 
 
 let staffMap = {}; 
 let scheduleData = {}; 
 let rawRows = [];      
 
 const POSITION_ORDER = {
-    "MANAGER": 1,
-    "BAR MANAGER": 2,
-    "HEAD SELLER": 3,
-    "BAR STAFF": 4,
-    "SALA STAFF": 5,
-    "STAFF": 6
+    "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "STAFF": 6
 };
 
-// --- DATA INITIALIZATION ---
+// --- DATA LOADING ---
 async function loadData() {
     const timestamp = new Date().getTime();
     Papa.parse(`${STAFF_URL}&t=${timestamp}`, {
         download: true,
         complete: (results) => {
+            staffMap = {};
             for (let i = 1; i < results.data.length; i++) {
                 let row = results.data[i];
                 if (row[0] && row[0].trim() !== "") {
-                    const fullNameKey = row[0].trim().toLowerCase();
-                    const rawPos = row[2] ? row[2].trim().toUpperCase() : "STAFF";
-                    
-                    staffMap[fullNameKey] = {
-                        alias: row[3] ? row[3].trim() : row[0].trim(), // Fetch Column D
+                    const nameKey = row[0].trim().toLowerCase();
+                    const pos = row[2] ? row[2].trim().toUpperCase() : "STAFF";
+                    staffMap[nameKey] = {
+                        alias: row[3] ? row[3].trim() : row[0].trim(),
                         area: (row[1] && row[1].toLowerCase().includes('bar')) ? 'Bar' : 'Sala',
-                        position: rawPos,
-                        priority: POSITION_ORDER[rawPos] || 99
+                        position: pos,
+                        priority: POSITION_ORDER[pos] || 99
                     };
                 }
             }
@@ -41,155 +36,115 @@ async function loadData() {
 }
 
 function loadSchedule() {
-    const timestamp = new Date().getTime();
-    Papa.parse(`${SCHEDULE_URL}&t=${timestamp}`, {
+    Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
         download: true,
-        header: false,
-        skipEmptyLines: true,
         complete: (results) => {
             rawRows = results.data;
-            if (!rawRows || rawRows.length < 2) return;
-
             const dates = {};
-            const headerRow = rawRows[0]; 
+            const headerRow = rawRows[0];
             let dateCols = [];
             for (let j = 1; j < headerRow.length; j++) {
-                let label = headerRow[j] ? headerRow[j].trim() : "";
-                if (label !== "" && !label.toLowerCase().includes("total")) {
+                let label = headerRow[j]?.trim();
+                if (label && !label.toLowerCase().includes("total")) {
                     dateCols.push({ index: j, label: label });
                     dates[label] = { Sala: [], Bar: [] };
                 }
             }
-
             for (let i = 1; i < rawRows.length; i++) {
-                let nameInSheet = rawRows[i][0] ? rawRows[i][0].trim() : "";
-                if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
-                
-                const info = staffMap[nameInSheet.toLowerCase()] || { alias: nameInSheet, area: 'Sala', position: 'STAFF', priority: 99 };
-                
+                let name = rawRows[i][0]?.trim();
+                if (!name || name.toLowerCase() === "name") continue;
+                const info = staffMap[name.toLowerCase()] || { alias: name, area: 'Sala', position: 'STAFF', priority: 99 };
                 dateCols.forEach(col => {
-                    let shift = rawRows[i][col.index] ? rawRows[i][col.index].trim() : "";
-                    const hasNumbers = /\d/.test(shift);
-                    const isOff = ["OFF", "FOLGA", "FÉRIAS", "BAIXA", "-", ""].includes(shift.toUpperCase());
-
-                    if (hasNumbers && !isOff) {
+                    let shift = rawRows[i][col.index]?.trim();
+                    if (/\d/.test(shift) && !["OFF", "FOLGA"].includes(shift.toUpperCase())) {
                         let parts = shift.split(/[- ]+/);
                         dates[col.label][info.area].push({
-                            displayName: info.alias, 
-                            position: info.position,
-                            priority: info.priority,
-                            time: parts[0] ? parts[0].replace('.', ':') : "--:--",
-                            endTime: parts[1] ? parts[1].replace('.', ':') : "--:--",
-                            task: ""
+                            displayName: info.alias, position: info.position, priority: info.priority,
+                            time: parts[0]?.replace('.', ':') || "--:--",
+                            endTime: parts[1]?.replace('.', ':') || "--:--", task: ""
                         });
                     }
                 });
             }
             scheduleData = dates;
-            updateDropdowns(Object.keys(dates));
+            const options = Object.keys(dates).map(k => `<option value="${k}">${k}</option>`).join('');
+            document.getElementById('dateSelect').innerHTML = options;
+            document.getElementById('manageDateSelect').innerHTML = options;
         }
     });
 }
 
-// --- MANAGE VIEW ---
+// --- NAVIGATION ---
+function openPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if(pageId === 'editStaffPage') renderStaffList();
+    if(pageId === 'showStaffPage') showStaffTable();
+}
+
+// --- CRUD: MANAGE STAFF ---
+function renderStaffList() {
+    const container = document.getElementById('staffListContainer');
+    container.innerHTML = "";
+    Object.keys(staffMap).sort((a,b) => staffMap[a].priority - staffMap[b].priority).forEach(key => {
+        const s = staffMap[key];
+        const div = document.createElement('div');
+        div.className = 'staff-edit-card';
+        div.innerHTML = `<div><strong>${s.alias}</strong><br><small>${s.position}</small></div>
+                         <div><button onclick="editStaff('${key}')">✏️</button>
+                         <button onclick="deleteStaff('${key}')">🗑️</button></div>`;
+        container.appendChild(div);
+    });
+}
+
+async function saveToSheet() {
+    const list = Object.keys(staffMap).map(key => [key.toUpperCase(), staffMap[key].area, staffMap[key].position, staffMap[key].alias]);
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({ action: "updateStaff", staffList: list })
+    }).then(() => alert("Saved Permanently to Google Sheets!"));
+}
+
+function deleteStaff(key) {
+    if(confirm(`Delete ${staffMap[key].alias}?`)) { delete staffMap[key]; renderStaffList(); }
+}
+
+function editStaff(key) {
+    const s = staffMap[key];
+    const newAlias = prompt("Alias:", s.alias);
+    const newPos = prompt("Position (MANAGER, BAR STAFF, etc):", s.position).toUpperCase();
+    if(newAlias) {
+        staffMap[key].alias = newAlias;
+        staffMap[key].position = newPos;
+        staffMap[key].area = newPos.includes("BAR") ? "Bar" : "Sala";
+        staffMap[key].priority = POSITION_ORDER[newPos] || 99;
+        renderStaffList();
+    }
+}
+
+// --- SHOW STAFF (GROUPED & SORTED) ---
 function showStaffTable() {
-    const selectedDate = document.getElementById('manageDateSelect').value;
-    const wrapper = document.getElementById('scheduleTableWrapper');
-    const headerRow = rawRows[0];
-    const colIdx = headerRow.findIndex(cell => cell && cell.trim() === selectedDate);
-    
-    if (colIdx === -1) return;
-
-    document.getElementById('staffTableContainer').style.display = 'block';
-    document.getElementById('tableHeaderDate').innerText = selectedDate;
-
-    let presentStaff = [];
-
+    const date = document.getElementById('manageDateSelect').value;
+    const colIdx = rawRows[0].findIndex(c => c?.trim() === date);
+    let present = [];
     for (let i = 1; i < rawRows.length; i++) {
-        let fullName = rawRows[i][0] ? rawRows[i][0].trim() : "";
-        let shift = rawRows[i][colIdx] ? rawRows[i][colIdx].trim() : "";
-        
-        const isOff = ["OFF", "FOLGA", "FÉRIAS", "BAIXA", "-", ""].includes(shift.toUpperCase());
-        const hasNumbers = /\d/.test(shift);
-
-        if (fullName && fullName.toLowerCase() !== 'name' && !isOff && hasNumbers) {
-            const info = staffMap[fullName.toLowerCase()] || { alias: fullName, area: 'Sala', position: 'STAFF', priority: 99 };
-            presentStaff.push({
-                alias: info.alias,
-                shift: shift,
-                area: info.area,
-                position: info.position,
-                priority: info.priority
-            });
+        let name = rawRows[i][0]?.trim();
+        let shift = rawRows[i][colIdx]?.trim();
+        if (name && /\d/.test(shift) && !["OFF", "FOLGA"].includes(shift.toUpperCase())) {
+            const info = staffMap[name.toLowerCase()] || { alias: name, area: 'Sala', position: 'STAFF', priority: 99 };
+            present.push({ alias: info.alias, shift, area: info.area, position: info.position, priority: info.priority });
         }
     }
-
-    presentStaff.sort((a, b) => a.priority - b.priority);
-
-    let html = `<div class="staff-grid-header"><span>NAME / POSITION</span><span>AREA</span><span>HOURS</span></div>`;
-
-    presentStaff.forEach(s => {
-        const areaClass = s.area.toLowerCase() === 'bar' ? 'tag-bar' : 'tag-sala';
-        html += `
-            <div class="staff-row">
-                <div class="staff-name">
-                    ${s.alias}<br>
-                    <span style="color:#ce8d5a; font-size:10px; font-weight:bold;">${s.position}</span>
-                </div>
-                <div class="staff-area"><span class="area-tag ${areaClass}">${s.area.toUpperCase()}</span></div>
-                <div class="staff-hours">${s.shift}</div>
-            </div>`;
+    present.sort((a, b) => a.priority - b.priority);
+    let html = `<div class="staff-grid-header"><span>NAME</span><span>AREA</span><span>HOURS</span></div>`;
+    present.forEach(s => {
+        html += `<div class="staff-row">
+            <div>${s.alias}<br><small style="color:#ce8d5a">${s.position}</small></div>
+            <div><span class="area-tag tag-${s.area.toLowerCase()}">${s.area.toUpperCase()}</span></div>
+            <div>${s.shift}</div></div>`;
     });
-
-    wrapper.innerHTML = presentStaff.length > 0 ? html : "<p style='text-align:center; padding:20px;'>No staff scheduled.</p>";
+    document.getElementById('scheduleTableWrapper').innerHTML = html;
 }
 
-// --- BRIEFING & COPY ---
-function generateBriefing() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    if(!day) return;
-    const render = (list, area) => list.sort((a,b) => a.priority - b.priority).map((s, i) => `
-        <div class="briefing-item">
-            <div class="briefing-info">
-                <strong>${s.displayName}</strong> <small style="color:#666;">(${s.position})</small><br>
-                <span>${s.time} - ${s.endTime}</span>
-            </div>
-            <input type="text" placeholder="Task..." onchange="updateTask('${date}','${area}',${i},this.value)">
-        </div>`).join('');
-
-    document.getElementById('modalResult').innerHTML = `
-        <h2 style="color:#7a4f2c;">${date}</h2>
-        <h4 style="color:#d9534f; border-bottom:1px solid #eee;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'None'}
-        <h4 style="color:#337ab7; border-bottom:1px solid #eee; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'None'}`;
-    document.getElementById('modal').style.display = 'flex';
-}
-
-function copyText() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    const sortFn = (a,b) => a.priority - b.priority;
-    let txt = `*ZENITH BRIEFING - ${date}*\n\n*BAR:*\n` + 
-              (day.Bar.sort(sortFn).map(s => `• ${s.displayName} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None") + 
-              `\n\n*SALA:*\n` + 
-              (day.Sala.sort(sortFn).map(s => `• ${s.displayName} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None");
-    navigator.clipboard.writeText(txt).then(() => alert("Briefing Copied!"));
-}
-
-// NAVIGATION
-function switchPage(pageId, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId + 'Page').classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('pageTitle').innerText = pageId.toUpperCase();
-}
-function updateTask(date, area, index, val) { if(scheduleData[date]) scheduleData[date][area][index].task = val; }
-function updateDropdowns(keys) {
-    const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-    document.getElementById('dateSelect').innerHTML = options;
-    document.getElementById('manageDateSelect').innerHTML = options;
-}
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function closeStaffTable() { document.getElementById('staffTableContainer').style.display = 'none'; }
 window.onload = loadData;
