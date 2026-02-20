@@ -1,28 +1,100 @@
-/* Small Sync Button Style */
+* { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+body { 
+    background-color: #f3ebe3; /* Light Coffee / Latte Cream */
+    margin: 0; 
+    color: #3e2723; /* Dark Coffee Text */
+}
+
+.page { display: none; padding: 20px; min-height: 100vh; position: relative; }
+.page.active { display: block; }
+
+.app-logo { text-align: center; letter-spacing: 5px; margin: 60px 0 40px 0; font-weight: 900; color: #3e2723; }
+
+.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+/* Icon Cards: Dark Coffee */
+.big-icon { 
+    background: #3e2723; /* Dark Coffee */
+    border-radius: 20px; 
+    padding: 30px 10px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    box-shadow: 0 4px 15px rgba(62, 39, 35, 0.2); 
+    cursor: pointer;
+}
+
+.big-icon .icon-circle { font-size: 40px; margin-bottom: 10px; }
+.big-icon span { font-weight: bold; font-size: 13px; color: #f3ebe3; /* Light text on dark icon */ }
+
+/* Buttons & Navigation */
+.btn-primary { 
+    background: #3e2723; 
+    color: #f3ebe3; 
+    border: none; 
+    padding: 16px; 
+    border-radius: 12px; 
+    width: 100%; 
+    font-weight: bold; 
+    font-size: 16px; 
+}
+
+.btn-secondary { 
+    background: #8d6e63; /* Medium roast for secondary */
+    color: white; 
+    border: none; 
+    padding: 16px; 
+    border-radius: 12px; 
+    width: 100%; 
+    font-weight: bold; 
+}
+
+.mini-sync-btn, .close-btn { 
+    background: #3e2723; 
+    color: #f3ebe3; 
+    border: none; 
+}
+
 .mini-sync-btn {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: #3e2723;
-    color: white;
-    border: none;
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 12px;
     font-weight: bold;
     z-index: 999;
-    opacity: 0.8;
 }
 
-.mini-sync-btn:active {
-    opacity: 1;
-    transform: scale(0.95);
+.close-btn { 
+    position: absolute; 
+    top: 20px; 
+    right: 20px; 
+    width: 35px; 
+    height: 35px; 
+    border-radius: 50%; 
 }
 
-/* Ensure the Zenith logo doesn't clash with the button */
-.app-logo { 
-    text-align: center; 
-    letter-spacing: 5px; 
-    margin: 60px 0 40px 0; /* Added more top margin */
-    font-weight: 900; 
+/* Modals & Cards */
+.modal-content { 
+    background: #ffffff; 
+    width: 90%; 
+    max-width: 400px; 
+    padding: 25px; 
+    border-radius: 25px; 
+    border: 2px solid #3e2723;
+}
+
+.filter-card, .staff-edit-card, .staff-row { 
+    background: #ffffff; 
+    padding: 15px; 
+    border-radius: 15px; 
+    margin-bottom: 10px; 
+    border: 1px solid #d7ccc8;
+}
+
+.styled-select, input { 
+    width: 100%; padding: 14px; border-radius: 10px; 
+    border: 1px solid #d7ccc8; background: #fafafa; font-size: 16px; 
 }
