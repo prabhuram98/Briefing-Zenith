@@ -3,6 +3,8 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzeVunNwX1r-TqWXEgXu
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv'; 
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
+
+
 let staffData = [];
 let scheduleData = {};
 let employeeSchedules = {};
@@ -14,6 +16,7 @@ function switchPage(pageId, btn) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('pageTitle').innerText = pageId.toUpperCase();
+    if(pageId === 'manage') closeStaffTable(); // Reset table when switching
 }
 
 // --- DATA LOADING ---
@@ -46,7 +49,7 @@ function loadSchedule() {
             let dateCols = [];
             const headerRow = rows[0]; 
 
-            // Dates now start at index 1 (Column B)
+            // Dates start at Column B (Index 1)
             for (let j = 1; j < headerRow.length; j++) {
                 let cellValue = headerRow[j] ? headerRow[j].trim() : "";
                 if (cellValue !== "") {
@@ -56,7 +59,6 @@ function loadSchedule() {
             }
 
             for (let i = 1; i < rows.length; i++) {
-                // Name is now in index 0 (Column A)
                 let nameInSheet = rows[i][0] ? rows[i][0].trim() : "";
                 if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
 
@@ -66,10 +68,9 @@ function loadSchedule() {
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index] ? rows[i][col.index].trim() : "";
+                    const ignore = ["OFF", "FOLGA", "F", "-", "COMPENSAÇÃO", "BAIXA"];
                     
-                    // Filter out non-working shifts
-                    const ignoreList = ["OFF", "FOLGA", "F", "-", "COMPENSAÇÃO", "BAIXA", "BAIXA MÉDICA"];
-                    if (shift !== "" && !ignoreList.includes(shift.toUpperCase())) {
+                    if (shift !== "" && !ignore.includes(shift.toUpperCase())) {
                         let times = shift.split('-');
                         let start = times[0]?.trim().replace('.', ':') || "--:--";
                         let end = times[1]?.trim().replace('.', ':') || "--:--";
@@ -105,42 +106,57 @@ function updateDateDropdowns(keys) {
 }
 
 // --- CORE FUNCTIONS ---
+function showStaffTable() {
+    const date = document.getElementById('manageDateSelect').value;
+    const day = scheduleData[date];
+    const container = document.getElementById('staffTableContainer');
+    const wrapper = document.getElementById('scheduleTableWrapper');
+    
+    if (!day) return;
+    container.style.display = 'block';
+    document.getElementById('tableHeaderDate').innerText = date;
+
+    const renderTable = (list, title, color) => `
+        <div style="margin-top:15px;">
+            <h4 style="color:${color}; border-bottom:2px solid ${color}; padding-bottom:5px;">${title}</h4>
+            <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:5px;">
+                <tr style="background:#f9f9f9; text-align:left;">
+                    <th style="padding:8px; border:1px solid #eee;">Name</th>
+                    <th style="padding:8px; border:1px solid #eee;">Shift</th>
+                </tr>
+                ${list.map(s => `<tr>
+                    <td style="padding:8px; border:1px solid #eee; font-weight:bold;">${s.name}</td>
+                    <td style="padding:8px; border:1px solid #eee;">${s.time}-${s.endTime}</td>
+                </tr>`).join('')}
+            </table>
+        </div>`;
+
+    let html = "";
+    if (day.Bar.length) html += renderTable(day.Bar, "BAR", "#d9534f");
+    if (day.Sala.length) html += renderTable(day.Sala, "SALA", "#337ab7");
+    wrapper.innerHTML = html || "<p>No shifts assigned.</p>";
+    container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeStaffTable() {
+    document.getElementById('staffTableContainer').style.display = 'none';
+}
+
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
     if(!day) return;
-    document.getElementById('copyBtn').style.display = 'block';
-
+    
     const render = (list, area) => list.map((s, i) => `
         <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:8px;">
-            <div style="font-size:14px;"><strong>${s.name}</strong> (${s.time} - ${s.endTime})</div>
-            <input type="text" placeholder="Assign Task..." onchange="updateTask('${date}','${area}',${i},this.value)" 
-                   style="width:90%; margin-top:5px; padding:6px; font-size:13px;">
+            <div style="font-size:14px;"><strong>${s.name}</strong> (${s.time}-${s.endTime})</div>
+            <input type="text" placeholder="Task..." onchange="updateTask('${date}','${area}',${i},this.value)" 
+                   style="width:95%; margin-top:5px; padding:8px; font-size:13px; border-radius:5px; border:1px solid #ddd;">
         </div>`).join('');
 
     let html = `<h2>Briefing: ${date}</h2>`;
-    html += `<h4 style="color:#d9534f;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'No Staff'}`;
-    html += `<h4 style="color:#337ab7; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'No Staff'}`;
-
-    document.getElementById('modalResult').innerHTML = html;
-    document.getElementById('modal').style.display = 'flex';
-}
-
-function viewToday() {
-    const date = document.getElementById('manageDateSelect').value;
-    const day = scheduleData[date];
-    if(!day) return;
-    document.getElementById('copyBtn').style.display = 'none';
-
-    const renderTable = (list) => `
-        <table style="width:100%; text-align:left; font-size:14px; margin-bottom:15px;">
-            <tr style="color:#888;"><th>Name</th><th>In</th><th>Out</th></tr>
-            ${list.map(s => `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px 0;">${s.name}</td><td>${s.time}</td><td>${s.endTime}</td></tr>`).join('')}
-        </table>`;
-
-    let html = `<h2>Schedule: ${date}</h2>`;
-    html += `<h4 style="color:#d9534f; border-bottom:1px solid #d9534f;">BAR</h4>` + (day.Bar.length ? renderTable(day.Bar) : 'None');
-    html += `<h4 style="color:#337ab7; border-bottom:1px solid #337ab7; margin-top:20px;">SALA</h4>` + (day.Sala.length ? renderTable(day.Sala) : 'None');
+    html += `<h4 style="color:#d9534f;">BAR</h4>${day.Bar.length ? render(day.Bar, 'Bar') : 'None'}`;
+    html += `<h4 style="color:#337ab7; margin-top:15px;">SALA</h4>${day.Sala.length ? render(day.Sala, 'Sala') : 'None'}`;
 
     document.getElementById('modalResult').innerHTML = html;
     document.getElementById('modal').style.display = 'flex';
@@ -152,15 +168,15 @@ function copyText() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
     let txt = `*ZENITH BRIEFING - ${date}*\n\n*BAR:*\n`;
-    txt += day.Bar.map(s => `${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
+    txt += day.Bar.map(s => `• ${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
     txt += `\n\n*SALA:*\n`;
-    txt += day.Sala.map(s => `${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
-    navigator.clipboard.writeText(txt).then(() => alert("Copied to Clipboard!"));
+    txt += day.Sala.map(s => `• ${s.name} (${s.time}-${s.endTime}) ${s.task}`).join('\n') || "None";
+    navigator.clipboard.writeText(txt).then(() => alert("Briefing copied!"));
 }
 
 function renderStaffList() {
-    const html = Object.keys(employeeSchedules).map(name => `<div style="padding:5px 0; border-bottom:1px solid #f0f0f0;">${name}</div>`).join('');
-    document.getElementById('staffList').innerHTML = html || "No staff found in schedule.";
+    const html = Object.keys(employeeSchedules).map(name => `<div style="padding:8px 0; border-bottom:1px solid #f0f0f0;">${name}</div>`).join('');
+    document.getElementById('staffList').innerHTML = html || "No staff found.";
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
