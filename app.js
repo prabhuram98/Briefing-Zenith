@@ -1,18 +1,18 @@
-// app.js - Full Professional Version
-window.staffMap = {}; 
-window.scheduleData = {}; 
-
+// app.js - MASTER CONTROLLER 2026
 const CONFIG = {
+    SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaDta8Pm4GyYT-rtbbFrkYrGSE74KWq6wpnJ8qOn_5JL4V6d8-pg/exec',
     SCHEDULE_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv',
     STAFF_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv'
 };
 
+window.staffMap = {}; 
+window.scheduleData = {}; 
+
 window.onload = () => loadAllData();
 
+// --- 1. DATA CORE ---
 async function loadAllData() {
-    const syncIcons = document.querySelectorAll('.sync-small');
-    syncIcons.forEach(i => i.classList.add('spinning'));
-
+    console.log("Syncing data...");
     Papa.parse(`${CONFIG.STAFF_URL}&t=${Date.now()}`, {
         download: true,
         complete: (results) => {
@@ -27,12 +27,12 @@ async function loadAllData() {
                     alias: row[3]?.trim() || row[0].trim()
                 };
             });
-            fetchSchedule(syncIcons);
+            fetchSchedule();
         }
     });
 }
 
-function fetchSchedule(icons) {
+function fetchSchedule() {
     Papa.parse(`${CONFIG.SCHEDULE_URL}&t=${Date.now()}`, {
         download: true,
         complete: (results) => {
@@ -62,21 +62,68 @@ function fetchSchedule(icons) {
                 });
             }
             window.scheduleData = dates;
-            refreshDropdown();
-            icons.forEach(i => i.classList.remove('spinning'));
+            updateDropdown();
         }
     });
 }
 
-function refreshDropdown() {
+function updateDropdown() {
     const select = document.getElementById('dateSelect');
     if (select) {
-        const keys = Object.keys(window.scheduleData);
-        select.innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+        select.innerHTML = Object.keys(window.scheduleData).map(k => `<option value="${k}">${k}</option>`).join('');
     }
 }
 
-// --- GENERATE BRIEFING ---
+// --- 2. STAFF CRUD ---
+function openStaffForm(name = '', area = 'Sala', pos = 'Staff', alias = '') {
+    const modal = document.getElementById('modal');
+    const res = document.getElementById('modalResult');
+    
+    res.innerHTML = `
+        <div class="crud-form">
+            <h3>${name ? 'Edit' : 'Add'} Team Member</h3>
+            <label>Real Name (Schedule Name)</label>
+            <input type="text" id="f_name" value="${name}" ${name ? 'readonly' : ''}>
+            <label>Alias (For Briefing)</label>
+            <input type="text" id="f_alias" value="${alias || name}">
+            <label>Work Area</label>
+            <select id="f_area">
+                <option value="Sala" ${area === 'Sala' ? 'selected' : ''}>Sala Staff</option>
+                <option value="Bar" ${area === 'Bar' ? 'selected' : ''}>Bar Staff</option>
+            </select>
+            <label>Position</label>
+            <input type="text" id="f_pos" value="${pos}">
+            <button class="main-btn" onclick="saveStaff()">SAVE CHANGES</button>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+async function saveStaff() {
+    const data = {
+        action: 'upsertStaff',
+        name: document.getElementById('f_name').value,
+        alias: document.getElementById('f_alias').value,
+        area: document.getElementById('f_area').value,
+        position: document.getElementById('f_pos').value
+    };
+
+    const btn = document.querySelector('.crud-form button');
+    btn.innerText = "Syncing...";
+    btn.disabled = true;
+
+    try {
+        await fetch(CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+        alert("Staff updated in Spreadsheet!");
+        closeModal();
+        loadAllData();
+    } catch (e) {
+        alert("Error saving: " + e);
+        btn.disabled = false;
+    }
+}
+
+// --- 3. THE BRIEFING ---
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const dayData = window.scheduleData[date];
@@ -101,12 +148,10 @@ function generateBriefing() {
     const barPool = process(dayData.Bar);
     const salaPool = process(dayData.Sala);
 
-    // Dynamic Logic
     const barA = barPool[0] || { alias: "N/A", in: "--:--" };
     const barB = barPool[1] || barA;
     const porta = salaPool[0] || { alias: "N/A", in: "--:--" };
     
-    // HACCP Logic (Sorted by Exit Time)
     const bExit = [...barPool].sort((a,b) => a.outM - b.outM);
     const sExit = [...salaPool].sort((a,b) => a.outM - b.outM);
 
@@ -116,40 +161,24 @@ function generateBriefing() {
     const es2 = sExit[1] || es1;
     const ls = sExit[sExit.length-1] || porta;
 
-    // --- TEMPLATE BUILDING ---
     let b = `Bom dia a todos!\n\n*BRIEFING ${date}*\n\n`;
     b += `${porta.in} Porta: ${porta.alias}\n\n`;
-    
-    b += `BAR:\n`;
-    b += `${barA.in} Abertura Sala/Bar: *${barA.alias}*\n`;
-    b += `${barA.in} Bar A: *${barA.alias}* Barista – Bebidas\n`;
-    b += `${barB.in} Bar B: *${barB.alias}* Barista – Cafés / Caixa\n`;
-    
+    b += `BAR:\n${barA.in} Abertura Sala/Bar: *${barA.alias}*\n${barA.in} Bar A: *${barA.alias}* Barista – Bebidas\n${barB.in} Bar B: *${barB.alias}* Barista – Cafés / Caixa\n`;
     b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n——————————————\n\nSELLERS:\n`;
     
-    // Seller Logic
     if (salaPool.length > 1) b += `${salaPool[1].in} Seller A: *${salaPool[1].alias}*\n`;
     if (salaPool.length > 2) b += `${salaPool[2].in} Seller B: *${salaPool[2].alias}*\n`;
     if (salaPool.length > 3) b += `${salaPool[3].in} Seller C: *${salaPool[3].alias}*\n`;
     
     b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${salaPool.length > 3 ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
-    
-    b += `HACCP / LIMPEZA BAR:\n`;
-    b += `${eb1.out} Preparações Bar: *${eb1.alias}*\n`;
-    b += `${lb.out} Fecho Bar: *${lb.alias}*\n\n`;
-    
-    b += `HACCP / SALA:\n`;
-    b += `${es1.out} Fecho do sala de cima: *${es1.alias}*\n`;
-    b += `${es1.out} Limpeza e reposição aparador: *${es1.alias}*\n`;
-    b += `${es2.out} Repor papel (WC): *${es2.alias}*\n`;
-    b += `${ls.out} Fecho Sala: *${ls.alias}*`;
+    b += `HACCP / LIMPEZA BAR:\n${eb1.out} Preparações Bar: *${eb1.alias}*\n${lb.out} Fecho Bar: *${lb.alias}*\n\n`;
+    b += `HACCP / SALA:\n${es1.out} Fecho do sala de cima: *${es1.alias}*\n${es1.out} Limpeza e reposição aparador: *${es1.alias}*\n${es2.out} Repor papel (WC): *${es2.alias}*\n${ls.out} Fecho Sala: *${ls.alias}*`;
 
-    const resArea = document.getElementById('modalResult');
-    resArea.innerHTML = `<pre style="white-space:pre-wrap; font-family:inherit;">${b}</pre>
-                        <button class="main-btn" onclick="copyBriefing()">Copy Briefing</button>`;
+    document.getElementById('modalResult').innerHTML = `<pre id="copyText">${b}</pre><button class="main-btn" onclick="copyBriefing()">Copy to Clipboard</button>`;
     document.getElementById('modal').style.display = 'flex';
 }
 
+// --- 4. NAVIGATION ---
 function openPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
@@ -158,26 +187,26 @@ function openPage(pageId) {
 }
 
 function renderDirectory() {
-    let h = '<h3>Staff Directory</h3><table style="width:100%; border-collapse:collapse;">';
+    let html = `<table class="staff-table"><tr><th>Alias</th><th>Area</th><th>Action</th></tr>`;
     Object.values(window.staffMap).forEach(s => {
-        h += `<tr style="border-bottom:1px solid #ddd;"><td>${s.alias}</td><td>${s.area}</td><td>${s.position}</td></tr>`;
+        html += `<tr><td>${s.alias}</td><td>${s.area}</td><td><button onclick="openStaffForm('${s.realName}','${s.area}','${s.position}','${s.alias}')">Edit</button></td></tr>`;
     });
-    document.getElementById('staffListContainer').innerHTML = h + '</table>';
+    document.getElementById('staffListContainer').innerHTML = html + `</table>`;
 }
 
 function renderDaily() {
     const d = document.getElementById('dateSelect').value;
     const data = window.scheduleData[d];
     if (!data) return;
-    let h = `<h3>${d}</h3><table style="width:100%; border-collapse:collapse;">`;
+    let html = `<table><tr><th>Area</th><th>Staff</th><th>Shift</th></tr>`;
     [...data.Bar, ...data.Sala].forEach(s => {
-        h += `<tr><td><b>${s.area}</b></td><td>${s.alias}</td><td>${s.shiftRaw}</td></tr>`;
+        html += `<tr><td>${s.area}</td><td>${s.alias}</td><td>${s.shiftRaw}</td></tr>`;
     });
-    document.getElementById('dailyViewContainer').innerHTML = h + '</table>';
+    document.getElementById('dailyViewContainer').innerHTML = html + `</table>`;
 }
 
 function copyBriefing() {
-    const text = document.querySelector('#modalResult pre').innerText;
+    const text = document.getElementById('copyText').innerText;
     navigator.clipboard.writeText(text).then(() => alert("Copied!"));
 }
 
