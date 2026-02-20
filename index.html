@@ -18,34 +18,30 @@
     <section id="briefingPage" class="page active">
         <div class="card">
             <label>Select Briefing Date:</label>
-            <select id="dateSelect"><option>Loading...</option></select>
+            <select id="dateSelect"><option>Loading dates...</option></select>
             <button class="main-btn" onclick="generateBriefing()" style="margin-top:10px;">Generate Briefing</button>
         </div>
     </section>
 
     <section id="managePage" class="page">
         <div class="card">
-            <h3>Quick Look: View Today</h3>
+            <h3>Staff Schedule Viewer</h3>
             <label style="font-size: 12px; color:#666;">Check shifts for:</label>
             <select id="manageDateSelect"></select>
-            <button class="main-btn" onclick="viewToday()" style="margin-top: 10px; background: #4a4a4a;">View Staff & Times</button>
+            <button class="main-btn" onclick="showStaffTable()" style="margin-top: 15px; background: #2c3e50;">Show Staff</button>
+        </div>
+
+        <div id="staffTableContainer" class="card" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <h3 id="tableHeaderDate" style="margin:0; font-size: 18px;"></h3>
+                <button onclick="closeStaffTable()" style="background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ Close</button>
+            </div>
+            <div id="scheduleTableWrapper"></div>
         </div>
 
         <div class="card">
-            <h3>Add Staff</h3>
-            <div class="input-group">
-                <input type="text" id="staffName" placeholder="Name">
-                <select id="staffArea">
-                    <option value="Sala">Sala</option>
-                    <option value="Bar">Bar</option>
-                </select>
-            </div>
-            <button class="main-btn" id="saveBtn" onclick="handleAddStaff()">Save to Sheets</button>
-        </div>
-        
-        <div class="card">
             <h3>Staff History</h3>
-            <div id="staffList">Loading...</div>
+            <div id="staffList" style="max-height: 200px; overflow-y: auto; font-size: 14px; color: #666;">Loading staff...</div>
         </div>
     </section>
 </main>
@@ -58,8 +54,10 @@
 <div id="modal" class="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div id="modalResult"></div>
-        <button class="main-btn" id="copyBtn" onclick="copyText()" style="margin-top: 20px;">Copy Text</button>
-        <button class="secondary-btn" onclick="closeModal()">Close</button>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="main-btn" id="copyBtn" onclick="copyText()">Copy Text</button>
+            <button class="secondary-btn" onclick="closeModal()">Close</button>
+        </div>
     </div>
 </div>
 
