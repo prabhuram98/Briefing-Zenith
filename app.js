@@ -63,13 +63,12 @@ function loadSchedule(icons, startTime) {
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index]?.toString().trim() || "";
                     
-                    // NEW STRICT VALIDATION: 
-                    // Does it look like "00:00-00:00" or "00h00-00h00"?
-                    // If it contains "OFF", "FOLGA", or NO numbers, it is REJECTED.
-                    const timePattern = /\d{1,2}[:h]\d{2}/; 
-                    const isExplicitlyOff = /OFF|FOLGA|VACATION|FERIAS|X/i.test(shift);
+                    // STRICT FILTER: Check if shift STARTS with a number. 
+                    // This blocks "OFF.1", "FOLGA", "OFF", etc.
+                    const startsWithNumber = /^\d/.test(shift);
+                    const isOff = /OFF|FOLGA|VACATION|FERIAS|X/i.test(shift);
 
-                    if (timePattern.test(shift) && !isExplicitlyOff) {
+                    if (startsWithNumber && !isOff) {
                         dates[col.label][info.area].push({ 
                             ...info, 
                             shiftRaw: shift, 
@@ -96,9 +95,8 @@ function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
 
-    // Final safety check: If the pool is empty, stop.
     if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) {
-        return alert("Error: No working staff detected for " + selectedDate + ". Check if shifts are entered as '09:00-18:00'.");
+        return alert("No staff working on " + selectedDate);
     }
 
     const parseTime = (t) => {
@@ -106,15 +104,15 @@ function generateBriefing() {
         return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
     };
 
-    // Build the "Active Only" list
+    // Filter list for TODAY ONLY
     let todayStaff = [...dayData.Bar, ...dayData.Sala].map(s => {
         const pts = s.shiftRaw.split(/[-–]/);
         return {
             ...s,
-            entryMin: parseTime(pts[0] || "09:00"),
-            exitMin: parseTime(pts[1] || "17:30"),
-            entryLabel: (pts[0] || "09:00").trim().replace('h', ':'),
-            exitLabel: (pts[1] || "17:30").trim().replace('h', ':')
+            entryMin: parseTime(pts[0] || "00:00"),
+            exitMin: parseTime(pts[1] || "00:00"),
+            entryLabel: (pts[0] || "00:00").trim().replace('h', ':'),
+            exitLabel: (pts[1] || "00:00").trim().replace('h', ':')
         };
     });
 
@@ -123,54 +121,46 @@ function generateBriefing() {
     const exitingBar = [...barStaff].sort((a,b) => a.exitMin - b.exitMin);
     const exitingSala = [...salaStaff].sort((a,b) => a.exitMin - b.exitMin);
 
-    // --- TASK ASSIGNMENT RULES ---
-
-    // Porta: Manager -> Head Seller -> Earliest Sala
+    // PORTA: Manager -> Head Seller -> Earliest Sala
     const manager = todayStaff.find(s => s.position === "MANAGER");
     const headSeller = todayStaff.find(s => s.position === "HEAD SELLER");
     const porta = manager || headSeller || salaStaff[0] || todayStaff[0];
 
-    // Sellers: No Managers allowed if others present. No "Ana" if others present.
+    // SELLERS: No Manager if others exist. No "Ana" if others exist.
     let sPool = salaStaff.filter(s => s.position !== 'MANAGER');
     const filteredPool = sPool.filter(s => s.displayName.toLowerCase() !== 'ana');
     if (filteredPool.length > 0) sPool = filteredPool;
     if (sPool.length === 0) sPool = salaStaff;
 
-    const sA = sPool[0] || { displayName: "---", entryLabel: "09:00" };
+    const sA = sPool[0];
     const sB = sPool[1] || sA;
     const sC = sPool[2];
 
-    // Runner Logic
-    const runnerObj = todayStaff.find(s => s.position.includes('RUNNER'));
-    const runnerName = runnerObj ? runnerObj.displayName : "Todos";
-
-    // Fecho de Caixa Priority
+    // FECHO DE CAIXA Priority
     const caixa = headSeller || todayStaff.find(s => s.position === "BAR MANAGER") || manager || exitingBar[exitingBar.length-1];
 
     // --- TEMPLATE ---
-    let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
-    b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
+    let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
+    b += `${porta?.entryLabel || '09:00'} Porta: ${porta?.displayName || '---'}\n\n`;
     
     b += `BAR:\n`;
-    b += `${barStaff[0]?.entryLabel || '07:30'} Abertura Sala/Bar: *${barStaff[0]?.displayName || ''}*\n`;
-    b += `${barStaff[0]?.entryLabel || '07:30'} Bar A: *${barStaff[0]?.displayName || ''}* Barista – Bebidas\n`;
-    b += `${barStaff[1]?.entryLabel || '08:00'} Bar B: *${barStaff[1]?.displayName || ''}* Barista – Cafés / Caixa\n`;
-    if(barStaff[2]) b += `${barStaff[2].entryLabel} Bar C: *${barStaff[2].displayName}*\n`;
+    b += `${barStaff[0]?.entryLabel || '07:30'} Abertura: *${barStaff[0]?.displayName || '---'}*\n`;
+    b += `${barStaff[0]?.entryLabel || '07:30'} Bar A: *${barStaff[0]?.displayName || '---'}*\n`;
+    b += `${barStaff[1]?.entryLabel || '08:00'} Bar B: *${barStaff[1]?.displayName || '---'}*\n\n`;
 
-    b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n`;
-    b += `——————————————\n\nSELLERS:\n`;
-    b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
+    b += `⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\n——————————————\n\nSELLERS:\n`;
+    if(sA) b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n`;
+    if(sB && sB !== sA) b += `${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
     if(sC) b += `${sC.entryLabel} Seller C: *${sC.displayName}*\n`;
-    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
     
-    b += `RUNNERS:\n${runnerObj ? runnerObj.entryLabel : '09:00'} Runner A e B: ${runnerName}\n——————————————\n\n`;
+    b += `\n⚠ Pastéis de Nata ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
 
     const eb1 = exitingBar[0], eb2 = exitingBar[1] || eb1, lb = exitingBar[exitingBar.length-1];
     const es1 = exitingSala[0], es2 = exitingSala[1] || es1, ls = exitingSala[exitingSala.length-1];
 
-    b += `HACCP / LIMPEZA BAR:\n16:00 Preparações Bar: *${eb1?.displayName || ''}*\n16:00 Reposição Bar: *${eb2?.displayName || ''}*\n17:30 Fecho Bar: *${lb?.displayName || ''}*\n\n`;
-    b += `HACCP / SALA:\n16:00- Fecho do sala de cima: *${es1?.displayName || ''}*\n16:00- Limpeza e reposição aparador: *${es1?.displayName || ''}*\n16:00- Repor papel (WC): *${es2?.displayName || ''}*\n17:30- Limpeza WC (clientes/staff): *${eb2?.displayName || ''}*\n17:30- Limpeza de vidros: *${ls?.displayName || ''}*\nFecho Sala: *${ls?.displayName || ''}*\n`;
-    b += `${exitingBar[exitingBar.length-1]?.exitLabel || '17:30'} Fecho de Caixa: *${caixa?.displayName || ''}*`;
+    b += `HACCP BAR:\n16:00 Preparações: *${eb1?.displayName || '---'}*\n16:00 Reposição: *${eb2?.displayName || '---'}*\n17:30 Fecho: *${lb?.displayName || '---'}*\n\n`;
+    b += `HACCP SALA:\n16:00- Fecho cima: *${es1?.displayName || '---'}*\n17:30- Vidros: *${ls?.displayName || '---'}*\n`;
+    b += `${exitingBar[exitingBar.length-1]?.exitLabel || '17:30'} Fecho Caixa: *${caixa?.displayName || '---'}*`;
 
     document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
