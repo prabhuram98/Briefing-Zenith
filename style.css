@@ -1,71 +1,53 @@
 :root {
-    --zen-black: #1a1a1a;
-    --zen-gold: #c5a059; /* Zenith accent color */
-    --zen-white: #ffffff;
-    --zen-gray: #f9f9f9;
+    --coffee: #DCC7B1;
+    --cocoa: #3E2723;
+    --card-light: #EFE3D5;
 }
 
-body { font-family: 'Inter', -apple-system, sans-serif; background: var(--zen-gray); margin: 0; color: var(--zen-black); }
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: var(--coffee); 
+    color: var(--cocoa); 
+    margin: 0; 
+}
 
 /* Zenith Branding */
-.brand-header { text-align: center; padding: 50px 0 30px; }
+.brand-header { text-align: center; padding: 50px 0 20px; }
 .logo-text { font-size: 42px; font-weight: 900; letter-spacing: 8px; margin: 0; }
-.subtitle { font-size: 12px; letter-spacing: 4px; color: #888; margin-top: 5px; }
 
-/* The Two Big Cards */
+/* The Two Big Icons Design */
 .zenith-grid { padding: 0 20px; display: flex; flex-direction: column; gap: 20px; }
 
 .zen-card {
-    background: var(--zen-white);
+    background: var(--cocoa);
     border-radius: 24px;
-    padding: 25px;
+    padding: 30px;
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     cursor: pointer;
-    transition: all 0.2s ease;
+    color: var(--coffee);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-.zen-card:active { transform: scale(0.97); }
-.briefing-card { background: var(--zen-black); color: var(--zen-white); }
+.date-card { background: var(--card-light); color: var(--cocoa); }
 
-.zen-icon { 
-    width: 60px; height: 60px; border-radius: 18px; 
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(197, 160, 89, 0.1);
-}
-.briefing-card .zen-icon { background: rgba(255,255,255,0.1); }
-.zen-icon span { font-size: 30px; color: var(--zen-gold); }
-.briefing-card .zen-icon span { color: white; }
-
-.zen-card-content h3 { margin: 0; font-size: 20px; }
-.zen-card-content p { margin: 5px 0 0; font-size: 14px; opacity: 0.7; }
+.zen-icon span { font-size: 36px; }
 
 .zen-select { 
-    border: none; background: transparent; font-size: 16px; 
-    font-weight: bold; color: var(--zen-black); margin-top: 5px; outline: none;
+    border: none; background: transparent; font-size: 18px; 
+    font-weight: bold; color: var(--cocoa); width: 100%;
 }
 
-/* Nav Dock */
+/* Bottom Nav */
 .zen-dock {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-    width: 80%; max-width: 350px; background: var(--zen-black);
-    height: 70px; border-radius: 35px; display: flex; align-items: center;
-    padding: 0 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+    width: 80%; background: var(--cocoa); height: 70px; border-radius: 35px;
+    display: flex; align-items: center; justify-content: space-around;
 }
-.dock-item { flex: 1; text-align: center; color: #555; }
-.dock-item.active { color: var(--zen-gold); }
-.dock-item span { font-size: 28px; }
-
-/* List View */
-.zen-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
-.zen-list { padding: 0 20px 100px; }
-.staff-row { background: white; padding: 20px; border-radius: 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.dock-item { color: rgba(220, 199, 177, 0.4); cursor: pointer; }
+.dock-item.active { color: var(--coffee); }
 
 /* Modal */
-.zen-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
-.modal-content { background: white; width: 100%; max-width: 500px; border-radius: 30px; padding: 30px; position: relative; }
-.zen-btn-close { width: 100%; background: var(--zen-black); color: white; border: none; padding: 15px; border-radius: 15px; margin-top: 20px; font-weight: bold; }
-
-pre { background: #f4f4f4; padding: 20px; border-radius: 15px; white-space: pre-wrap; font-size: 14px; }
+.zen-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: var(--card-light); padding: 25px; border-radius: 30px; width: 90%; max-width: 500px; }
