@@ -3,67 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenith Briefing App</title>
+    <title>Zenith Briefing Generator</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
 
-    <header class="app-header">
-        <h2>Zenith Lounge</h2>
-        <h1 id="pageTitle">BRIEFING</h1>
-    </header>
-
-    <main id="app">
-        <section id="briefingPage" class="page active">
-            <div class="card">
-                <label>Select Date</label>
-                <select id="dateSelect">
-                    <option>Loading dates...</option>
-                </select>
-                <button class="main-btn" onclick="generateBriefing()" style="margin-top: 15px;">
-                    <i class="fas fa-edit"></i> Create Briefing
-                </button>
+    <div id="dashboardPage" class="page active">
+        <h1 class="app-logo">ZENITH</h1>
+        <div class="icon-grid">
+            <div class="big-icon" onclick="openPage('briefingPage')">
+                <div class="icon-circle">📝</div>
+                <span>BRIEFING</span>
             </div>
-        </section>
-
-        <section id="managePage" class="page">
-            <div class="card">
-                <label>Check Daily Staff</label>
-                <select id="manageDateSelect"></select>
-                <button class="main-btn" onclick="showStaffTable()" style="margin-top: 15px; background: #2c3e50;">
-                    <i class="fas fa-users"></i> Show Staff
-                </button>
+            <div class="big-icon" onclick="openPage('manageMenuPage')">
+                <div class="icon-circle">⚙️</div>
+                <span>MANAGE</span>
             </div>
+        </div>
+    </div>
 
-            <div id="staffTableContainer" class="card" style="display: none; padding: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h3 id="tableHeaderDate" style="margin: 0; color: var(--accent);"></h3>
-                    <button onclick="closeStaffTable()" style="border: none; background: none; color: #999; font-size: 20px;">&times;</button>
-                </div>
-                <div id="scheduleTableWrapper"></div>
+    <div id="manageMenuPage" class="page">
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Management</h2>
+        <div class="icon-grid">
+            <div class="big-icon" onclick="openPage('showStaffPage')">
+                <div class="icon-circle">👥</div>
+                <span>SHOW STAFF</span>
             </div>
-        </section>
-    </main>
+            <div class="big-icon" onclick="openPage('editStaffPage')">
+                <div class="icon-circle">✏️</div>
+                <span>MANAGE STAFF</span>
+            </div>
+        </div>
+    </div>
 
-    <nav class="bottom-nav">
-        <button class="nav-btn active" onclick="switchPage('briefing', this)">
-            <i class="fas fa-clipboard-list"></i><br>Briefing
-        </button>
-        <button class="nav-btn" onclick="switchPage('manage', this)">
-            <i class="fas fa-calendar-alt"></i><br>Manage
-        </button>
-    </nav>
+    <div id="showStaffPage" class="page">
+        <button class="close-btn" onclick="openPage('manageMenuPage')">✕</button>
+        <h2 class="page-title">Daily Roster</h2>
+        <div class="filter-bar">
+            <select id="manageDateSelect" onchange="showStaffTable()"></select>
+        </div>
+        <div id="scheduleTableWrapper"></div>
+    </div>
+
+    <div id="editStaffPage" class="page">
+        <button class="close-btn" onclick="openPage('manageMenuPage')">✕</button>
+        <h2 class="page-title">Staff Directory</h2>
+        <div id="staffListContainer"></div>
+        <div class="action-footer">
+            <button class="btn-primary" onclick="addStaffPrompt()">+ Add New Staff</button>
+            <button class="btn-save" onclick="saveToSheet()">SAVE CHANGES TO CLOUD</button>
+        </div>
+    </div>
+
+    <div id="briefingPage" class="page">
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Briefing Creator</h2>
+        <div class="filter-bar">
+            <select id="dateSelect"></select>
+            <button class="btn-primary" onclick="generateBriefing()">Create</button>
+        </div>
+        <div id="briefingResult"></div>
+    </div>
 
     <div id="modal" class="modal">
         <div class="modal-content">
             <div id="modalResult"></div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="main-btn" onclick="copyText()" style="background: #25D366;">
-                    <i class="fab fa-whatsapp"></i> Copy for WhatsApp
-                </button>
-                <button class="main-btn" onclick="closeModal()" style="background: #999;">Close</button>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn-primary" onclick="copyText()">Copy WhatsApp</button>
             </div>
         </div>
     </div>
