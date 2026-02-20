@@ -3,64 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZENITH Portal</title>
+    <title>Zenith Briefing App</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-<header class="app-header">
-    <h1>ZENITH</h1>
-    <h2 id="pageTitle">BRIEFING</h2>
-</header>
+    <header class="app-header">
+        <h2>Zenith Lounge</h2>
+        <h1 id="pageTitle">BRIEFING</h1>
+    </header>
 
-<main>
-    <section id="briefingPage" class="page active">
-        <div class="card">
-            <label>Select Briefing Date:</label>
-            <select id="dateSelect"><option>Loading dates...</option></select>
-            <button class="main-btn" onclick="generateBriefing()" style="margin-top:10px;">Generate Briefing</button>
-        </div>
-    </section>
-
-    <section id="managePage" class="page">
-        <div class="card">
-            <h3>Staff Schedule Viewer</h3>
-            <label style="font-size: 12px; color:#666;">Check shifts for:</label>
-            <select id="manageDateSelect"></select>
-            <button class="main-btn" onclick="showStaffTable()" style="margin-top: 15px; background: #2c3e50;">Show Staff</button>
-        </div>
-
-        <div id="staffTableContainer" class="card" style="display:none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                <h3 id="tableHeaderDate" style="margin:0; font-size: 18px;"></h3>
-                <button onclick="closeStaffTable()" style="background: #e74c3c; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕ Close</button>
+    <main id="app">
+        <section id="briefingPage" class="page active">
+            <div class="card">
+                <label>Select Date</label>
+                <select id="dateSelect">
+                    <option>Loading dates...</option>
+                </select>
+                <button class="main-btn" onclick="generateBriefing()" style="margin-top: 15px;">
+                    <i class="fas fa-edit"></i> Create Briefing
+                </button>
             </div>
-            <div id="scheduleTableWrapper"></div>
-        </div>
+        </section>
 
-        <div class="card">
-            <h3>Staff History</h3>
-            <div id="staffList" style="max-height: 200px; overflow-y: auto; font-size: 14px; color: #666;">Loading staff...</div>
-        </div>
-    </section>
-</main>
+        <section id="managePage" class="page">
+            <div class="card">
+                <label>Check Daily Staff</label>
+                <select id="manageDateSelect"></select>
+                <button class="main-btn" onclick="showStaffTable()" style="margin-top: 15px; background: #2c3e50;">
+                    <i class="fas fa-users"></i> Show Staff
+                </button>
+            </div>
 
-<nav class="bottom-nav">
-    <button class="nav-btn active" id="btn-briefing" onclick="switchPage('briefing', this)">📋 Briefing</button>
-    <button class="nav-btn" id="btn-manage" onclick="switchPage('manage', this)">👥 Manage</button>
-</nav>
+            <div id="staffTableContainer" class="card" style="display: none; padding: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 id="tableHeaderDate" style="margin: 0; color: var(--accent);"></h3>
+                    <button onclick="closeStaffTable()" style="border: none; background: none; color: #999; font-size: 20px;">&times;</button>
+                </div>
+                <div id="scheduleTableWrapper"></div>
+            </div>
+        </section>
+    </main>
 
-<div id="modal" class="modal" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div id="modalResult"></div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="main-btn" id="copyBtn" onclick="copyText()">Copy Text</button>
-            <button class="secondary-btn" onclick="closeModal()">Close</button>
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchPage('briefing', this)">
+            <i class="fas fa-clipboard-list"></i><br>Briefing
+        </button>
+        <button class="nav-btn" onclick="switchPage('manage', this)">
+            <i class="fas fa-calendar-alt"></i><br>Manage
+        </button>
+    </nav>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div id="modalResult"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="main-btn" onclick="copyText()" style="background: #25D366;">
+                    <i class="fab fa-whatsapp"></i> Copy for WhatsApp
+                </button>
+                <button class="main-btn" onclick="closeModal()" style="background: #999;">Close</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
