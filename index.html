@@ -3,29 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Manager Pro</title>
+    <title>Staff Portal</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <nav class="navbar">
-        <div class="nav-icon" onclick="openPage('briefingPage')">📋</div>
-        <div class="nav-icon" onclick="openPage('dailyViewPage')">📅</div>
-        <div class="nav-icon" onclick="openPage('manageStaffPage')">👥</div>
+        <div class="nav-icon" onclick="openPage('briefingPage')">
+            <span class="material-symbols-outlined">assignment</span>
+            <small>Briefing</small>
+        </div>
+        <div class="nav-icon" onclick="openPage('dailyViewPage')">
+            <span class="material-symbols-outlined">calendar_month</span>
+            <small>Daily</small>
+        </div>
+        <div class="nav-icon" onclick="openPage('manageStaffPage')">
+            <span class="material-symbols-outlined">group</span>
+            <small>Staff</small>
+        </div>
     </nav>
 
     <div id="briefingPage" class="page active">
-        <h2>Generate Briefing</h2>
-        <select id="dateSelect"><option>Loading dates...</option></select>
-        <button class="main-btn" onclick="generateBriefing()">Create Briefing</button>
+        <div class="header-section">
+            <h2>Briefing Generator</h2>
+            <select id="dateSelect"></select>
+            <button class="main-btn" onclick="generateBriefing()">Generate Text</button>
+        </div>
     </div>
 
     <div id="dailyViewPage" class="page">
+        <h2>Daily Schedule</h2>
         <div id="dailyViewContainer"></div>
     </div>
 
     <div id="manageStaffPage" class="page">
+        <div class="header-section">
+            <h2>Staff Directory</h2>
+            <button class="add-btn" onclick="openStaffForm()">+ Add New Member</button>
+        </div>
         <div id="staffListContainer"></div>
     </div>
 
