@@ -69,18 +69,22 @@
         <div class="modal-content">
             <h3 id="modalTitle">Staff Details</h3>
             <input type="hidden" id="editOriginalKey">
+            
             <div class="form-group">
                 <label class="field-label">Full Name</label>
-                <input type="text" id="formFullName">
+                <input type="text" id="formFullName" placeholder="e.g. JOHN DOE">
             </div>
+            
             <div class="form-group" style="margin-top:15px;">
                 <label class="field-label">Alias</label>
-                <input type="text" id="formAlias">
+                <input type="text" id="formAlias" placeholder="e.g. John">
             </div>
+            
             <div class="form-group" style="margin-top:15px;">
                 <label class="field-label">Position</label>
                 <select id="formPosition" class="styled-select"></select>
             </div>
+            
             <div class="modal-buttons-vertical">
                 <button class="btn-primary" onclick="confirmSave()">SAVE CHANGES</button>
                 <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE</button>
