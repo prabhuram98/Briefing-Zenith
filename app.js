@@ -59,7 +59,7 @@ function loadSchedule(icons) {
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index]?.toString().trim() || "";
-                    // STRICT FILTER: Must start with number (Blocks OFF.1, FOLGA, etc)
+                    // STRICT FILTER: Block OFF.1, FOLGA, blank cells. Only allow numeric start.
                     if (/^\d/.test(shift)) {
                         dates[col.label][info.area].push({ ...info, shiftRaw: shift, displayName: info.alias });
                     }
@@ -76,12 +76,12 @@ function loadSchedule(icons) {
     });
 }
 
-// --- BRIEFING GENERATION ---
+// --- BRIEFING GENERATION (NO HARDCODED TIMES) ---
 
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
-    if (!dayData) return alert("No data.");
+    if (!dayData) return alert("No staff found for this date.");
 
     const parseTime = (t) => {
         const m = t.match(/(\d{1,2})[:h](\d{2})/);
@@ -92,57 +92,60 @@ function generateBriefing() {
         const pts = s.shiftRaw.split(/[-–]/);
         return {
             ...s,
-            entryMin: parseTime(pts[0] || "09:00"),
-            exitMin: parseTime(pts[1] || "17:30"),
-            entryLabel: (pts[0] || "09:00").trim().replace('h', ':'),
-            exitLabel: (pts[1] || "17:30").trim().replace('h', ':')
+            entryLabel: (pts[0] || "00:00").trim().replace('h', ':'),
+            exitLabel: (pts[1] || "00:00").trim().replace('h', ':'),
+            entryMin: parseTime(pts[0] || "00:00"),
+            exitMin: parseTime(pts[1] || "00:00")
         };
     };
 
-    // 1. Separate Active Pools
+    // 1. Separate Pools
     const barActive = dayData.Bar.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
     const salaActive = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
     const allActive = [...barActive, ...salaActive];
 
-    // 2. Specialized Exit Sorts
+    // 2. Sort by Exit for HACCP
     const exitingBar = [...barActive].sort((a,b) => a.exitMin - b.exitMin);
     const exitingSala = [...salaActive].sort((a,b) => a.exitMin - b.exitMin);
 
-    // 3. Porta
+    // 3. Porta Assignment
     const manager = allActive.find(s => s.position === "MANAGER");
     const headSeller = allActive.find(s => s.position === "HEAD SELLER");
     const porta = manager || headSeller || salaActive[0] || barActive[0];
 
-    // 4. Bar (Bar Staff Only)
+    // 4. Bar Assignments (Bar Staff Only)
     const barA = barActive[0] || { displayName: "N/A", entryLabel: "--:--", exitLabel: "--:--" };
     const barB = barActive[1] || barA;
 
-    // 5. Sellers (Sala Staff Only - Filtered)
+    // 5. Seller Assignments (Sala Staff Only)
     let sPool = salaActive.filter(s => s.position !== 'MANAGER' && s.displayName.toLowerCase() !== 'ana');
-    if (sPool.length === 0) sPool = salaActive; 
+    if (sPool.length === 0) sPool = salaActive;
 
     const sA = sPool[0] || { displayName: "N/A", entryLabel: "--:--", exitLabel: "--:--" };
     const sB = sPool[1] || sA;
     const sC = sPool[2];
 
-    // 6. HACCP Assignments (Bar to Bar, Sala to Sala)
-    const haccpBar1 = exitingBar[0] || barA;
-    const haccpBarLast = exitingBar[exitingBar.length-1] || barA;
-    
-    const haccpSala1 = exitingSala[0] || sA;
-    const haccpSalaLast = exitingSala[exitingSala.length-1] || sA;
+    // 6. HACCP Assignments (Bar for Bar, Sala for Sala)
+    const bHaccp1 = exitingBar[0] || barA;
+    const bHaccpLast = exitingBar[exitingBar.length-1] || barA;
+    const sHaccp1 = exitingSala[0] || sA;
+    const sHaccpLast = exitingSala[exitingSala.length-1] || sA;
 
     // 7. Fecho de Caixa
-    const caixa = headSeller || allActive.find(s => s.position === "BAR MANAGER") || manager || haccpBarLast || haccpSalaLast;
+    const caixa = headSeller || allActive.find(s => s.position === "BAR MANAGER") || manager || bHaccpLast || sHaccpLast;
 
     // --- TEMPLATE ---
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
+    
+    // PORTA
     b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
     
+    // BAR SECTION
     b += `BAR:\n`;
     b += `${barA.entryLabel} Bar A: *${barA.displayName}*\n`;
     b += `${barB.entryLabel} Bar B: *${barB.displayName}*\n\n`;
 
+    // SELLERS SECTION
     b += `SELLERS:\n`;
     b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n`;
     b += `${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
@@ -150,27 +153,21 @@ function generateBriefing() {
     
     b += `\n⸻⸻⸻⸻\n\n`;
     
+    // HACCP BAR (Uses Exit Times from Schedule)
     b += `HACCP BAR:\n`;
-    b += `${haccpBar1.exitLabel} Preparações/Reposição: *${haccpBar1.displayName}*\n`;
-    b += `${haccpBarLast.exitLabel} Fecho Bar: *${haccpBarLast.displayName}*\n\n`;
+    b += `${bHaccp1.exitLabel} Preparações: *${bHaccp1.displayName}*\n`;
+    b += `${bHaccpLast.exitLabel} Fecho Bar: *${bHaccpLast.displayName}*\n\n`;
     
+    // HACCP SALA (Uses Exit Times from Schedule)
     b += `HACCP SALA:\n`;
-    b += `${haccpSala1.exitLabel} Fecho cima / Reposição: *${haccpSala1.displayName}*\n`;
-    b += `${haccpSalaLast.exitLabel} Limpeza Vidros / Fecho Sala: *${haccpSalaLast.displayName}*\n\n`;
+    b += `${sHaccp1.exitLabel} Fecho cima / Reposição: *${sHaccp1.displayName}*\n`;
+    b += `${sHaccpLast.exitLabel} Vidros / Fecho Sala: *${sHaccpLast.displayName}*\n\n`;
     
+    // FECHO CAIXA
     b += `${caixa.exitLabel} Fecho Caixa: *${caixa.displayName}*`;
 
     document.getElementById('modalResult').innerHTML = `<pre>${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
-}
-
-function openPage(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function copyBriefing() {
-    navigator.clipboard.writeText(document.getElementById('modalResult').innerText).then(() => alert("Copied!"));
 }
 
 window.onload = loadData;
