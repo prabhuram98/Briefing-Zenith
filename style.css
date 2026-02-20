@@ -4,21 +4,29 @@ body { background-color: #dbc9b7; margin: 0; color: #3e2723; }
 .page.active { display: block; }
 .app-logo { text-align: center; letter-spacing: 5px; margin: 40px 0; font-weight: 900; }
 
-/* HEADER NAVIGATION */
+/* HEADER */
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
 .header-btn { background: #3e2723; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .page-title { margin: 0; font-size: 22px; font-weight: 800; }
 
+/* DASHBOARD */
 .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.big-icon { background: #ffffff; border-radius: 20px; padding: 30px 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 15px rgba(62, 39, 35, 0.1); cursor: pointer; }
-.icon-circle { font-size: 40px; margin-bottom: 10px; }
-.big-icon span { font-weight: bold; font-size: 13px; }
+.big-icon { background: #ffffff; border-radius: 20px; padding: 40px 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 15px rgba(62, 39, 35, 0.1); cursor: pointer; }
+.icon-circle { font-size: 45px; margin-bottom: 12px; }
+.big-icon span { font-weight: bold; font-size: 14px; text-transform: uppercase; }
 
+/* MANAGE HUB */
+.vertical-menu { display: flex; flex-direction: column; gap: 12px; }
+.menu-item-card { background: white; border: none; padding: 20px; border-radius: 15px; text-align: left; display: flex; flex-direction: column; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.menu-item-card span { font-weight: 800; font-size: 16px; color: #3e2723; }
+.menu-item-card small { color: #a1887f; margin-top: 4px; }
+
+/* BUTTONS */
 .btn-primary { background: #3e2723; color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; }
 .btn-secondary { background: #a1887f; color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 .btn-delete { background: #8d2b2b; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; margin-top: 10px; cursor: pointer; }
 
-/* TABLE STYLING */
+/* LISTS */
 .staff-grid-header { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 10px 15px; font-size: 11px; font-weight: 900; color: #7a4f2c; }
 .staff-row { background: white; padding: 15px; border-radius: 15px; margin-bottom: 8px; display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .role-subtitle { font-size: 11px; color: #a1887f; font-weight: bold; }
