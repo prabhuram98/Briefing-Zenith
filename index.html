@@ -2,112 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenith Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Manager Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
 
-    <div id="dashboardPage" class="page active">
-        <h1 class="app-logo">ZENITH</h1>
-        <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('briefingPage')">
-                <div class="icon-circle">☕</div>
-                <span>Briefing</span>
-            </div>
-            <div class="big-icon" onclick="openPage('manageHubPage')">
-                <div class="icon-circle">⚙️</div>
-                <span>Manage</span>
-            </div>
-        </div>
+    <nav class="navbar">
+        <div class="nav-icon" onclick="openPage('briefingPage')">📋</div>
+        <div class="nav-icon" onclick="openPage('dailyViewPage')">📅</div>
+        <div class="nav-icon" onclick="openPage('manageStaffPage')">👥</div>
+    </nav>
+
+    <div id="briefingPage" class="page active">
+        <h2>Generate Briefing</h2>
+        <select id="dateSelect"><option>Loading dates...</option></select>
+        <button class="main-btn" onclick="generateBriefing()">Create Briefing</button>
     </div>
 
-    <div id="manageHubPage" class="page">
-        <div class="page-header">
-            <button class="header-btn" onclick="openPage('dashboardPage')">✕</button>
-            <h2 class="page-title">Manage</h2>
-            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
-        </div>
-        <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('showStaffPage')">
-                <div class="icon-circle">📅</div>
-                <span>Daily View</span>
-            </div>
-            <div class="big-icon" onclick="openPage('editStaffPage')">
-                <div class="icon-circle">👤</div>
-                <span>Directory</span>
-            </div>
-        </div>
+    <div id="dailyViewPage" class="page">
+        <div id="dailyViewContainer"></div>
     </div>
 
-    <div id="briefingPage" class="page">
-        <div class="page-header">
-            <button class="header-btn" onclick="openPage('dashboardPage')">✕</button>
-            <h2 class="page-title">Briefing</h2>
-            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
-        </div>
-        <div class="filter-card">
-            <label class="field-label">Select Date</label>
-            <select id="dateSelect" class="styled-select"></select>
-            <button class="btn-primary" style="margin-top: 25px;" onclick="generateBriefing()">Generate Briefing</button>
-        </div>
-    </div>
-
-    <div id="showStaffPage" class="page">
-        <div class="page-header">
-            <button class="header-btn" onclick="openPage('manageHubPage')">✕</button>
-            <h2 class="page-title">Daily Staff</h2>
-            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
-        </div>
-        <div class="filter-card">
-            <label class="field-label">Viewing Date</label>
-            <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
-        </div>
-        <div id="scheduleTableWrapper" class="scroll-container"></div>
-    </div>
-
-    <div id="editStaffPage" class="page">
-        <div class="page-header">
-            <button class="header-btn" onclick="openPage('manageHubPage')">✕</button>
-            <h2 class="page-title">Directory</h2>
-            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
-        </div>
-        <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
-        <div id="staffListContainer" class="scroll-container"></div>
+    <div id="manageStaffPage" class="page">
+        <div id="staffListContainer"></div>
     </div>
 
     <div id="modal" class="modal">
         <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
             <div id="modalResult"></div>
-            <div class="modal-buttons-vertical">
-                <button class="btn-primary" onclick="copyBriefing()">Copy</button>
-                <button class="btn-secondary" onclick="closeModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="staffModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Staff Details</h3>
-            <input type="hidden" id="editOriginalKey">
-            <div class="form-group">
-                <label class="field-label">Full Name</label>
-                <input type="text" id="formFullName">
-            </div>
-            <div class="form-group">
-                <label class="field-label">Alias</label>
-                <input type="text" id="formAlias">
-            </div>
-            <div class="form-group">
-                <label class="field-label">Position</label>
-                <select id="formPosition" class="styled-select"></select>
-            </div>
-            <div class="modal-buttons-vertical">
-                <button class="btn-primary" onclick="confirmSave()">SAVE CHANGES</button>
-                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE</button>
-                <button class="btn-secondary" onclick="closeStaffModal()">CANCEL</button>
-            </div>
         </div>
     </div>
 
