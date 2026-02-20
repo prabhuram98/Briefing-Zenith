@@ -28,7 +28,7 @@ async function loadData() {
                     const rawPos = row[2] ? row[2].trim().toUpperCase() : "STAFF";
                     
                     staffMap[fullNameKey] = {
-                        alias: row[3] ? row[3].trim() : row[0].trim(), // Column D for Alias
+                        alias: row[3] ? row[3].trim() : row[0].trim(), // Fetch Column D
                         area: (row[1] && row[1].toLowerCase().includes('bar')) ? 'Bar' : 'Sala',
                         position: rawPos,
                         priority: POSITION_ORDER[rawPos] || 99
@@ -65,7 +65,6 @@ function loadSchedule() {
                 let nameInSheet = rawRows[i][0] ? rawRows[i][0].trim() : "";
                 if (!nameInSheet || nameInSheet.toLowerCase() === "name") continue;
                 
-                // Fetch info using Full Name, but we'll store the Alias
                 const info = staffMap[nameInSheet.toLowerCase()] || { alias: nameInSheet, area: 'Sala', position: 'STAFF', priority: 99 };
                 
                 dateCols.forEach(col => {
@@ -76,7 +75,7 @@ function loadSchedule() {
                     if (hasNumbers && !isOff) {
                         let parts = shift.split(/[- ]+/);
                         dates[col.label][info.area].push({
-                            displayName: info.alias, // Store the Alias for display
+                            displayName: info.alias, 
                             position: info.position,
                             priority: info.priority,
                             time: parts[0] ? parts[0].replace('.', ':') : "--:--",
@@ -92,7 +91,7 @@ function loadSchedule() {
     });
 }
 
-// --- MANAGE VIEW: SHOWING ALIAS ---
+// --- MANAGE VIEW ---
 function showStaffTable() {
     const selectedDate = document.getElementById('manageDateSelect').value;
     const wrapper = document.getElementById('scheduleTableWrapper');
@@ -142,10 +141,10 @@ function showStaffTable() {
             </div>`;
     });
 
-    wrapper.innerHTML = presentStaff.length > 0 ? html : "<p style='text-align:center; padding:20px;'>No staff working.</p>";
+    wrapper.innerHTML = presentStaff.length > 0 ? html : "<p style='text-align:center; padding:20px;'>No staff scheduled.</p>";
 }
 
-// --- BRIEFING & COPY: USING ALIAS ---
+// --- BRIEFING & COPY ---
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const day = scheduleData[date];
@@ -174,10 +173,10 @@ function copyText() {
               (day.Bar.sort(sortFn).map(s => `• ${s.displayName} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None") + 
               `\n\n*SALA:*\n` + 
               (day.Sala.sort(sortFn).map(s => `• ${s.displayName} (${s.position}) ${s.time}-${s.endTime}: ${s.task || ''}`).join('\n') || "None");
-    navigator.clipboard.writeText(txt).then(() => alert("Copied!"));
+    navigator.clipboard.writeText(txt).then(() => alert("Briefing Copied!"));
 }
 
-// Navigation & Modal Closing
+// NAVIGATION
 function switchPage(pageId, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId + 'Page').classList.add('active');
