@@ -33,7 +33,7 @@
             </div>
             <div class="big-icon" onclick="openPage('editStaffPage')">
                 <div class="icon-circle">✏️</div>
-                <span>EDIT DIRECTORY</span>
+                <span>DIRECTORY</span>
             </div>
         </div>
     </div>
@@ -47,7 +47,10 @@
 
     <div id="editStaffPage" class="page">
         <button class="close-btn" onclick="openPage('manageMenuPage')">✕</button>
-        <h2 class="page-title">Staff Directory</h2>
+        <h2 class="page-title">
+            Staff Directory 
+            <button class="refresh-inline-btn" onclick="loadData()">🔄</button>
+        </h2>
         <div id="staffListContainer"></div>
         <div class="action-footer">
             <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
@@ -59,28 +62,20 @@
             <button class="close-btn-small" onclick="closeStaffModal()">✕</button>
             <h3 id="modalTitle">Staff Details</h3>
             <input type="hidden" id="editOriginalKey">
-            
             <div class="form-group">
-                <label>Full Name (as in schedule)</label>
+                <label>Full Name</label>
                 <input type="text" id="formFullName" placeholder="JOÃO SILVA">
             </div>
             <div class="form-group">
-                <label>Alias (short name)</label>
+                <label>Alias</label>
                 <input type="text" id="formAlias" placeholder="João">
             </div>
             <div class="form-group">
                 <label>Position</label>
-                <select id="formPosition">
-                    <option value="MANAGER">MANAGER</option>
-                    <option value="BAR MANAGER">BAR MANAGER</option>
-                    <option value="HEAD SELLER">HEAD SELLER</option>
-                    <option value="BAR STAFF">BAR STAFF</option>
-                    <option value="SALA STAFF">SALA STAFF</option>
-                </select>
+                <select id="formPosition"></select>
             </div>
-
             <div class="modal-buttons-vertical">
-                <button id="saveBtn" class="btn-save" onclick="confirmSave()">SAVE TO CLOUD</button>
+                <button id="saveBtn" class="btn-save" onclick="confirmSave()">SAVE CHANGES</button>
                 <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE STAFF</button>
             </div>
         </div>
