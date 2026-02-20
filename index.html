@@ -3,71 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Staff Pro Dashboard</title>
+    <title>Zenith Staff Portal</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="app-shell">
+    <div class="zenith-app">
         <div id="briefingPage" class="page active">
-            <div class="hero-section">
-                <h1>Welcome Back</h1>
-                <p id="currentDateDisplay"></p>
+            <div class="brand-header">
+                <h1 class="logo-text">ZENITH</h1>
+                <p class="subtitle">BRUNCH & COCKTAILS</p>
             </div>
 
-            <div class="main-grid">
-                <div class="big-card primary" onclick="generateBriefing()">
-                    <div class="icon-circle">
-                        <span class="material-symbols-outlined">bolt</span>
+            <div class="zenith-grid">
+                <div class="zen-card briefing-card" onclick="generateBriefing()">
+                    <div class="zen-icon">
+                        <span class="material-symbols-outlined">description</span>
                     </div>
-                    <h2>Quick Briefing</h2>
-                    <p>Generate daily tasks</p>
+                    <div class="zen-card-content">
+                        <h3>Briefing</h3>
+                        <p>Generate daily tasks</p>
+                    </div>
                 </div>
 
-                <div class="big-card secondary">
-                    <div class="icon-circle">
-                        <span class="material-symbols-outlined">event_note</span>
+                <div class="zen-card date-card">
+                    <div class="zen-icon">
+                        <span class="material-symbols-outlined">calendar_today</span>
                     </div>
-                    <h2>Select Date</h2>
-                    <select id="dateSelect" class="ghost-select"></select>
+                    <div class="zen-card-content">
+                        <h3>Date</h3>
+                        <select id="dateSelect" class="zen-select"></select>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="manageStaffPage" class="page">
-            <div class="page-header">
-                <h2>Team Directory</h2>
-                <button class="fab-btn" onclick="openStaffForm()">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
+            <div class="zen-header">
+                <h2>Staff Directory</h2>
+                <span class="material-symbols-outlined add-icon" onclick="openStaffForm()">person_add</span>
             </div>
-            <div id="staffListContainer" class="list-view"></div>
+            <div id="staffListContainer" class="zen-list"></div>
         </div>
 
         <div id="dailyViewPage" class="page">
-            <div class="page-header"><h2>Daily Shifts</h2></div>
-            <div id="dailyViewContainer" class="list-view"></div>
+            <div class="zen-header"><h2>Daily Shifts</h2></div>
+            <div id="dailyViewContainer" class="zen-list"></div>
         </div>
 
-        <nav class="dock-nav">
+        <nav class="zen-dock">
             <div class="dock-item active" onclick="openPage('briefingPage', this)">
-                <span class="material-symbols-outlined">space_dashboard</span>
+                <span class="material-symbols-outlined">home</span>
             </div>
             <div class="dock-item" onclick="openPage('dailyViewPage', this)">
-                <span class="material-symbols-outlined">reorder</span>
+                <span class="material-symbols-outlined">list_alt</span>
             </div>
             <div class="dock-item" onclick="openPage('manageStaffPage', this)">
-                <span class="material-symbols-outlined">group</span>
+                <span class="material-symbols-outlined">badge</span>
             </div>
         </nav>
     </div>
 
-    <div id="modal" class="modal-overlay">
-        <div class="modal-card">
+    <div id="modal" class="zen-modal">
+        <div class="modal-content">
             <div id="modalResult"></div>
-            <button class="close-btn" onclick="closeModal()">Dismiss</button>
+            <button class="zen-btn-close" onclick="closeModal()">Close</button>
         </div>
     </div>
 
