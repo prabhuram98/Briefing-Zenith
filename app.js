@@ -4,8 +4,8 @@ const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_kl
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
 let staffData = [];
-let scheduleData = {}; // For Briefing (Filtered)
-let rawRows = [];      // For Manage Page (Exact match of Sheet)
+let scheduleData = {}; 
+let rawRows = [];      
 
 // --- NAVIGATION ---
 function switchPage(pageId, btn) {
@@ -48,7 +48,6 @@ function loadSchedule() {
             const headerRow = rawRows[0];
             let dateCols = [];
 
-            // Identify Date Columns (B onwards)
             for (let j = 1; j < headerRow.length; j++) {
                 let label = headerRow[j] ? headerRow[j].trim() : "";
                 if (label !== "" && !label.toLowerCase().includes("total")) {
@@ -57,7 +56,6 @@ function loadSchedule() {
                 }
             }
 
-            // Process for Briefing (Working only)
             for (let i = 1; i < rawRows.length; i++) {
                 let name = rawRows[i][0] ? rawRows[i][0].trim() : "";
                 if (!name || name.toLowerCase() === 'name') continue;
@@ -94,66 +92,5 @@ function updateDateDropdowns(keys) {
     document.getElementById('manageDateSelect').innerHTML = options;
 }
 
-// --- MANAGE PAGE: EXACT SHEET VIEW ---
-function showStaffTable() {
-    const selectedDate = document.getElementById('manageDateSelect').value;
-    const container = document.getElementById('staffTableContainer');
-    const wrapper = document.getElementById('scheduleTableWrapper');
-    const header = document.getElementById('tableHeaderDate');
-
-    const headerRow = rawRows[0];
-    const dateIndex = headerRow.indexOf(selectedDate);
-
-    if (dateIndex === -1) return;
-
-    container.style.display = 'block';
-    header.innerText = selectedDate;
-
-    let html = `
-        <table class="schedule-table">
-            <thead>
-                <tr>
-                    <th>Staff Name</th>
-                    <th>Shift / Status</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    for (let i = 1; i < rawRows.length; i++) {
-        let name = rawRows[i][0] ? rawRows[i][0].trim() : "";
-        let status = rawRows[i][dateIndex] ? rawRows[i][dateIndex].trim() : "-";
-        if (!name || name.toLowerCase() === 'name') continue;
-
-        const isOff = ["OFF", "FOLGA", "FÉRIAS", "FÃ‰RIAS"].some(k => status.toUpperCase().includes(k));
-        
-        html += `
-            <tr class="${isOff ? 'row-off' : 'row-working'}">
-                <td><strong>${name}</strong></td>
-                <td>${status}</td>
-            </tr>
-        `;
-    }
-
-    html += `</tbody></table>`;
-    wrapper.innerHTML = html;
-    container.scrollIntoView({ behavior: 'smooth' });
-}
-
-function closeStaffTable() {
-    document.getElementById('staffTableContainer').style.display = 'none';
-}
-
-// --- BRIEFING LOGIC ---
-function generateBriefing() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    if(!day) return;
-
-    const render = (list, area) => list.map((s, i) => `
-        <div class="briefing-item">
-            <div class="briefing-info"><strong>${s.name}</strong> (${s.time}-${s.endTime})</div>
-            <input type="text" placeholder="Assign Task..." onchange="updateTask('${date}','${area}',${i},this.value)">
-        </div>`).join('');
-
-    let html = `<h2>Briefing: ${date
+// --- MANAGE PAGE: MOBILE GRID VIEW ---
+function
