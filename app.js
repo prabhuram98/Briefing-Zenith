@@ -9,8 +9,8 @@ const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR 
 // --- DATA INITIALIZATION ---
 
 async function loadData() {
-    const icons = document.querySelectorAll('.sync-small');
-    icons.forEach(i => i.classList.add('spinning'));
+    const syncIcons = document.querySelectorAll('.sync-small');
+    syncIcons.forEach(i => i.classList.add('spinning'));
     const startTime = Date.now();
 
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
@@ -30,7 +30,7 @@ async function loadData() {
                     priority: POSITION_ORDER[pos] || 99 
                 };
             });
-            loadSchedule(icons, startTime);
+            loadSchedule(syncIcons, startTime);
         }
     });
 }
@@ -61,7 +61,7 @@ function loadSchedule(icons, startTime) {
 
                 dateCols.forEach(col => {
                     let shift = rows[i][col.index]?.toString().trim() || "";
-                    // STRICTOR FILTER: Must start with a number. Rejects "OFF", "OFF.1", "FOLGA".
+                    // BLOCKS: Empty cells, "OFF", "OFF.1", "FOLGA", or anything not starting with a number
                     if (/^\d/.test(shift) && !/OFF|FOLGA|FERIAS|X/i.test(shift)) {
                         dates[col.label][info.area].push({ ...info, shiftRaw: shift, displayName: info.alias });
                     }
@@ -71,7 +71,8 @@ function loadSchedule(icons, startTime) {
             scheduleData = dates;
             const dateKeys = Object.keys(dates);
             if(dateKeys.length > 0) {
-                document.getElementById('dateSelect').innerHTML = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+                const dateSelect = document.getElementById('dateSelect');
+                if(dateSelect) dateSelect.innerHTML = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
             }
             const elapsed = Date.now() - startTime;
             setTimeout(() => icons.forEach(i => i.classList.remove('spinning')), Math.max(0, 600 - elapsed));
@@ -79,22 +80,29 @@ function loadSchedule(icons, startTime) {
     });
 }
 
-// --- BRIEFING GENERATION ---
+// --- NAVIGATION & UI (RESTORED ICONS) ---
+
+function openPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(pageId);
+    if(target) target.classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+}
+
+// --- BRIEFING GENERATION (STRICT ROLE ASSIGNMENT) ---
 
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
-    if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) return alert("No staff working today.");
+    if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) return alert("No staff scheduled today.");
 
     const parseTime = (t) => {
         const m = t.match(/(\d{1,2})[:h](\d{2})/);
         return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
     };
-
-    // Prepare Working Staff Pools
-    const barStaff = dayData.Bar.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
-    const salaStaff = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
-    const allStaff = [...barStaff, ...salaStaff];
 
     function processShift(s) {
         const pts = s.shiftRaw.split(/[-–]/);
@@ -107,31 +115,30 @@ function generateBriefing() {
         };
     }
 
-    // --- ASSIGNMENT LOGIC ---
+    const barStaff = dayData.Bar.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
+    const salaStaff = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
+    const allStaff = [...barStaff, ...salaStaff];
 
-    // Porta: Manager -> Head Seller -> Earliest Sala
+    // Porta: Prioritize Manager/Head Seller
     const manager = allStaff.find(s => s.position === "MANAGER");
     const headSeller = allStaff.find(s => s.position === "HEAD SELLER");
     const porta = manager || headSeller || salaStaff[0] || barStaff[0];
 
-    // Bar: Strict Bar Staff Priority
+    // Bar Tasks: STRICT to Bar Staff
     const barA = barStaff[0] || salaStaff[0]; 
-    const barB = barStaff[1] || (barStaff.length > 0 ? barStaff[0] : salaStaff[1] || salaStaff[0]);
+    const barB = barStaff[1] || barStaff[0] || salaStaff[1] || salaStaff[0];
 
-    // Sellers: Sala Staff only (Exclude Manager/Ana if others present)
+    // Sellers Tasks: STRICT to Sala Staff (Excluding Manager/Ana)
     let sPool = salaStaff.filter(s => s.position !== 'MANAGER');
     const filteredPool = sPool.filter(s => s.displayName.toLowerCase() !== 'ana');
     if (filteredPool.length > 0) sPool = filteredPool;
-    if (sPool.length === 0) sPool = salaStaff; // Emergency fallback to Sala
+    if (sPool.length === 0) sPool = salaStaff;
 
     const sA = sPool[0] || barStaff[0];
     const sB = sPool[1] || sA;
     const sC = sPool[2];
 
-    // Fecho de Caixa: Hierarchy
-    const caixa = headSeller || allStaff.find(s => s.position === "BAR MANAGER") || manager || [...barStaff].sort((a,b) => b.exitMin - a.exitMin)[0] || salaStaff[0];
-
-    // HACCP Assignments (Bar tasks to Bar staff, Sala to Sala)
+    // HACCP Splits: Bar for Bar, Sala for Sala
     const exitingBar = [...barStaff].sort((a,b) => a.exitMin - b.exitMin);
     const exitingSala = [...salaStaff].sort((a,b) => a.exitMin - b.exitMin);
 
@@ -143,8 +150,11 @@ function generateBriefing() {
     const es2 = exitingSala[1] || es1;
     const ls = exitingSala[exitingSala.length-1] || es1;
 
+    const caixa = headSeller || allStaff.find(s => s.position === "BAR MANAGER") || manager || lb || ls;
+
     // --- TEMPLATE ---
-    let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
+    let b = `Bom dia a todos!\n\n`;
+    b += `*BRIEFING ${selectedDate}*\n\n`;
     b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
     
     b += `BAR:\n`;
@@ -159,7 +169,7 @@ function generateBriefing() {
     
     b += `\n⚠ Pastéis de Nata ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
 
-    b += `HACCP BAR:\n16:00 Preparações: *${eb1.displayName}*\n16:00 Reposição: *${eb2.displayName}*\n17:30 Fecho: *${lb.displayName}*\n\n`;
+    b += `HACCP BAR:\n16:00 Preparações: *${eb1.displayName}*\n16:00 Reposição: *${eb2.displayName}*\n17:30 Fecho Bar: *${lb.displayName}*\n\n`;
     b += `HACCP SALA:\n16:00- Fecho cima: *${es1.displayName}*\n16:00- Repor papel: *${es2.displayName}*\n17:30- Limpeza WC: *${eb2.displayName}*\n17:30- Vidros/Espelhos: *${ls.displayName}*\nFecho Sala: *${ls.displayName}*\n`;
     b += `${caixa.exitLabel} Fecho Caixa: *${caixa.displayName}*`;
 
@@ -171,5 +181,4 @@ function copyBriefing() {
     navigator.clipboard.writeText(document.getElementById('modalResult').innerText).then(() => alert("Copied!"));
 }
 
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
 window.onload = loadData;
