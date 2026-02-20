@@ -1,53 +1,66 @@
 :root {
-    --coffee: #DCC7B1;
-    --cocoa: #3E2723;
-    --card-light: #EFE3D5;
+    --coffee: #dbc9b7;
+    --dark-brown: #3e2723;
+    --card-white: #ffffff;
 }
 
 body { 
-    font-family: 'Inter', sans-serif; 
     background-color: var(--coffee); 
-    color: var(--cocoa); 
-    margin: 0; 
+    margin: 0; color: var(--dark-brown); 
+    font-family: -apple-system, sans-serif;
 }
 
-/* Zenith Branding */
-.brand-header { text-align: center; padding: 50px 0 20px; }
-.logo-text { font-size: 42px; font-weight: 900; letter-spacing: 8px; margin: 0; }
+.page { display: none; padding: 20px; padding-bottom: 100px; }
+.page.active { display: block; }
 
-/* The Two Big Icons Design */
-.zenith-grid { padding: 0 20px; display: flex; flex-direction: column; gap: 20px; }
+.app-logo { text-align: center; letter-spacing: 8px; margin: 50px 0; font-weight: 900; font-size: 40px; }
+
+/* TWO BIG CARDS */
+.zenith-grid { display: flex; flex-direction: column; gap: 20px; padding: 0 10px; }
 
 .zen-card {
-    background: var(--cocoa);
-    border-radius: 24px;
+    background: var(--dark-brown);
+    border-radius: 25px;
     padding: 30px;
     display: flex;
     align-items: center;
     gap: 20px;
-    cursor: pointer;
     color: var(--coffee);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 20px rgba(62, 39, 35, 0.2);
 }
 
-.date-card { background: var(--card-light); color: var(--cocoa); }
+.date-card { background: var(--card-white); color: var(--dark-brown); }
 
-.zen-icon span { font-size: 36px; }
+.zen-icon { font-size: 40px; }
+.zen-card-content h3 { margin: 0; font-size: 22px; }
+.zen-card-content p { margin: 5px 0 0; opacity: 0.8; font-size: 14px; }
 
 .zen-select { 
     border: none; background: transparent; font-size: 18px; 
-    font-weight: bold; color: var(--cocoa); width: 100%;
+    font-weight: bold; color: var(--dark-brown); width: 100%; outline: none;
 }
 
-/* Bottom Nav */
+/* NAVIGATION DOCK */
 .zen-dock {
-    position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
-    width: 80%; background: var(--cocoa); height: 70px; border-radius: 35px;
-    display: flex; align-items: center; justify-content: space-around;
+    position: fixed; bottom: 0; left: 0; right: 0; height: 80px;
+    background: var(--dark-brown); display: flex; align-items: center;
+    justify-content: space-around; z-index: 100;
 }
-.dock-item { color: rgba(220, 199, 177, 0.4); cursor: pointer; }
+.dock-item { color: #a1887f; font-weight: bold; font-size: 14px; text-transform: uppercase; }
 .dock-item.active { color: var(--coffee); }
 
-/* Modal */
-.zen-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: var(--card-light); padding: 25px; border-radius: 30px; width: 90%; max-width: 500px; }
+/* BUTTONS & MODALS */
+.btn-primary { 
+    background: var(--dark-brown); color: white; border: none; padding: 18px; 
+    border-radius: 15px; width: 100%; font-weight: bold; margin-top: 15px;
+}
+.btn-secondary { background: transparent; color: var(--dark-brown); border: none; width: 100%; margin-top: 10px; }
+
+.modal { 
+    display: none; position: fixed; inset: 0; 
+    background: rgba(62, 39, 35, 0.9); align-items: center; justify-content: center; z-index: 1000;
+}
+.modal-content { background: white; width: 90%; padding: 25px; border-radius: 30px; max-height: 80vh; overflow-y: auto; }
+
+pre { background: #f4eee8; padding: 15px; border-radius: 15px; white-space: pre-wrap; color: var(--dark-brown); font-weight: 500; }
+.sync-link { background: none; border: none; color: var(--dark-brown); font-weight: bold; opacity: 0.6; }
