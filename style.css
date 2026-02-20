@@ -4,35 +4,35 @@ body { background-color: #dbc9b7; margin: 0; color: #3e2723; }
 .page.active { display: block; }
 .app-logo { text-align: center; letter-spacing: 5px; margin: 40px 0; font-weight: 900; }
 
-/* GRID & CARDS */
+/* HEADER NAVIGATION */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.header-btn { background: #3e2723; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.page-title { margin: 0; font-size: 22px; font-weight: 800; }
+
 .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .big-icon { background: #ffffff; border-radius: 20px; padding: 30px 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 15px rgba(62, 39, 35, 0.1); cursor: pointer; }
 .icon-circle { font-size: 40px; margin-bottom: 10px; }
 .big-icon span { font-weight: bold; font-size: 13px; }
 
-/* BUTTONS: DARK ESPRESSO */
 .btn-primary { background: #3e2723; color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 16px; cursor: pointer; }
 .btn-secondary { background: #a1887f; color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 .btn-delete { background: #8d2b2b; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; margin-top: 10px; cursor: pointer; }
 
-/* MODALS */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(62, 39, 35, 0.85); align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-.modal-buttons-vertical { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-
-/* STAFF LISTS */
+/* TABLE STYLING */
 .staff-grid-header { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 10px 15px; font-size: 11px; font-weight: 900; color: #7a4f2c; }
 .staff-row { background: white; padding: 15px; border-radius: 15px; margin-bottom: 8px; display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .role-subtitle { font-size: 11px; color: #a1887f; font-weight: bold; }
-.area-tag { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; }
+.area-tag { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-align: center; }
 .tag-bar { background: #e0f2f1; color: #00695c; }
 .tag-sala { background: #fbe9e7; color: #d84315; }
 
-/* INPUTS */
 .filter-card { background: white; padding: 20px; border-radius: 18px; }
 .styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #d1bba7; background: #fafafa; font-size: 16px; margin-bottom: 10px; }
 .field-label { display: block; font-size: 11px; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; color: #7a4f2c; }
-.close-btn { position: absolute; top: 20px; right: 20px; background: #3e2723; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(62, 39, 35, 0.85); align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; }
+.modal-buttons-vertical { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
 
 @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .spinning { animation: rotate 1s linear infinite; }
