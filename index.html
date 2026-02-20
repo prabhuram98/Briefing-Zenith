@@ -16,10 +16,6 @@
                 <div class="icon-circle">☕</div>
                 <span>Briefing</span>
             </div>
-            <div id="refreshBtn" class="big-icon" onclick="loadData()">
-                <div class="icon-circle">🔄</div>
-                <span>Sync Data</span>
-            </div>
             <div class="big-icon" onclick="openPage('showStaffPage')">
                 <div class="icon-circle">📅</div>
                 <span>Daily Staff</span>
@@ -32,8 +28,11 @@
     </div>
 
     <div id="briefingPage" class="page">
-        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
-        <h2 class="page-title">Briefing</h2>
+        <div class="page-header">
+            <button class="header-btn" onclick="openPage('dashboardPage')">✕</button>
+            <h2 class="page-title">Briefing</h2>
+            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
+        </div>
         <div class="filter-card">
             <label class="field-label">Select Date</label>
             <select id="dateSelect" class="styled-select"></select>
@@ -42,8 +41,11 @@
     </div>
 
     <div id="showStaffPage" class="page">
-        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
-        <h2 class="page-title">Daily Staff</h2>
+        <div class="page-header">
+            <button class="header-btn" onclick="openPage('dashboardPage')">✕</button>
+            <h2 class="page-title">Daily Staff</h2>
+            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
+        </div>
         <div class="filter-card" style="margin-bottom:15px;">
             <label class="field-label">VIEWING DATE</label>
             <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
@@ -52,8 +54,11 @@
     </div>
 
     <div id="editStaffPage" class="page">
-        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
-        <h2 class="page-title">Directory</h2>
+        <div class="page-header">
+            <button class="header-btn" onclick="openPage('dashboardPage')">✕</button>
+            <h2 class="page-title">Directory</h2>
+            <button class="header-btn sync-small" onclick="loadData()">🔄</button>
+        </div>
         <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
         <div id="staffListContainer"></div>
     </div>
@@ -70,7 +75,7 @@
 
     <div id="staffModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle" style="margin-top:0;">Staff Details</h3>
+            <h3 id="modalTitle">Staff Details</h3>
             <input type="hidden" id="editOriginalKey">
             <div class="form-group">
                 <label class="field-label">Full Name</label>
