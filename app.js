@@ -6,7 +6,7 @@ let staffMap = {};
 let scheduleData = {}; 
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "RUNNER": 6, "STAFF": 7 };
 
-// --- INITIALIZATION ---
+// --- DATA INITIALIZATION ---
 
 async function loadData() {
     const icons = document.querySelectorAll('.sync-small');
@@ -44,6 +44,7 @@ function loadSchedule(icons, startTime) {
             if (rows.length < 1) return;
             const header = rows[0]; 
             let dateCols = [];
+
             for (let j = 1; j < header.length; j++) {
                 const colName = header[j]?.trim();
                 if (colName && !colName.toLowerCase().includes("total")) {
@@ -51,17 +52,32 @@ function loadSchedule(icons, startTime) {
                     dates[colName] = { Sala: [], Bar: [] };
                 }
             }
+
             for (let i = 1; i < rows.length; i++) {
                 let nameInSched = rows[i][0]?.toString().toLowerCase().trim();
                 if (!nameInSched || nameInSched === "name") continue;
-                const info = staffMap[nameInSched] || { alias: nameInSched.toUpperCase(), area: 'Sala', position: 'STAFF', priority: 99 };
+                
+                const info = staffMap[nameInSched];
+                if (!info) continue;
+
                 dateCols.forEach(col => {
-                    let shift = rows[i][col.index]?.toString().trim();
-                    if (shift && /\d/.test(shift) && !["OFF", "FOLGA"].includes(shift.toUpperCase())) {
-                        dates[col.label][info.area].push({ ...info, shiftRaw: shift, displayName: info.alias });
+                    let shift = rows[i][col.index]?.toString().trim() || "";
+                    
+                    // STRICT CHECK: Only include if the cell has a number (time) 
+                    // and does NOT contain OFF or FOLGA
+                    const hasNumber = /\d/.test(shift);
+                    const isOff = /OFF|FOLGA|VACATION|FERIAS/i.test(shift);
+
+                    if (hasNumber && !isOff) {
+                        dates[col.label][info.area].push({ 
+                            ...info, 
+                            shiftRaw: shift, 
+                            displayName: info.alias 
+                        });
                     }
                 });
             }
+
             scheduleData = dates;
             const dateKeys = Object.keys(dates);
             if(dateKeys.length > 0) {
@@ -74,14 +90,14 @@ function loadSchedule(icons, startTime) {
     });
 }
 
-// --- BRIEFING GENERATION LOGIC ---
+// --- BRIEFING GENERATION ---
 
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
 
     if (!dayData || (dayData.Sala.length === 0 && dayData.Bar.length === 0)) {
-        return alert("No staff working on " + selectedDate);
+        return alert("No staff working on " + selectedDate + " (Everyone is OFF)");
     }
 
     const parseTime = (t) => {
@@ -89,7 +105,7 @@ function generateBriefing() {
         return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
     };
 
-    // 1. Filter Today's Staff Only
+    // Filter list for TODAY ONLY (Strictly those with numeric times in schedule)
     let todayStaff = [...dayData.Bar, ...dayData.Sala].map(s => {
         const pts = s.shiftRaw.split(/[-–]/);
         return {
@@ -106,109 +122,75 @@ function generateBriefing() {
     const exitingBar = [...barStaff].sort((a,b) => a.exitMin - b.exitMin);
     const exitingSala = [...salaStaff].sort((a,b) => a.exitMin - b.exitMin);
 
-    // 2. ASSIGNMENT RULES (No hardcoded names)
-    
-    // Porta: Manager -> Head Seller -> Earliest Sala Present
+    // PORTA: Manager -> Head Seller -> Earliest Sala Present
     const manager = todayStaff.find(s => s.position === "MANAGER");
     const headSeller = todayStaff.find(s => s.position === "HEAD SELLER");
     const porta = manager || headSeller || salaStaff[0] || todayStaff[0];
 
-    // Sellers Pool Logic
-    // RULE: Manager is never assigned seller if other sala staff present
+    // SELLERS: Rule - Manager never assigned if other Sala staff present
     let sPool = salaStaff.filter(s => s.position !== 'MANAGER');
     
-    // RULE: Exclude "Ana" if other staff present (Only hardcoded check for exclusion rule)
-    const poolNoAna = sPool.filter(s => s.displayName.toLowerCase() !== 'ana');
-    if (poolNoAna.length > 0) sPool = poolNoAna;
+    // Ana exclusion rule (Only name-based check per instruction)
+    const filteredPool = sPool.filter(s => s.displayName.toLowerCase() !== 'ana');
+    if (filteredPool.length > 0) sPool = filteredPool;
 
-    // Emergency Fallback: If pool is empty (e.g. only Manager working), revert to full Sala list
+    // Emergency Fallback: If only Manager working Sala, use Sala list
     if (sPool.length === 0) sPool = salaStaff;
 
     const sA = sPool[0] || { displayName: "---", entryLabel: "09:00" };
     const sB = sPool[1] || sA;
     const sC = sPool[2];
 
-    // Runner Logic: Find staff by position
+    // Runner Logic
     const runnerObj = todayStaff.find(s => s.position.includes('RUNNER'));
     const runnerName = runnerObj ? runnerObj.displayName : "Todos";
 
-    // Fecho de Caixa Priority: Head Seller -> Bar Manager -> Manager
+    // Fecho de Caixa Priority
     const caixa = headSeller || todayStaff.find(s => s.position === "BAR MANAGER") || manager || exitingBar[exitingBar.length-1];
 
-    // --- TEMPLATE BUILDING ---
-    let b = `Bom dia a todos!\n\n`;
-    b += `*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
+    // --- TEMPLATE ---
+    let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
     b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
-
+    
     b += `BAR:\n`;
     b += `${barStaff[0]?.entryLabel || '07:30'} Abertura Sala/Bar: *${barStaff[0]?.displayName || ''}*\n`;
     b += `${barStaff[0]?.entryLabel || '07:30'} Bar A: *${barStaff[0]?.displayName || ''}* Barista – Bebidas\n`;
     b += `${barStaff[1]?.entryLabel || '08:00'} Bar B: *${barStaff[1]?.displayName || ''}* Barista – Cafés / Caixa\n`;
     if(barStaff[2]) b += `${barStaff[2].entryLabel} Bar C: *${barStaff[2].displayName}*\n`;
 
-    b += `\n⸻⸻⸻⸻\n\n`;
-    b += `‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n`;
-    b += `——————————————\n\n`;
-
-    b += `SELLERS:\n`;
-    b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n`;
-    b += `${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
+    b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n`;
+    b += `——————————————\n\nSELLERS:\n`;
+    b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
     if(sC) b += `${sC.entryLabel} Seller C: *${sC.displayName}*\n`;
+    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
     
-    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n`;
-    b += `——————————————\n`;
-    b += `Seller A: Mesas 20-30\n`;
-    b += `Seller B ${sC ? '& C' : ''}: Mesas 1-12\n`;
-    b += `——————————————\n\n`;
+    b += `RUNNERS:\n${runnerObj ? runnerObj.entryLabel : '09:00'} Runner A e B: ${runnerName}\n——————————————\n\n`;
 
-    b += `RUNNERS:\n`;
-    b += `${runnerObj ? runnerObj.entryLabel : '09:00'} Runner A e B: ${runnerName}\n`;
-    b += `——————————————\n\n`;
+    const eb1 = exitingBar[0], eb2 = exitingBar[1] || eb1, lb = exitingBar[exitingBar.length-1];
+    const es1 = exitingSala[0], es2 = exitingSala[1] || es1, ls = exitingSala[exitingSala.length-1];
 
-    // HACCP Assignments
-    const eb1 = exitingBar[0] || barStaff[0], eb2 = exitingBar[1] || eb1, lb = exitingBar[exitingBar.length-1] || eb1;
-    const es1 = exitingSala[0] || salaStaff[0], es2 = exitingSala[1] || es1, ls = exitingSala[exitingSala.length-1] || es1;
+    b += `HACCP / LIMPEZA BAR:\n16:00 Preparações Bar: *${eb1?.displayName || ''}*\n16:00 Reposição Bar: *${eb2?.displayName || ''}*\n17:30 Fecho Bar: *${lb?.displayName || ''}*\n\n`;
+    b += `HACCP / SALA:\n16:00- Fecho do sala de cima: *${es1?.displayName || ''}*\n16:00- Limpeza e reposição aparador: *${es1?.displayName || ''}*\n16:00- Repor papel (WC): *${es2?.displayName || ''}*\n17:30- Limpeza WC (clientes/staff): *${eb2?.displayName || ''}*\n17:30- Limpeza de vidros: *${ls?.displayName || ''}*\nFecho Sala: *${ls?.displayName || ''}*\n`;
+    b += `${exitingBar[exitingBar.length-1]?.exitLabel || '17:30'} Fecho de Caixa: *${caixa?.displayName || ''}*`;
 
-    b += `HACCP / LIMPEZA BAR:\n`;
-    b += `16:00 Preparações Bar: *${eb1?.displayName || ''}*\n`;
-    b += `16:00 Reposição Bar: *${eb2?.displayName || ''}*\n`;
-    b += `17:30 Fecho Bar: *${lb?.displayName || ''}*\n\n`;
-
-    b += `HACCP / SALA:\n`;
-    b += `16:00- Fecho do sala de cima: *${es1?.displayName || ''}*\n`;
-    b += `16:00- Limpeza e reposição aparador/ cadeira de bebés: *${es1?.displayName || ''}*\n`;
-    b += `16:00- Repor papel (casa de banho): *${es2?.displayName || ''}*\n`;
-    b += `17:30- Limpeza casa de banho (clientes e staff): *${eb2?.displayName || ''}*\n`;
-    b += `17:30- Limpeza de espelhos e vidros: *${ls?.displayName || ''}*\n`;
-    b += `Fecho da sala: *${ls?.displayName || ''}*\n`;
-    b += `${exitingBar[exitingBar.length-1]?.exitLabel || '17:30'} Fecho de Caixa: *${caixa.displayName}*`;
-
-    document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${b}</pre>`;
+    document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
 }
 
-// --- UI AND NAVIGATION ---
-
-function openPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    if (pageId === 'editStaffPage') renderStaffList();
-    if (pageId === 'showStaffPage') showStaffTable();
+// --- UTILS ---
+function openPage(p) {
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.getElementById(p).classList.add('active');
+    if (p === 'editStaffPage') renderStaffList();
+    if (p === 'showStaffPage') showStaffTable();
 }
 
 function showStaffTable() {
     const d = document.getElementById('manageDateSelect').value, day = scheduleData[d];
     if(!day) return;
     const all = [...(day.Bar || []), ...(day.Sala || [])].sort((a,b) => a.priority - b.priority);
-    document.getElementById('scheduleTableWrapper').innerHTML = `
-        <div style="padding:10px; font-size:10px; font-weight:900; display:grid; grid-template-columns:2fr 1fr 1fr;">
-            <span>NAME</span><span>AREA</span><span>HOURS</span>
-        </div>` + all.map(s => `
-        <div class="staff-row">
-            <div><strong>${s.displayName}</strong><br><small>${s.position}</small></div>
-            <div><span class="area-tag tag-${s.area.toLowerCase()}">${s.area.toUpperCase()}</span></div>
-            <div style="font-weight:bold;">${s.shiftRaw}</div>
-        </div>`).join('');
+    document.getElementById('scheduleTableWrapper').innerHTML = `<div style="padding:10px; display:grid; grid-template-columns:2fr 1fr 1fr; font-size:10px; font-weight:bold;"><span>NAME</span><span>AREA</span><span>SHIFT</span></div>` + 
+        all.map(s => `<div class="staff-row"><div>${s.displayName}<br><small>${s.position}</small></div><div>${s.area}</div><div>${s.shiftRaw}</div></div>`).join('');
 }
 
 function renderStaffList() {
@@ -225,48 +207,4 @@ function copyBriefing() {
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
-
-// --- CRUD OPERATIONS ---
-
-function openStaffForm(key = null) {
-    if (key) {
-        const s = staffMap[key];
-        document.getElementById('editOriginalKey').value = key;
-        document.getElementById('formFullName').value = key.toUpperCase();
-        document.getElementById('formAlias').value = s.alias;
-        document.getElementById('formPosition').value = s.position;
-        document.getElementById('deleteBtn').style.display = "block";
-    } else {
-        document.getElementById('editOriginalKey').value = "";
-        document.getElementById('formFullName').value = ""; 
-        document.getElementById('formAlias').value = "";
-        document.getElementById('deleteBtn').style.display = "none";
-    }
-    document.getElementById('staffModal').style.display = 'flex';
-}
-
-async function processCRUD(action) {
-    const orig = document.getElementById('editOriginalKey').value;
-    const name = document.getElementById('formFullName').value.trim().toLowerCase();
-    const alias = document.getElementById('formAlias').value.trim();
-    const pos = document.getElementById('formPosition').value;
-
-    if (action === 'save') {
-        if (!name || !alias) return alert("Fill Name and Alias");
-        if (orig && orig !== name) delete staffMap[orig];
-        staffMap[name] = { alias, area: pos.includes("BAR") ? "Bar" : "Sala", position: pos, priority: POSITION_ORDER[pos] || 99 };
-    } else {
-        delete staffMap[orig];
-    }
-    
-    closeStaffModal(); 
-    const list = Object.keys(staffMap).map(k => [k.toUpperCase(), staffMap[k].area, staffMap[k].position, staffMap[k].alias]);
-    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStaff", staffList: list }) })
-        .then(() => loadData());
-}
-
-function confirmSave() { if(confirm("Save?")) processCRUD('save'); }
-function confirmDelete() { if(confirm("Delete?")) processCRUD('delete'); }
-
 window.onload = loadData;
