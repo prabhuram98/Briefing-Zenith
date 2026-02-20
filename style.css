@@ -1,29 +1,44 @@
-:root { --primary: #007bff; --bg: #f8f9fa; }
-body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+:root {
+    --primary: #2563eb;
+    --bg: #f3f4f6;
+    --card: #ffffff;
+    --text: #1f2937;
+}
 
-/* Dashboard Nav */
-.navbar { position: fixed; bottom: 0; width: 100%; display: flex; background: white; border-top: 1px solid #ddd; height: 75px; }
-.nav-icon { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: #555; }
-.nav-icon .material-symbols-outlined { font-size: 32px; }
-.nav-icon small { font-size: 11px; margin-top: 4px; }
-.nav-icon:hover { color: var(--primary); }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
 
-/* Layout */
-.page { display: none; padding: 20px; }
-.page.active { display: block; }
-.header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.app-container { max-width: 600px; margin: 0 auto; height: 100vh; position: relative; }
 
-/* Buttons */
-.main-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
-.add-btn { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 6px; }
+.app-header { display: flex; justify-content: space-between; align-items: center; padding: 25px 20px; }
+.app-header h1 { font-size: 24px; margin: 0; }
 
-/* Tables */
-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+.dashboard-grid { display: grid; gap: 15px; padding: 0 20px; }
+.card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+.action-card { text-align: center; border: 2px solid transparent; transition: 0.3s; cursor: pointer; }
+.action-card:active { transform: scale(0.98); border-color: var(--primary); }
+.icon-lg { font-size: 48px; color: var(--primary); margin-bottom: 10px; }
+
+.selector-card select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; font-size: 16px; }
+
+/* Bottom Nav */
+.bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 600px; height: 70px; background: white; display: flex; border-top: 1px solid #e5e7eb; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; cursor: pointer; transition: 0.2s; }
+.nav-item.active { color: var(--primary); }
+.nav-item span:first-child { font-size: 28px; }
+.nav-item span:last-child { font-size: 10px; font-weight: 600; margin-top: 4px; }
 
 /* Modal */
-.modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-.modal-content { background: white; padding: 25px; width: 90%; max-width: 500px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
-.close { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
+.modal-window { background: white; width: 90%; max-width: 500px; border-radius: 20px; overflow: hidden; animation: slideUp 0.3s ease-out; }
+.modal-header { padding: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; }
+.modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
 
-pre { background: #f4f4f4; padding: 15px; border-radius: 8px; font-size: 14px; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Staff List */
+.list-container { padding: 0 20px 100px; }
+.staff-row { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+.spinning { animation: rotate 1s linear infinite; }
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
