@@ -5,13 +5,13 @@ const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhoj
 let staffMap = {}; 
 let scheduleData = {}; 
 let uniquePositions = new Set();
-const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "STAFF": 6 };
+const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "RUNNER": 6, "STAFF": 7 };
 
-// --- DATA SYNC ---
+// --- DATA INITIALIZATION & SYNC ---
+
 async function loadData() {
     const icons = document.querySelectorAll('.sync-small');
     icons.forEach(i => i.classList.add('spinning'));
-    
     const startTime = Date.now();
 
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
@@ -37,7 +37,9 @@ async function loadData() {
             });
             
             const sortedPos = Array.from(uniquePositions).sort();
-            document.getElementById('formPosition').innerHTML = sortedPos.map(p => `<option value="${p}">${p}</option>`).join('');
+            const posSelect = document.getElementById('formPosition');
+            if (posSelect) posSelect.innerHTML = sortedPos.map(p => `<option value="${p}">${p}</option>`).join('');
+            
             loadSchedule(icons, startTime);
         }
     });
@@ -91,7 +93,6 @@ function loadSchedule(icons, startTime) {
                 showStaffTable();
             }
 
-            // Sync visual feedback delay
             const elapsed = Date.now() - startTime;
             setTimeout(() => {
                 icons.forEach(i => i.classList.remove('spinning'));
@@ -100,13 +101,118 @@ function loadSchedule(icons, startTime) {
     });
 }
 
-// --- NAVIGATION & UI ---
-function openPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    if (pageId === 'editStaffPage') renderStaffList();
-    if (pageId === 'showStaffPage') showStaffTable();
+// --- BRIEFING GENERATION LOGIC ---
+
+function generateBriefing() {
+    const date = document.getElementById('dateSelect').value;
+    const day = scheduleData[date];
+    if (!day) return alert("No data for this date");
+
+    const parseTime = (timeStr) => {
+        const match = timeStr.match(/(\d{1,2})[:h](\d{2})/);
+        return match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
+    };
+
+    let allStaff = [...(day.Bar || []), ...(day.Sala || [])].map(s => {
+        const times = s.shiftRaw.split(/[-–]/);
+        return {
+            ...s,
+            entryTime: parseTime(times[0]),
+            exitTime: parseTime(times[1] || "00:00"),
+            timeLabel: (times[0] || "09:00").trim().replace('h', ':'),
+            exitLabel: (times[1] || "17:30").trim().replace('h', ':')
+        };
+    });
+
+    const byEntry = [...allStaff].sort((a, b) => a.entryTime - b.entryTime || a.priority - b.priority);
+    const byExit = [...allStaff].sort((a, b) => a.exitTime - b.exitTime || a.priority - b.priority);
+    
+    const barByEntry = byEntry.filter(s => s.area === 'Bar');
+    const barByExit = byExit.filter(s => s.area === 'Bar');
+    const salaByEntry = byEntry.filter(s => s.area === 'Sala');
+    const salaByExit = byExit.filter(s => s.area === 'Sala');
+
+    // 1. Porta Priority: Manager -> Head Seller -> Earliest Sala
+    const manager = allStaff.find(s => s.position.toUpperCase() === "MANAGER");
+    const headSeller = allStaff.find(s => s.position.toUpperCase() === "HEAD SELLER");
+    const portaStaff = manager || headSeller || salaByEntry[0] || byEntry[0];
+
+    // 2. Sellers Logic: Exclude Ana if others exist
+    const sellersPool = salaByEntry.filter(s => s.displayName.toLowerCase() !== 'ana' || salaByEntry.length === 1);
+    const sellerA = sellersPool[0] || salaByEntry[0];
+    const sellerB = sellersPool[1] || sellerA;
+    const sellerC = sellersPool[2];
+
+    // 3. Runner Logic: Dynamic check for RUNNER position
+    const runnerStaff = allStaff.find(s => s.position.toUpperCase().includes('RUNNER'));
+    const runnerText = runnerStaff ? runnerStaff.displayName : "Todos";
+
+    // 4. Fecho de Caixa: Head Seller -> Bar Manager -> Manager
+    const fechoCaixaStaff = 
+        allStaff.find(s => s.position.toUpperCase() === "HEAD SELLER") || 
+        allStaff.find(s => s.position.toUpperCase() === "BAR MANAGER") || 
+        manager || 
+        byExit[byExit.length - 1];
+
+    const lastBarExitTime = barByExit.length > 0 ? barByExit[barByExit.length-1].exitLabel : "17:30";
+
+    // --- TEMPLATE BUILDING ---
+    let b = `Bom dia a todos!\n\n`;
+    b += `*BRIEFING ${date.split('/')[0]}/${date.split('/')[1]}*\n\n`;
+    b += `${portaStaff.timeLabel} Porta: ${portaStaff.displayName}\n\n`;
+
+    b += `BAR:\n`;
+    b += `${barByEntry[0]?.timeLabel || '07:30'} Abertura Sala/Bar: *${barByEntry[0]?.displayName || ''}*\n`;
+    b += `${barByEntry[0]?.timeLabel || '07:30'} Bar A: *${barByEntry[0]?.displayName || ''}* Barista – Bebidas\n`;
+    b += `${barByEntry[1]?.timeLabel || '08:00'} Bar B: *${barByEntry[1]?.displayName || ''}* Barista – Cafés / Caixa\n`;
+    if(barByEntry[2]) b += `${barByEntry[2].timeLabel} Bar C: *${barByEntry[2].displayName}*\n`;
+
+    b += `\n⸻⸻⸻⸻\n\n`;
+    b += `‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n`;
+    b += `——————————————\n\n`;
+
+    b += `SELLERS:\n`;
+    b += `${sellerA.timeLabel} Seller A: *${sellerA.displayName}*\n`;
+    b += `${sellerB.timeLabel} Seller B: *${sellerB.displayName}*\n`;
+    if(sellerC) b += `${sellerC.timeLabel} Seller C: *${sellerC.displayName}*\n`;
+    
+    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n`;
+    b += `——————————————\n`;
+    b += `Seller A: Mesas 20-30\n`;
+    b += `Seller B ${sellerC ? '& C' : ''}: Mesas 1-12\n`;
+    b += `——————————————\n\n`;
+
+    b += `RUNNERS:\n`;
+    b += `${runnerStaff ? runnerStaff.timeLabel : '09:00'} Runner A e B: ${runnerText}\n`;
+    b += `——————————————\n\n`;
+
+    // HACCP Assignments
+    const eb1 = barByExit[0] || barByEntry[0];
+    const eb2 = barByExit[1] || eb1;
+    const lb = barByExit[barByExit.length-1] || eb1;
+    const es1 = salaByExit[0] || salaByEntry[0];
+    const es2 = salaByExit[1] || es1;
+    const ls = salaByExit[salaByExit.length-1] || es1;
+
+    b += `HACCP / LIMPEZA BAR:\n`;
+    b += `16:00 Preparações Bar: *${eb1.displayName}*\n`;
+    b += `16:00 Reposição Bar: *${eb2.displayName}*\n`;
+    b += `17:30 Fecho Bar: *${lb.displayName}*\n\n`;
+
+    b += `HACCP / SALA:\n`;
+    b += `16:00- Fecho do sala de cima: *${es1.displayName}*\n`;
+    b += `16:00- Limpeza e reposição aparador/ cadeira de bebés: *${es1.displayName}*\n`;
+    b += `16:00- Repor papel (casa de banho): *${es2.displayName}*\n`;
+    b += `17:30- Limpeza casa de banho (clientes e staff): *${eb2.displayName}*\n`;
+    b += `17:30- Limpeza de espelhos e vidros: *${ls.displayName}*\n`;
+    b += `Fecho da sala: *${ls.displayName}*\n`;
+    b += `${lastBarExitTime} Fecho de Caixa: *${fechoCaixaStaff.displayName}*`;
+
+    document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; font-size: 14px;">${b}</pre>`;
+    document.getElementById('modal').style.display = 'flex';
 }
+
+// --- UI HELPERS & NAVIGATION ---
 
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
@@ -135,23 +241,11 @@ function renderStaffList() {
         </div>`).join('');
 }
 
-// --- CRUD & MODALS ---
-function generateBriefing() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    if(!day) return alert("No data for this date");
-    
-    // Simple Preview logic - we can enhance this message format
-    const staffCount = (day.Sala?.length || 0) + (day.Bar?.length || 0);
-    document.getElementById('modalResult').innerHTML = `
-        <div style="text-align:center;">
-            <h3 style="margin:0;">${date}</h3>
-            <p>Total Staff on Duty: <strong>${staffCount}</strong></p>
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <p style="font-size:14px; color:#666;">Ready to generate WhatsApp briefing?</p>
-        </div>
-    `;
-    document.getElementById('modal').style.display = 'flex';
+function openPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if (pageId === 'editStaffPage') renderStaffList();
+    if (pageId === 'showStaffPage') showStaffTable();
 }
 
 function copyBriefing() {
@@ -159,7 +253,13 @@ function copyBriefing() {
     navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
 }
 
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
+
+// --- CRUD OPERATIONS ---
+
 function openStaffForm(key = null) {
+    const modal = document.getElementById('staffModal');
     if (key) {
         const s = staffMap[key];
         document.getElementById('modalTitle').innerText = "Edit Staff";
@@ -175,7 +275,7 @@ function openStaffForm(key = null) {
         document.getElementById('formAlias').value = "";
         document.getElementById('deleteBtn').style.display = "none";
     }
-    document.getElementById('staffModal').style.display = 'flex';
+    modal.style.display = 'flex';
 }
 
 async function processCRUD(action) {
@@ -195,12 +295,10 @@ async function processCRUD(action) {
     closeStaffModal(); 
     const list = Object.keys(staffMap).map(k => [k.toUpperCase(), staffMap[k].area, staffMap[k].position, staffMap[k].alias]);
     fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateStaff", staffList: list }) })
-        .then(() => { alert("Cloud Synced"); loadData(); });
+        .then(() => { loadData(); });
 }
 
 function confirmSave() { if(confirm("Save changes?")) processCRUD('save'); }
 function confirmDelete() { if(confirm("Permanently delete?")) processCRUD('delete'); }
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
 window.onload = loadData;
