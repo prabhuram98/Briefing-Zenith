@@ -8,7 +8,7 @@ let scheduleData = {};
 let uniquePositions = new Set();
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "STAFF": 6 };
 
-// --- 1. DATA LOADING (The Sequence) ---
+// --- 1. DATA LOADING ---
 async function loadData() {
     const btn = document.getElementById('refreshBtn');
     if(btn) btn.classList.add('spinning');
@@ -23,15 +23,13 @@ async function loadData() {
             
             results.data.forEach((row, i) => {
                 if (i === 0 || !row[0]) return;
-                
-                // NORMALIZE: lowercase and trim for matching
-                const nameKey = row[0].toString().toLowerCase().trim();
+                const rawName = row[0].toString().toLowerCase().trim();
                 const area = row[1] ? row[1].toString().trim() : "Sala";
                 const pos = row[2] ? row[2].toString().trim().toUpperCase() : "STAFF";
                 const alias = row[3] ? row[3].toString().trim() : row[0].trim();
                 
                 uniquePositions.add(pos);
-                staffMap[nameKey] = { 
+                staffMap[rawName] = { 
                     alias: alias, 
                     area: area.toLowerCase().includes('bar') ? 'Bar' : 'Sala', 
                     position: pos, 
@@ -39,13 +37,8 @@ async function loadData() {
                 };
             });
 
-            // Update Position Dropdown
             const sortedPos = Array.from(uniquePositions).sort();
-            const posDropdown = document.getElementById('formPosition');
-            if(posDropdown) {
-                posDropdown.innerHTML = sortedPos.map(p => `<option value="${p}">${p}</option>`).join('');
-            }
-
+            document.getElementById('formPosition').innerHTML = sortedPos.map(p => `<option value="${p}">${p}</option>`).join('');
             loadSchedule(btn);
         }
     });
@@ -73,12 +66,11 @@ function loadSchedule(refreshBtn) {
             }
 
             for (let i = 1; i < rows.length; i++) {
-                let rawName = rows[i][0] ? rows[i][0].toString().toLowerCase().trim() : "";
-                if (!rawName || rawName === "name") continue;
+                let nameInSchedule = rows[i][0] ? rows[i][0].toString().toLowerCase().trim() : "";
+                if (!nameInSchedule || nameInSchedule === "name") continue;
 
-                // Match with Dictionary
-                const info = staffMap[rawName] || { 
-                    alias: rawName.toUpperCase(), 
+                const info = staffMap[nameInSchedule] || { 
+                    alias: nameInSchedule.toUpperCase(), 
                     area: 'Sala', 
                     position: 'EXTERNAL', 
                     priority: 99 
@@ -91,7 +83,8 @@ function loadSchedule(refreshBtn) {
                             displayName: info.alias, 
                             position: info.position, 
                             priority: info.priority, 
-                            shiftRaw: shift 
+                            shiftRaw: shift,
+                            area: info.area
                         });
                     }
                 });
@@ -103,10 +96,7 @@ function loadSchedule(refreshBtn) {
                 const optHtml = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
                 document.getElementById('dateSelect').innerHTML = optHtml;
                 document.getElementById('manageDateSelect').innerHTML = optHtml;
-                
-                // Auto-refresh the views
-                if(document.getElementById('showStaffPage').classList.contains('active')) showStaffTable();
-                if(document.getElementById('editStaffPage').classList.contains('active')) renderStaffList();
+                showStaffTable();
             }
 
             if(refreshBtn) refreshBtn.classList.remove('spinning');
@@ -114,7 +104,7 @@ function loadSchedule(refreshBtn) {
     });
 }
 
-// --- 2. UI NAVIGATION ---
+// --- 2. NAVIGATION & RENDERING ---
 function openPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
@@ -135,21 +125,42 @@ function showStaffTable() {
         <div class="staff-row">
             <div><strong>${s.displayName}</strong><br><span class="role-subtitle">${s.position}</span></div>
             <div><span class="area-tag tag-${s.area.toLowerCase()}">${s.area.toUpperCase()}</span></div>
-            <div>${s.shiftRaw}</div>
+            <div style="font-weight:bold;">${s.shiftRaw}</div>
         </div>`).join('');
 }
 
-// --- 3. STAFF DIRECTORY (CRUD) ---
 function renderStaffList() {
     const container = document.getElementById('staffListContainer');
     const sortedKeys = Object.keys(staffMap).sort((a,b) => staffMap[a].priority - staffMap[b].priority);
     container.innerHTML = sortedKeys.map(k => `
-        <div class="staff-edit-card" onclick="openStaffForm('${k}')">
+        <div class="staff-edit-card" onclick="openStaffForm('${k}')" style="background:white; padding:15px; border-radius:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
             <div><strong>${staffMap[k].alias}</strong><br><span class="role-subtitle">${staffMap[k].position}</span></div>
             <div style="color:#7a4f2c">✏️</div>
         </div>`).join('');
 }
 
+// --- 3. BRIEFING & MODALS ---
+function generateBriefing() {
+    const date = document.getElementById('dateSelect').value;
+    document.getElementById('modalResult').innerHTML = `
+        <div style="text-align:center;">
+            <h3 style="color:#3e2723; margin:0;">${date}</h3>
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <p style="color:#666;">Briefing content logic will be added here.</p>
+        </div>
+    `;
+    document.getElementById('modal').style.display = 'flex';
+}
+
+function copyBriefing() {
+    const text = document.getElementById('modalResult').innerText;
+    navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
+
+// --- 4. CRUD ---
 function openStaffForm(key = null) {
     const delBtn = document.getElementById('deleteBtn');
     if (key) {
@@ -168,10 +179,6 @@ function openStaffForm(key = null) {
         delBtn.style.display = "none";
     }
     document.getElementById('staffModal').style.display = 'flex';
-}
-
-function closeStaffModal() {
-    document.getElementById('staffModal').style.display = 'none';
 }
 
 async function processCRUD(action) {
@@ -198,45 +205,6 @@ async function processCRUD(action) {
     });
 }
 
-// --- 4. BRIEFING LOGIC (The Fixed Part) ---
-function generateBriefing() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    if(!day) return alert("Choose a date");
-
-    const renderItems = (list, area) => list.sort((a,b) => a.priority - b.priority).map((s, i) => `
-        <div style="background:#fff; padding:10px; border-radius:10px; margin-bottom:10px; border-left:4px solid #7a4f2c">
-            <div><strong>${s.displayName}</strong> (${s.shiftRaw})</div>
-            <input type="text" placeholder="Task..." style="width:100%; margin-top:5px; border:1px solid #ddd; padding:5px; border-radius:5px;" onchange="updateTask('${date}','${area}',${i},this.value)">
-        </div>`).join('');
-
-    document.getElementById('modalResult').innerHTML = `
-        <h3 style="color:#7a4f2c">${date}</h3>
-        <p style="font-weight:bold; margin:10px 0 5px;">BAR TEAM</p>
-        ${renderItems(day.Bar, 'Bar')}
-        <p style="font-weight:bold; margin:15px 0 5px;">SALA TEAM</p>
-        ${renderItems(day.Sala, 'Sala')}
-    `;
-    // Explicitly open the BRIEFING modal, not the STAFF modal
-    document.getElementById('modal').style.display = 'flex';
-}
-
-function updateTask(date, area, index, value) {
-    scheduleData[date][area][index].task = value;
-}
-
-function copyText() {
-    const date = document.getElementById('dateSelect').value;
-    const day = scheduleData[date];
-    let text = `*ZENITH BRIEFING - ${date}*\n\n*BAR TEAM:*\n` + day.Bar.map(s => `• ${s.displayName}: ${s.task || ''}`).join('\n') + `\n\n*SALA TEAM:*\n` + day.Sala.map(s => `• ${s.displayName}: ${s.task || ''}`).join('\n');
-    navigator.clipboard.writeText(text).then(() => alert("Copied for WhatsApp!"));
-}
-
-function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-}
-
-// --- 5. INITIALIZE ---
 function confirmSave() { if(confirm("Save and Sync?")) processCRUD('save'); }
 function confirmDelete() { if(confirm("Permanently delete?")) processCRUD('delete'); }
 window.onload = loadData;
