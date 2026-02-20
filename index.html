@@ -3,53 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Portal</title>
+    <title>Staff Management System</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="nav-icon" onclick="openPage('briefingPage')">
-            <span class="material-symbols-outlined">assignment</span>
-            <small>Briefing</small>
+    <div class="app-container">
+        <div id="briefingPage" class="page active">
+            <header class="app-header">
+                <h1>Daily Operations</h1>
+                <div class="sync-status" onclick="loadAllData()">
+                    <span class="material-symbols-outlined" id="syncIcon">sync</span>
+                </div>
+            </header>
+            
+            <div class="dashboard-grid">
+                <div class="card action-card" onclick="generateBriefing()">
+                    <span class="material-symbols-outlined icon-lg">assignment_add</span>
+                    <h3>Generate Briefing</h3>
+                    <p>Create WhatsApp-ready text</p>
+                </div>
+                <div class="card selector-card">
+                    <span class="material-symbols-outlined">event</span>
+                    <label>Target Date</label>
+                    <select id="dateSelect"></select>
+                </div>
+            </div>
         </div>
-        <div class="nav-icon" onclick="openPage('dailyViewPage')">
-            <span class="material-symbols-outlined">calendar_month</span>
-            <small>Daily</small>
-        </div>
-        <div class="nav-icon" onclick="openPage('manageStaffPage')">
-            <span class="material-symbols-outlined">group</span>
-            <small>Staff</small>
-        </div>
-    </nav>
 
-    <div id="briefingPage" class="page active">
-        <div class="header-section">
-            <h2>Briefing Generator</h2>
-            <select id="dateSelect"></select>
-            <button class="main-btn" onclick="generateBriefing()">Generate Text</button>
+        <div id="manageStaffPage" class="page">
+            <header class="app-header">
+                <h1>Staff Directory</h1>
+                <button class="icon-btn-add" onclick="openStaffForm()">
+                    <span class="material-symbols-outlined">person_add</span>
+                </button>
+            </header>
+            <div id="staffListContainer" class="list-container"></div>
         </div>
+
+        <div id="dailyViewPage" class="page">
+            <header class="app-header">
+                <h1>Schedule Preview</h1>
+            </header>
+            <div id="dailyViewContainer" class="list-container"></div>
+        </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active" onclick="openPage('briefingPage', this)">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Home</span>
+            </div>
+            <div class="nav-item" onclick="openPage('dailyViewPage', this)">
+                <span class="material-symbols-outlined">calendar_today</span>
+                <span>Daily</span>
+            </div>
+            <div class="nav-item" onclick="openPage('manageStaffPage', this)">
+                <span class="material-symbols-outlined">badge</span>
+                <span>Staff</span>
+            </div>
+        </nav>
     </div>
 
-    <div id="dailyViewPage" class="page">
-        <h2>Daily Schedule</h2>
-        <div id="dailyViewContainer"></div>
-    </div>
-
-    <div id="manageStaffPage" class="page">
-        <div class="header-section">
-            <h2>Staff Directory</h2>
-            <button class="add-btn" onclick="openStaffForm()">+ Add New Member</button>
-        </div>
-        <div id="staffListContainer"></div>
-    </div>
-
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <div id="modalResult"></div>
+    <div id="modal" class="modal-overlay">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h2 id="modalTitle">System Action</h2>
+                <span class="material-symbols-outlined close-btn" onclick="closeModal()">close</span>
+            </div>
+            <div id="modalResult" class="modal-body"></div>
         </div>
     </div>
 
