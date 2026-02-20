@@ -6,6 +6,16 @@ let staffMap = {};
 let scheduleData = {}; 
 const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "RUNNER": 6, "STAFF": 7 };
 
+// --- UI NAVIGATION ---
+function openPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById(pageId);
+    if (target) target.classList.add('active');
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+// --- DATA LOADING ---
 async function loadData() {
     const syncIcons = document.querySelectorAll('.sync-small');
     syncIcons.forEach(i => i.classList.add('spinning'));
@@ -59,15 +69,14 @@ function loadSchedule(icons) {
                 });
             }
             scheduleData = dates;
-            const dateKeys = Object.keys(dates);
-            if(dateKeys.length > 0) {
-                document.getElementById('dateSelect').innerHTML = dateKeys.map(k => `<option value="${k}">${k}</option>`).join('');
-            }
+            const select = document.getElementById('dateSelect');
+            if(select) select.innerHTML = Object.keys(dates).map(k => `<option value="${k}">${k}</option>`).join('');
             icons.forEach(i => i.classList.remove('spinning'));
         }
     });
 }
 
+// --- BRIEFING GENERATION ---
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayData = scheduleData[selectedDate];
@@ -82,92 +91,77 @@ function generateBriefing() {
         const pts = s.shiftRaw.split(/[-–]/);
         return {
             ...s,
-            entryLabel: (pts[0] || "00:00").trim().replace('h', ':'),
-            exitLabel: (pts[1] || "00:00").trim().replace('h', ':'),
-            entryMin: parseTime(pts[0] || "00:00"),
-            exitMin: parseTime(pts[1] || "00:00")
+            entryLabel: (pts[0] || "09:00").trim().replace('h', ':'),
+            exitLabel: (pts[1] || "17:30").trim().replace('h', ':'),
+            entryMin: parseTime(pts[0] || "09:00"),
+            exitMin: parseTime(pts[1] || "17:30")
         };
     };
 
     const barActive = dayData.Bar.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
     const salaActive = dayData.Sala.map(processShift).sort((a,b) => a.entryMin - b.entryMin);
     const allActive = [...barActive, ...salaActive];
-    const exitingBar = [...barActive].sort((a,b) => a.exitMin - b.exitMin);
-    const exitingSala = [...salaActive].sort((a,b) => a.exitMin - b.exitMin);
 
+    // --- SELLER / RUNNER LOGIC ---
+    let runnerObj = allActive.find(s => s.position.includes('RUNNER'));
+    let salaSellers = salaActive.filter(s => (s.position.includes('STAFF') || s.position.includes('SELLER')) && s.position !== 'MANAGER' && s.displayName.toLowerCase() !== 'ana');
+    let headSellers = salaActive.filter(s => s.position === 'HEAD SELLER');
+    
+    let totalMainSellers = salaSellers.length + headSellers.length;
+    let finalRunnerDisplay = runnerObj ? runnerObj.displayName : "Todos";
+    let finalSellers = [...headSellers, ...salaSellers];
+
+    // Rule: If <= 1 Seller (including Head), Runner becomes a Seller
+    if (totalMainSellers <= 1 && runnerObj) {
+        finalSellers.push(runnerObj);
+        finalRunnerDisplay = "Todos";
+    }
+
+    const sA = finalSellers[0] || { displayName: "N/A", entryLabel: "--:--" };
+    const sB = finalSellers[1] || { displayName: "N/A", entryLabel: "--:--" };
+    const sC = finalSellers[2];
+
+    // PORTA & BAR
     const manager = allActive.find(s => s.position === "MANAGER");
     const headSeller = allActive.find(s => s.position === "HEAD SELLER");
-    const porta = manager || headSeller || salaActive[0] || barActive[0];
-
-    // BAR - Strict Specialization
+    const porta = manager || headSeller || (salaActive.length > 0 ? salaActive[0] : allActive[0]);
     const barA = barActive[0] || { displayName: "N/A", entryLabel: "--:--", exitLabel: "--:--" };
     const barB = barActive[1] || barA;
 
-    // SELLERS - Strict Specialization
-    let sPool = salaActive.filter(s => s.position !== 'MANAGER' && s.displayName.toLowerCase() !== 'ana');
-    if (sPool.length === 0) sPool = salaActive;
-    const sA = sPool[0] || { displayName: "N/A", entryLabel: "--:--", exitLabel: "--:--" };
-    const sB = sPool[1] || sA;
-    const sC = sPool[2];
+    // --- HACCP (STRICT SEPARATION, NO MANAGER) ---
+    const bHPool = barActive.filter(s => s.position !== 'MANAGER');
+    const bExit = (bHPool.length > 0 ? bHPool : barActive).sort((a,b) => a.exitMin - b.exitMin);
+    const eb1 = bExit[0] || barA;
+    const eb2 = bExit[1] || eb1;
+    const lb = bExit[bExit.length-1] || eb1;
 
-    const runnerObj = allActive.find(s => s.position.includes('RUNNER'));
-    const runnerName = runnerObj ? runnerObj.displayName : "Todos";
-
-    // HACCP Assignments
-    const eb1 = exitingBar[0] || barA;
-    const eb2 = exitingBar[1] || eb1;
-    const lb = exitingBar[exitingBar.length-1] || eb1;
-    const es1 = exitingSala[0] || sA;
-    const es2 = exitingSala[1] || es1;
-    const ls = exitingSala[exitingSala.length-1] || es1;
+    const sHPool = salaActive.filter(s => s.position !== 'MANAGER');
+    const sExit = (sHPool.length > 0 ? sHPool : salaActive).sort((a,b) => a.exitMin - b.exitMin);
+    const es1 = sExit[0] || sA;
+    const es2 = sExit[1] || es1;
+    const ls = sExit[sExit.length-1] || es1;
 
     const caixa = headSeller || allActive.find(s => s.position === "BAR MANAGER") || manager || lb || ls;
 
-    // --- FULL TEMPLATE RESTORED ---
+    // --- TEMPLATE ---
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
     b += `${porta.entryLabel} Porta: ${porta.displayName}\n\n`;
-    
-    b += `BAR:\n`;
-    b += `${barA.entryLabel} Abertura Sala/Bar: *${barA.displayName}*\n`;
-    b += `${barA.entryLabel} Bar A: *${barA.displayName}* Barista – Bebidas\n`;
-    b += `${barB.entryLabel} Bar B: *${barB.displayName}* Barista – Cafés / Caixa\n`;
-    
-    b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n`;
-    b += `——————————————\n\nSELLERS:\n`;
-    b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n`;
-    b += `${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
+    b += `BAR:\n${barA.entryLabel} Abertura Sala/Bar: *${barA.displayName}*\n${barA.entryLabel} Bar A: *${barA.displayName}* Barista – Bebidas\n${barB.entryLabel} Bar B: *${barB.displayName}* Barista – Cafés / Caixa\n`;
+    b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n——————————————\n\nSELLERS:\n`;
+    b += `${sA.entryLabel} Seller A: *${sA.displayName}*\n${sB.entryLabel} Seller B: *${sB.displayName}*\n`;
     if(sC) b += `${sC.entryLabel} Seller C: *${sC.displayName}*\n`;
-    
-    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\n`;
-    b += `Seller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
-    
-    b += `RUNNERS:\n${runnerObj ? runnerObj.entryLabel : '09:00'} Runner A e B: ${runnerName}\n——————————————\n\n`;
-
-    b += `HACCP / LIMPEZA BAR:\n`;
-    b += `${eb1.exitLabel} Preparações Bar: *${eb1.displayName}*\n`;
-    b += `${eb2.exitLabel} Reposição Bar: *${eb2.displayName}*\n`;
-    b += `${lb.exitLabel} Fecho Bar: *${lb.displayName}*\n\n`;
-    
-    b += `HACCP / SALA:\n`;
-    b += `${es1.exitLabel} Fecho do sala de cima: *${es1.displayName}*\n`;
-    b += `${es1.exitLabel} Limpeza e reposição aparador: *${es1.displayName}*\n`;
-    b += `${es2.exitLabel} Repor papel (WC): *${es2.displayName}*\n`;
-    b += `${eb2.exitLabel} Limpeza WC (clientes/staff): *${eb2.displayName}*\n`;
-    b += `${ls.exitLabel} Limpeza de vidros: *${ls.displayName}*\n`;
-    b += `${ls.exitLabel} Fecho Sala: *${ls.displayName}*\n`;
-    
+    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\nSeller A: Mesas 20-30\nSeller B ${sC ? '& C' : ''}: Mesas 1-12\n——————————————\n\n`;
+    b += `RUNNERS:\n${runnerObj ? runnerObj.entryLabel : '09:00'} Runner A e B: ${finalRunnerDisplay}\n——————————————\n\n`;
+    b += `HACCP / LIMPEZA BAR:\n${eb1.exitLabel} Preparações Bar: *${eb1.displayName}*\n${eb2.exitLabel} Reposição Bar: *${eb2.displayName}*\n${lb.exitLabel} Fecho Bar: *${lb.displayName}*\n\n`;
+    b += `HACCP / SALA:\n${es1.exitLabel} Fecho do sala de cima: *${es1.displayName}*\n${es1.exitLabel} Limpeza e reposição aparador: *${es1.displayName}*\n${es2.exitLabel} Repor papel (WC): *${es2.displayName}*\n${eb2.exitLabel} Limpeza WC (clientes/staff): *${eb2.displayName}*\n${ls.exitLabel} Limpeza de vidros: *${ls.displayName}*\n${ls.exitLabel} Fecho Sala: *${ls.displayName}*\n`;
     b += `${caixa.exitLabel} Fecho de Caixa: *${caixa.displayName}*`;
 
     document.getElementById('modalResult').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
 }
 
-function openPage(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function copyBriefing() {
     navigator.clipboard.writeText(document.getElementById('modalResult').innerText).then(() => alert("Copied!"));
 }
+
 window.onload = loadData;
