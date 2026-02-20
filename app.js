@@ -2,11 +2,12 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaD
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv';
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
-let staffMap = {}, scheduleData = {};
-
-window.onload = loadData;
+let staffMap = {}, scheduleData = {}, uniquePositions = new Set();
+const POSITION_ORDER = { "MANAGER": 1, "BAR MANAGER": 2, "HEAD SELLER": 3, "BAR STAFF": 4, "SALA STAFF": 5, "STAFF": 6 };
 
 async function loadData() {
+    const btn = document.getElementById('refreshBtn');
+    if(btn) btn.classList.add('spinning');
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
         download: true,
         complete: (results) => {
@@ -16,15 +17,19 @@ async function loadData() {
                 const key = row[0].toLowerCase().trim();
                 staffMap[key] = { 
                     alias: row[3] || row[0], 
-                    area: (row[1]||'').toLowerCase().includes('bar') ? 'Bar' : 'Sala'
+                    area: (row[1]||'').toLowerCase().includes('bar') ? 'Bar' : 'Sala', 
+                    position: row[2] || "STAFF", 
+                    priority: POSITION_ORDER[row[2]] || 99 
                 };
+                uniquePositions.add(row[2] || "STAFF");
             });
-            loadSchedule();
+            document.getElementById('formPosition').innerHTML = Array.from(uniquePositions).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+            loadSchedule(btn);
         }
     });
 }
 
-function loadSchedule() {
+function loadSchedule(refreshBtn) {
     Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
         download: true,
         complete: (results) => {
@@ -42,13 +47,18 @@ function loadSchedule() {
                 for (let j = 1; j < header.length; j++) {
                     let shift = rows[i][j]?.trim();
                     if (shift && /\d/.test(shift)) {
-                        dates[header[j].trim()][info.area].push({ alias: info.alias, shiftRaw: shift });
+                        dates[header[j].trim()][info.area].push({ alias: info.alias, shiftRaw: shift, priority: info.priority });
                     }
                 }
             }
             scheduleData = dates;
-            const opt = Object.keys(dates).map(k => `<option value="${k}">${k}</option>`).join('');
-            document.getElementById('dateSelect').innerHTML = opt;
+            const keys = Object.keys(dates);
+            if(keys.length > 0) {
+                const opt = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+                document.getElementById('dateSelect').innerHTML = opt;
+                document.getElementById('manageDateSelect').innerHTML = opt;
+            }
+            if(refreshBtn) refreshBtn.classList.remove('spinning');
         }
     });
 }
@@ -87,18 +97,21 @@ function generateBriefing() {
     b += `\nLIMPEZA BAR:\n${bE[0]?.out} Preparações: ${bE[0]?.alias}\n${bE[bE.length-1]?.out} Fecho: ${bE[bE.length-1]?.alias}\n\n`;
     b += `LIMPEZA SALA:\n${sE[0]?.out} Fecho Cima: ${sE[0]?.alias}\n${sE[sE.length-1]?.out} Fecho Sala: ${sE[sE.length-1]?.alias}`;
 
-    document.getElementById('modalResult').innerHTML = `<pre id="cText">${b}</pre>`;
+    document.getElementById('modalResult').innerHTML = `<pre id="cText" style="white-space:pre-wrap; font-size:13px; color:#3e2723;">${b}</pre>`;
     document.getElementById('modal').style.display = 'flex';
-}
-
-function openPage(id, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.dock-item').forEach(d => d.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    el.classList.add('active');
 }
 
 function copyBriefing() {
     navigator.clipboard.writeText(document.getElementById('cText').innerText).then(() => alert("Copied!"));
 }
+
+function openPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (id === 'editStaffPage') renderStaffList();
+    if (id === 'showStaffPage') showStaffTable();
+}
+
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
+window.onload = loadData;
