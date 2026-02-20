@@ -1,4 +1,4 @@
-// app.js - MASTER CONTROLLER 2026
+// app.js - Advanced Dashboard Controller
 const CONFIG = {
     SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaDta8Pm4GyYT-rtbbFrkYrGSE74KWq6wpnJ8qOn_5JL4V6d8-pg/exec',
     SCHEDULE_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv',
@@ -10,29 +10,29 @@ window.scheduleData = {};
 
 window.onload = () => loadAllData();
 
-// --- 1. DATA CORE ---
 async function loadAllData() {
-    console.log("Syncing data...");
+    const icon = document.getElementById('syncIcon');
+    icon.classList.add('spinning');
+
     Papa.parse(`${CONFIG.STAFF_URL}&t=${Date.now()}`, {
         download: true,
         complete: (results) => {
             window.staffMap = {};
             results.data.forEach((row, i) => {
                 if (i === 0 || !row[0]) return;
-                const rawName = row[0].toLowerCase().trim();
-                window.staffMap[rawName] = {
+                window.staffMap[row[0].toLowerCase().trim()] = {
                     realName: row[0].trim(),
                     area: row[1]?.trim() || "Sala",
                     position: row[2]?.trim() || "Staff",
                     alias: row[3]?.trim() || row[0].trim()
                 };
             });
-            fetchSchedule();
+            fetchSchedule(icon);
         }
     });
 }
 
-function fetchSchedule() {
+function fetchSchedule(icon) {
     Papa.parse(`${CONFIG.SCHEDULE_URL}&t=${Date.now()}`, {
         download: true,
         complete: (results) => {
@@ -49,54 +49,49 @@ function fetchSchedule() {
             }
 
             for (let i = 1; i < rows.length; i++) {
-                const nameKey = rows[i][0]?.toLowerCase().trim();
-                const info = window.staffMap[nameKey];
+                const info = window.staffMap[rows[i][0]?.toLowerCase().trim()];
                 if (!info) continue;
 
                 dateCols.forEach(col => {
                     const shift = rows[i][col.index]?.trim();
                     if (shift && /^\d/.test(shift)) {
-                        const targetArea = info.area.toLowerCase().includes("bar") ? "Bar" : "Sala";
-                        dates[col.label][targetArea].push({ ...info, shiftRaw: shift });
+                        const area = info.area.toLowerCase().includes("bar") ? "Bar" : "Sala";
+                        dates[col.label][area].push({ ...info, shiftRaw: shift });
                     }
                 });
             }
             window.scheduleData = dates;
-            updateDropdown();
+            document.getElementById('dateSelect').innerHTML = Object.keys(dates).map(k => `<option value="${k}">${k}</option>`).join('');
+            icon.classList.remove('spinning');
         }
     });
 }
 
-function updateDropdown() {
-    const select = document.getElementById('dateSelect');
-    if (select) {
-        select.innerHTML = Object.keys(window.scheduleData).map(k => `<option value="${k}">${k}</option>`).join('');
-    }
+// NAVIGATION
+function openPage(pageId, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    el.classList.add('active');
+    if (pageId === 'manageStaffPage') renderStaffList();
 }
 
-// --- 2. STAFF CRUD ---
+// CRUD
 function openStaffForm(name = '', area = 'Sala', pos = 'Staff', alias = '') {
-    const modal = document.getElementById('modal');
-    const res = document.getElementById('modalResult');
-    
-    res.innerHTML = `
-        <div class="crud-form">
-            <h3>${name ? 'Edit' : 'Add'} Team Member</h3>
-            <label>Real Name (Schedule Name)</label>
-            <input type="text" id="f_name" value="${name}" ${name ? 'readonly' : ''}>
-            <label>Alias (For Briefing)</label>
-            <input type="text" id="f_alias" value="${alias || name}">
-            <label>Work Area</label>
+    document.getElementById('modalTitle').innerText = name ? 'Edit Staff' : 'Add New Staff';
+    document.getElementById('modalResult').innerHTML = `
+        <div class="crud-body">
+            <input type="text" id="f_name" value="${name}" placeholder="Schedule Name" ${name?'readonly':''}>
+            <input type="text" id="f_alias" value="${alias || name}" placeholder="Alias (Display Name)">
             <select id="f_area">
-                <option value="Sala" ${area === 'Sala' ? 'selected' : ''}>Sala Staff</option>
-                <option value="Bar" ${area === 'Bar' ? 'selected' : ''}>Bar Staff</option>
+                <option value="Sala" ${area==='Sala'?'selected':''}>Sala</option>
+                <option value="Bar" ${area==='Bar'?'selected':''}>Bar</option>
             </select>
-            <label>Position</label>
-            <input type="text" id="f_pos" value="${pos}">
-            <button class="main-btn" onclick="saveStaff()">SAVE CHANGES</button>
+            <input type="text" id="f_pos" value="${pos}" placeholder="Position">
+            <button class="main-btn" onclick="saveStaff()">SYNC TO SHEET</button>
         </div>
     `;
-    modal.style.display = 'flex';
+    document.getElementById('modal').style.display = 'flex';
 }
 
 async function saveStaff() {
@@ -107,23 +102,13 @@ async function saveStaff() {
         area: document.getElementById('f_area').value,
         position: document.getElementById('f_pos').value
     };
-
-    const btn = document.querySelector('.crud-form button');
-    btn.innerText = "Syncing...";
-    btn.disabled = true;
-
-    try {
-        await fetch(CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-        alert("Staff updated in Spreadsheet!");
-        closeModal();
-        loadAllData();
-    } catch (e) {
-        alert("Error saving: " + e);
-        btn.disabled = false;
-    }
+    await fetch(CONFIG.SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+    alert("Updated Successfully");
+    closeModal();
+    loadAllData();
 }
 
-// --- 3. THE BRIEFING ---
+// BRIEFING ENGINE
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     const dayData = window.scheduleData[date];
@@ -174,40 +159,26 @@ function generateBriefing() {
     b += `HACCP / LIMPEZA BAR:\n${eb1.out} Preparações Bar: *${eb1.alias}*\n${lb.out} Fecho Bar: *${lb.alias}*\n\n`;
     b += `HACCP / SALA:\n${es1.out} Fecho do sala de cima: *${es1.alias}*\n${es1.out} Limpeza e reposição aparador: *${es1.alias}*\n${es2.out} Repor papel (WC): *${es2.alias}*\n${ls.out} Fecho Sala: *${ls.alias}*`;
 
-    document.getElementById('modalResult').innerHTML = `<pre id="copyText">${b}</pre><button class="main-btn" onclick="copyBriefing()">Copy to Clipboard</button>`;
+    document.getElementById('modalTitle').innerText = "Briefing Copy";
+    document.getElementById('modalResult').innerHTML = `<pre id="copyText">${b}</pre><button class="main-btn" onclick="copyBriefing()">COPY TEXT</button>`;
     document.getElementById('modal').style.display = 'flex';
 }
 
-// --- 4. NAVIGATION ---
-function openPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-    if (pageId === 'manageStaffPage') renderDirectory();
-    if (pageId === 'dailyViewPage') renderDaily();
-}
-
-function renderDirectory() {
-    let html = `<table class="staff-table"><tr><th>Alias</th><th>Area</th><th>Action</th></tr>`;
+function renderStaffList() {
+    let h = '';
     Object.values(window.staffMap).forEach(s => {
-        html += `<tr><td>${s.alias}</td><td>${s.area}</td><td><button onclick="openStaffForm('${s.realName}','${s.area}','${s.position}','${s.alias}')">Edit</button></td></tr>`;
+        h += `<div class="staff-row">
+            <div><strong>${s.alias}</strong><br><small>${s.area} | ${s.position}</small></div>
+            <button class="icon-btn" onclick="openStaffForm('${s.realName}','${s.area}','${s.position}','${s.alias}')">
+                <span class="material-symbols-outlined">edit</span>
+            </button>
+        </div>`;
     });
-    document.getElementById('staffListContainer').innerHTML = html + `</table>`;
-}
-
-function renderDaily() {
-    const d = document.getElementById('dateSelect').value;
-    const data = window.scheduleData[d];
-    if (!data) return;
-    let html = `<table><tr><th>Area</th><th>Staff</th><th>Shift</th></tr>`;
-    [...data.Bar, ...data.Sala].forEach(s => {
-        html += `<tr><td>${s.area}</td><td>${s.alias}</td><td>${s.shiftRaw}</td></tr>`;
-    });
-    document.getElementById('dailyViewContainer').innerHTML = html + `</table>`;
+    document.getElementById('staffListContainer').innerHTML = h;
 }
 
 function copyBriefing() {
-    const text = document.getElementById('copyText').innerText;
-    navigator.clipboard.writeText(text).then(() => alert("Copied!"));
+    navigator.clipboard.writeText(document.getElementById('copyText').innerText).then(() => alert("Copied!"));
 }
 
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
