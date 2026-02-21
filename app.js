@@ -80,14 +80,14 @@ function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
     const day = scheduleData[date] || [];
     const container = document.getElementById('scheduleTableWrapper');
-    if (day.length === 0) { container.innerHTML = "<p style='text-align:center;'>No shifts.</p>"; return; }
-    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Staff</th><th>Area</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td class="col-alias">${s.alias}</td><td class="col-meta">${s.area}</td><td><span class="badge-time">${s.shiftRaw}</span></td></tr>`).join('')}</tbody></table></div>`;
+    if (day.length === 0) { container.innerHTML = "<p style='text-align:center;'>No shifts found.</p>"; return; }
+    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Staff</th><th>Area</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td class="col-alias">${s.alias}</td><td>${s.area}</td><td><span class="badge-time">${s.shiftRaw}</span></td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function renderStaffList() {
     const container = document.getElementById('staffListContainer');
     const sorted = Object.keys(staffMap).sort();
-    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Alias</th><th>Position</th><th style="text-align:right">✎</th></tr></thead><tbody>${sorted.map(k => `<tr onclick="openStaffForm('${k}')"><td><b>${staffMap[k].alias}</b></td><td class="col-meta">${staffMap[k].area} • ${staffMap[k].position}</td><td style="text-align:right">→</td></tr>`).join('')}</tbody></table></div>`;
+    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Alias</th><th>Position</th><th style="text-align:right">→</th></tr></thead><tbody>${sorted.map(k => `<tr onclick="openStaffForm('${k}')"><td><b>${staffMap[k].alias}</b></td><td style="font-size:12px;color:#8d6e63;">${staffMap[k].area} • ${staffMap[k].position}</td><td style="text-align:right">✎</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function openStaffForm(k = null) {
