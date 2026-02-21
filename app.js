@@ -8,9 +8,26 @@ let scheduleData = {};
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+
+    // Show Loader for data pages
+    if (id === 'showStaffPage') {
+        document.getElementById('dailyLoader').style.display = 'flex';
+        document.getElementById('scheduleTableWrapper').innerHTML = '';
+    }
+    if (id === 'editStaffPage') {
+        document.getElementById('directoryLoader').style.display = 'flex';
+        document.getElementById('staffListContainer').innerHTML = '';
+    }
+
     loadData().then(() => {
-        if (id === 'editStaffPage') renderStaffList();
-        if (id === 'showStaffPage') showStaffTable();
+        if (id === 'editStaffPage') {
+            renderStaffList();
+            document.getElementById('directoryLoader').style.display = 'none';
+        }
+        if (id === 'showStaffPage') {
+            showStaffTable();
+            document.getElementById('dailyLoader').style.display = 'none';
+        }
     });
 }
 
@@ -120,7 +137,7 @@ async function confirmSave() {
     btn.disabled = true; btn.innerText = "Saving..."; btn.style.opacity = "0.5";
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: key ? 'update' : 'add', originalKey: key, fullName, alias, position: pos, area: staffMap[key?.toLowerCase()]?.area || 'Sala' }) });
-        setTimeout(() => { alert("Success!"); closeStaffModal(); loadData(); }, 600);
+        setTimeout(() => { alert("Success!"); closeStaffModal(); loadData().then(() => renderStaffList()); }, 600);
     } catch (e) { alert("Error"); btn.disabled = false; btn.innerText = "Save Changes"; btn.style.opacity = "1"; }
 }
 
@@ -131,7 +148,7 @@ async function confirmDelete() {
     btn.disabled = true; btn.innerText = "Deleting..."; btn.style.opacity = "0.5";
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', originalKey: key }) });
-        setTimeout(() => { alert("Removed"); closeStaffModal(); loadData(); }, 600);
+        setTimeout(() => { alert("Removed"); closeStaffModal(); loadData().then(() => renderStaffList()); }, 600);
     } catch (e) { alert("Error"); btn.disabled = false; btn.innerText = "Delete Staff"; }
 }
 
