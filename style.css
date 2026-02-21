@@ -5,48 +5,65 @@ body { background-color: #ffffff; margin: 0; color: #3e2723; height: 100vh; over
 .page { display: none; height: 100vh; flex-direction: column; background: #ffffff; }
 .page.active { display: flex; }
 
-/* BRANDING HEADER: Coffee Background */
+/* BRANDING HEADER */
 .brand-header {
     background-color: #dbc9b7;
-    padding: 50px 20px 30px 20px;
+    padding: 60px 20px 45px 20px;
     text-align: center;
     position: relative;
-    border-bottom: 2px solid #3e2723;
+    border-bottom: 3px solid #3e2723;
 }
 
-.app-logo { font-size: 42px; letter-spacing: 8px; margin: 0; font-weight: 900; color: #3e2723; }
-.app-subtitle { font-size: 14px; letter-spacing: 2px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; color: #3e2723; }
+.app-logo { 
+    font-size: 52px; 
+    letter-spacing: 10px; 
+    margin: 0; 
+    line-height: 1;
+    font-weight: 900; 
+    color: #3e2723; 
+}
+
+.app-subtitle { 
+    font-size: 16px; 
+    letter-spacing: 3px; 
+    margin: 10px 0 0 0; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    color: #3e2723; 
+}
+
 .header-title { font-size: 24px; text-transform: uppercase; margin: 0; font-weight: 900; color: #3e2723; }
 
-/* CONTENT AREA: Pure White Background */
-.content-area { flex-grow: 1; overflow-y: auto; background-color: #ffffff; padding-bottom: 40px; }
-.padded-container { padding: 20px; }
+/* CONTENT AREA */
+.content-area { flex-grow: 1; overflow-y: auto; background-color: #ffffff; }
+.padded-container { padding: 20px; background-color: #ffffff; }
 
-/* ICONS */
-.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 25px 20px; }
+/* DASHBOARD ICONS */
+.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 30px 20px; }
 .big-icon { 
-    background: #3e2723; border-radius: 20px; padding: 35px 10px; 
+    background: #3e2723; border-radius: 20px; padding: 40px 10px; 
     display: flex; flex-direction: column; align-items: center; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 .icon-circle { font-size: 44px; margin-bottom: 12px; }
 .big-icon span { font-weight: bold; font-size: 13px; color: #f3ebe3; text-transform: uppercase; }
 
-/* TABLES on White Background */
+/* TABLES */
 .table-container { width: 100%; margin-top: 15px; background: #ffffff; border-radius: 15px; border: 2px solid #3e2723; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
 th { background-color: #3e2723; color: #f3ebe3; text-align: left; padding: 12px; font-size: 11px; text-transform: uppercase; }
-td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #3e2723; }
+td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #3e2723; background: #ffffff; }
 .col-alias { font-weight: 800; }
 .badge-time { background: #3e2723; color: #f3ebe3; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
 
-/* BUTTONS */
+/* UI COMPONENTS */
 .btn-primary { background: #3e2723; color: #f3ebe3; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; }
 .btn-secondary { background: #8d6e63; color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; margin-top: 8px; font-weight: bold; }
 .btn-delete { background: #c62828; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; margin-top: 15px; font-weight: bold; }
 .close-btn { position: absolute; top: 15px; left: 20px; width: 35px; height: 35px; border-radius: 50%; background: #3e2723; color: #f3ebe3; border: none; font-size: 18px; }
 
-.styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #d7ccc8; background: #ffffff; font-size: 16px; margin-top: 5px; color: #3e2723; font-weight: bold;}
-.field-label { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-top: 15px; display: block; }
+.styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #d7ccc8; background: #ffffff; font-size: 16px; margin-top: 5px; color: #3e2723; }
+.field-label { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-top: 15px; display: block; color: #3e2723; }
 
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
 .modal-content { background: #ffffff; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 2px solid #3e2723; }
