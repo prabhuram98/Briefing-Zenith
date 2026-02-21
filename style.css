@@ -1,15 +1,35 @@
-* { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
 
-/* Prevent global scrolling on the body */
 body { 
     margin: 0; 
-    background-color: #ffffff; 
+    background-color: #f2f2f7; /* iOS Light Gray Background */
     color: #3e2723; 
     height: 100vh; 
     overflow: hidden; 
 }
 
-/* Page Setup: Locked Height */
+/* HEADER: Fixed Coffee Branding */
+.brand-container { 
+    background-color: #dbc9b7; 
+    padding: 60px 20px 30px 20px; 
+    text-align: center; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+.app-logo { font-size: 34px; letter-spacing: 4px; margin: 0; font-weight: 800; color: #3e2723; }
+.app-subtitle { font-size: 11px; letter-spacing: 2px; margin-top: 4px; font-weight: 600; opacity: 0.8; }
+
+/* SUB-PAGE HEADERS */
+.page-title { 
+    text-align: center; 
+    padding: 60px 0 20px 0; 
+    text-transform: uppercase; 
+    background-color: #dbc9b7; 
+    color: #3e2723;
+    font-weight: 800;
+}
+
+/* MAIN CONTENT AREA */
 .page { 
     display: none; 
     height: 100vh; 
@@ -18,76 +38,106 @@ body {
     top: 0; 
     left: 0; 
     flex-direction: column;
+    background-color: #f2f2f7; 
 }
 .page.active { display: flex; }
 
-/* BRANDING SECTION: Stays Coffee Color */
-.brand-container { 
-    background-color: #dbc9b7; 
-    padding: 60px 20px 40px 20px; 
-    text-align: center; 
-    flex-shrink: 0; /* Prevents header from squishing */
-}
-.app-logo { font-size: 48px; letter-spacing: 8px; margin: 0; font-weight: 900; color: #3e2723; }
-.app-subtitle { font-size: 14px; letter-spacing: 3px; margin-top: 5px; font-weight: 600; color: #3e2723; }
-
-/* SUB-PAGE HEADERS */
-.page-title { 
-    text-align: center; 
-    padding: 60px 0 25px 0; 
-    text-transform: uppercase; 
-    letter-spacing: 2px; 
-    background-color: #dbc9b7; 
-    margin: 0;
-    color: #3e2723;
-    flex-shrink: 0;
-}
-
-/* CONTENT AREA: This is where icons live */
+/* DASHBOARD ICONS: iOS Style Cards */
 .icon-grid { 
-    padding: 30px 20px; 
+    padding: 25px; 
     display: grid; 
     grid-template-columns: 1fr 1fr; 
-    gap: 15px; 
-    flex-grow: 1; /* Fills remaining space */
-    align-content: start; /* Keeps icons near the top of the white area */
-}
-
-/* List containers (Daily Staff/Directory) can scroll if needed */
-#staffListContainer, #scheduleTableWrapper {
-    flex-grow: 1;
-    overflow-y: auto; /* Only lists can scroll */
-    padding: 20px;
-}
-
-/* UI ELEMENTS: White Background, Dark Coffee Detail */
-.big-icon, .btn-primary, .btn-secondary, .mini-sync-btn, .close-btn, 
-.filter-card, .staff-edit-card, .staff-row, .modal-content, .styled-select, input {
-    background-color: #ffffff !important;
-    border: 2px solid #3e2723;
-    color: #3e2723 !important;
-    font-weight: 900 !important;
+    gap: 20px; 
 }
 
 .big-icon { 
-    border-radius: 20px; 
+    background: #ffffff;
+    border-radius: 24px; 
     padding: 30px 10px; 
     display: flex; 
     flex-direction: column; 
     align-items: center; 
-    justify-content: center;
-    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
 }
-.icon-circle { font-size: 40px; margin-bottom: 10px; }
-.big-icon span { font-size: 12px; text-transform: uppercase; text-align: center; }
+.big-icon:active { transform: scale(0.95); }
+.icon-circle { font-size: 44px; margin-bottom: 12px; }
+.big-icon span { font-weight: 700; font-size: 14px; color: #3e2723; }
 
-/* FIXED BUTTONS */
-.mini-sync-btn { position: fixed; top: 20px; left: 20px; padding: 8px 12px; border-radius: 8px; z-index: 999; font-size: 11px; }
-.close-btn { position: absolute; top: 15px; right: 20px; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 999; }
+/* ADVANCED TABLE VIEW (Daily Staff) */
+.staff-row {
+    background: #ffffff;
+    margin: 8px 15px;
+    padding: 15px 20px;
+    border-radius: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.area-divider {
+    margin: 25px 20px 10px 20px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
-/* MODAL STYLES */
+/* CRUD / DIRECTORY LIST */
+.staff-edit-card {
+    background: #ffffff;
+    padding: 18px 22px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid #dbc9b7;
+}
+
+/* INPUTS & BUTTONS */
+.styled-select, input {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: #ffffff;
+    font-size: 16px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    margin-top: 8px;
+}
+
+.btn-primary { 
+    background: #3e2723; 
+    color: #ffffff; 
+    padding: 18px; 
+    border-radius: 16px; 
+    font-weight: 700; 
+    border: none;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.close-btn { 
+    position: absolute; top: 15px; right: 15px; 
+    background: rgba(255,255,255,0.8); 
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 18px;
+}
+
+/* MODAL: Modern Slide-up feel */
 .modal { 
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(62, 39, 35, 0.85); align-items: center; justify-content: center; z-index: 1000;
+    background: rgba(0,0,0,0.4); 
+    backdrop-filter: blur(8px);
 }
-.modal-content { width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 3px solid #3e2723; }
+.modal-content { 
+    background: #f2f2f7; 
+    width: 95%; 
+    max-width: 450px; 
+    border-radius: 30px; 
+    padding: 30px; 
+    border: none;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+}
