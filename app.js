@@ -56,8 +56,7 @@ function processSchedule(rows) {
             }
         });
     }
-    scheduleData = dates; 
-    updateDropdowns();
+    scheduleData = dates; updateDropdowns();
 }
 
 function updateDropdowns() {
@@ -114,7 +113,7 @@ async function confirmSave() {
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: key ? 'update' : 'add', originalKey: key, fullName, alias, position: pos, area: staffMap[key?.toLowerCase()]?.area || 'Sala' }) });
         closeStaffModal(); loadData();
-    } catch (e) { alert("Erro!"); }
+    } catch (e) { alert("Erro de conexão"); }
 }
 
 async function confirmDelete() {
