@@ -8,27 +8,10 @@ let scheduleData = {};
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-
-    if (id === 'showStaffPage' || id === 'editStaffPage') {
-        const loaderId = id === 'showStaffPage' ? 'dailyLoader' : 'directoryLoader';
-        const wrapperId = id === 'showStaffPage' ? 'scheduleTableWrapper' : 'staffListContainer';
-        const loader = document.getElementById(loaderId);
-        const wrapper = document.getElementById(wrapperId);
-
-        loader.style.display = 'flex';
-        wrapper.style.display = 'none';
-
-        loadData().then(() => {
-            // Renders immediately after data is ready
-            if (id === 'editStaffPage') renderStaffList();
-            if (id === 'showStaffPage') showStaffTable();
-            
-            loader.style.display = 'none';
-            wrapper.style.display = 'block';
-        });
-    } else {
-        loadData();
-    }
+    loadData().then(() => {
+        if (id === 'editStaffPage') renderStaffList();
+        if (id === 'showStaffPage') showStaffTable();
+    });
 }
 
 async function loadData() {
