@@ -1,40 +1,70 @@
 * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
 
-body { background-color: #f3ebe3; margin: 0; color: #3e2723; }
+/* Main Background is now White */
+body { background-color: #ffffff; margin: 0; color: #3e2723; }
 
-.page { display: none; padding: 0; min-height: 100vh; position: relative; }
-.page.active { display: block; }
+.page { display: none; min-height: 100vh; flex-direction: column; }
+.page.active { display: flex; }
 
-.app-logo { text-align: center; letter-spacing: 5px; margin: 60px 0 40px 0; font-weight: 900; color: #3e2723; font-size: 36px; }
-.page-title { text-align: center; margin: 40px 0 20px 0; text-transform: uppercase; font-weight: 900; }
+/* COFFEE HEADER: Branding Area */
+.brand-header {
+    background-color: #dbc9b7; /* Coffee Background */
+    padding: 60px 20px 40px 20px;
+    text-align: center;
+    border-bottom: 2px solid #3e2723;
+}
 
-/* ICON GRID */
-.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+.app-logo { 
+    margin: 0; 
+    font-weight: 900; 
+    color: #3e2723; /* Dark Coffee Color */
+    font-size: 48px; 
+    letter-spacing: 8px; 
+}
+
+.app-subtitle { 
+    margin: 5px 0 0 0; 
+    font-size: 18px; 
+    font-weight: 600; 
+    color: #3e2723; 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* CONTENT AREA: White Background */
+.content-area {
+    background-color: #ffffff;
+    flex-grow: 1;
+}
+
+/* Page Titles for sub-pages */
+.page-title { 
+    text-align: center; 
+    padding: 30px 0; 
+    margin: 0;
+    text-transform: uppercase; 
+    font-weight: 900; 
+    background-color: #dbc9b7; /* Consistent header color for sub-pages */
+    border-bottom: 1px solid #3e2723;
+}
+
+/* ICONS (Keeping the Dark Coffee theme) */
+.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 30px 20px; }
 .big-icon { 
     background: #3e2723; border-radius: 20px; padding: 35px 10px; 
     display: flex; flex-direction: column; align-items: center; 
-    box-shadow: 0 4px 15px rgba(62, 39, 35, 0.2); cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer;
 }
 .icon-circle { font-size: 44px; margin-bottom: 12px; }
 .big-icon span { font-weight: bold; font-size: 14px; color: #f3ebe3; text-transform: uppercase; }
 
-/* TABLE VIEW */
-.table-container { width: 100%; margin-top: 10px; border-collapse: collapse; background: #ffffff; border-radius: 15px; overflow: hidden; border: 1px solid #d7ccc8; }
-table { width: 100%; border-collapse: collapse; }
-th { background-color: #3e2723; color: #f3ebe3; text-align: left; padding: 12px 15px; font-size: 11px; text-transform: uppercase; }
-td { padding: 15px; border-bottom: 1px solid #f3ebe3; font-size: 14px; color: #3e2723; }
-.col-alias { font-weight: 800; }
-.col-meta { font-size: 12px; color: #8d6e63; }
-.badge-time { background: #3e2723; color: #f3ebe3; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
-
-/* BUTTONS & FORMS */
-.btn-primary { background: #3e2723; color: #f3ebe3; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; }
-.btn-secondary { background: #8d6e63; color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; margin-top: 8px; font-weight: bold; }
-.btn-delete { background: #c62828; color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; margin-top: 15px; font-weight: bold; }
-.close-btn { position: absolute; top: 20px; right: 20px; width: 35px; height: 35px; border-radius: 50%; background: #3e2723; color: #f3ebe3; border: none; font-weight: bold; z-index: 10; }
-.styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #d7ccc8; background: #ffffff; font-size: 16px; margin-top: 5px; }
-.field-label { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-top: 15px; display: block; padding-left: 5px; }
-
-/* MODAL */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #ffffff; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 2px solid #3e2723; }
+/* TABLES (On White Background) */
+.table-container { 
+    width: 100%; 
+    margin: 20px 0; 
+    background: #ffffff; 
+    border-radius: 12px; 
+    border: 2px solid #3e2723; 
+    overflow: hidden; 
+}
+td { padding: 15px; border-bottom: 1px solid #eee; }
