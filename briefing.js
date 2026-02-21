@@ -1,10 +1,10 @@
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayStaff = scheduleData[selectedDate];
-    if (!dayStaff || dayStaff.length === 0) return alert("Sem dados!");
+    if (!dayStaff || dayStaff.length === 0) return alert("Sem dados para esta data!");
 
     const activeStaff = dayStaff.filter(s => s.shiftRaw && /\d/.test(s.shiftRaw));
-    if (activeStaff.length === 0) return alert("Ninguém escalado!");
+    if (activeStaff.length === 0) return alert("Ninguém escalado com horários!");
 
     const getEntry = (s) => s.shiftRaw.split('-')[0].trim();
     const getExit = (s) => s.shiftRaw.split('-')[1].trim();
