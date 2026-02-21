@@ -64,6 +64,12 @@
         </div>
         <div class="padded-container">
             <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
+            
+            <div id="dailyLoader" class="loader-container">
+                <div class="spinner"></div>
+                <div class="loading-text">Loading Schedule...</div>
+            </div>
+
             <div id="scheduleTableWrapper"></div>
         </div>
     </div>
@@ -75,6 +81,12 @@
         </div>
         <div class="padded-container">
             <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
+            
+            <div id="directoryLoader" class="loader-container">
+                <div class="spinner"></div>
+                <div class="loading-text">Loading Staff...</div>
+            </div>
+
             <div id="staffListContainer"></div>
         </div>
     </div>
