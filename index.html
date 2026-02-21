@@ -57,15 +57,19 @@
         <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Daily Staff</h2>
-        <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
-        <div id="scheduleTableWrapper" style="margin-top:20px;"></div>
+        <div style="padding: 0 20px;">
+            <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
+        </div>
+        <div id="scheduleTableWrapper"></div>
     </div>
 
     <div id="editStaffPage" class="page">
         <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Directory</h2>
-        <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
+        <div style="padding: 0 20px;">
+            <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
+        </div>
         <div id="staffListContainer"></div>
     </div>
 
@@ -93,14 +97,7 @@
             </div>
             <div class="form-group" style="margin-top:15px;">
                 <label class="field-label">Position</label>
-                <select id="formPosition" class="styled-select">
-                    <option value="MANAGER">MANAGER</option>
-                    <option value="BAR MANAGER">BAR MANAGER</option>
-                    <option value="HEAD SELLER">HEAD SELLER</option>
-                    <option value="BAR STAFF">BAR STAFF</option>
-                    <option value="SALA STAFF">SALA STAFF</option>
-                    <option value="STAFF">STAFF</option>
-                </select>
+                <select id="formPosition" class="styled-select"></select>
             </div>
             <div class="modal-buttons-vertical">
                 <button class="btn-primary" onclick="confirmSave()">SAVE CHANGES</button>
