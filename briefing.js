@@ -1,27 +1,17 @@
 window.generateBriefing = function() {
-    // 1. Get selected date from the dropdown
-    const dateDropdown = document.getElementById('dateSelect');
-    const selectedDate = dateDropdown ? dateDropdown.value : null;
-
-    if (!selectedDate) {
-        return alert("Please select a date first.");
-    }
-
-    // 2. Access the data exactly where app.js saved it
-    const sourceData = window.scheduleData;
-
-    if (!sourceData || Object.keys(sourceData).length === 0) {
-        return alert("Data is still syncing from Google Sheets. Give it 2 seconds.");
-    }
-
-    const dayStaff = sourceData[selectedDate];
-    if (!dayStaff || dayStaff.length === 0) {
-        return alert("No staff found in the schedule for " + selectedDate);
-    }
-
-    // 3. Filter and Sort (Logic from Daily View)
-    const activeStaff = dayStaff.filter(s => s.shiftRaw && /\d/.test(s.shiftRaw));
+    const selectedDate = document.getElementById('dateSelect').value;
     
+    // 1. Pull data same way like staff data was pulled in daily view
+    if (!window.scheduleData || !window.scheduleData[selectedDate]) {
+        return alert("Data is loading, please wait...");
+    }
+
+    const dayStaff = window.scheduleData[selectedDate];
+    const activeStaff = dayStaff.filter(s => s.shiftRaw && /\d/.test(s.shiftRaw));
+
+    if (activeStaff.length === 0) return alert("No active shifts found for this date.");
+
+    // 2. Helpers for time parsing
     const getEntry = (s) => s.shiftRaw.split('-')[0].trim();
     const getExit = (s) => s.shiftRaw.split('-')[1].trim();
     const parseToMin = (t) => { 
@@ -29,10 +19,11 @@ window.generateBriefing = function() {
         return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0); 
     };
 
+    // 3. Sort logic: Entry and Exit
     const byEntry = [...activeStaff].sort((a, b) => parseToMin(getEntry(a)) - parseToMin(getEntry(b)));
     const byExit = [...activeStaff].sort((a, b) => parseToMin(getExit(a)) - parseToMin(getExit(b)));
 
-    // 4. Area Assignment (Bar for Bar, Sala for Sala)
+    // 4. Split by Area (Business Rule: Bar for Bar, Sala for Sala)
     const barEntry = byEntry.filter(s => s.area.toLowerCase() === 'bar');
     const barExit = byExit.filter(s => s.area.toLowerCase() === 'bar');
     const salaEntry = byEntry.filter(s => s.area.toLowerCase() === 'sala');
@@ -40,35 +31,65 @@ window.generateBriefing = function() {
 
     const findStaff = (list, pos) => list.find(s => s.position.toLowerCase().includes(pos.toLowerCase()));
 
-    // 5. Task Logic
+    // 5. Assignment Logic
     let porta = findStaff(activeStaff, 'Manager') || findStaff(activeStaff, 'Head Seller') || salaEntry[0];
     const sellers = salaEntry.filter(s => !s.position.toLowerCase().includes('manager') || salaEntry.length === 1);
     const fechoCaixa = findStaff(activeStaff, 'Head Seller') || findStaff(activeStaff, 'Bar Manager') || findStaff(activeStaff, 'Manager') || salaExit[salaExit.length - 1];
 
-    // 6. Build the text string
-    let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate}*\n\n`;
+    // 6. Template Generation (Business Rules Applied)
+    let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
+    
+    // Header
     b += `${getEntry(porta)} Porta: ${porta.alias}\n\n`;
 
+    // BAR SECTION (Bar Staff only)
     b += `BAR:\n`;
-    if (barEntry[0]) b += `${getEntry(barEntry[0])} Bar A: *${barEntry[0].alias}*\n`;
-    if (barEntry[1]) b += `${getEntry(barEntry[1])} Bar B: *${barEntry[1].alias}*\n`;
+    if (barEntry[0]) {
+        b += `${getEntry(barEntry[0])} Abertura Sala/Bar: *${barEntry[0].alias}*\n`;
+        b += `${getEntry(barEntry[0])} Bar A: *${barEntry[0].alias}* Barista – Bebidas\n`;
+    }
+    if (barEntry[1]) b += `${getEntry(barEntry[1])} Bar B: *${barEntry[1].alias}* Barista – Cafés / Caixa\n`;
+    if (barEntry[2]) b += `${getEntry(barEntry[2])} Bar C: *${barEntry[2].alias}*\n`;
+    if (barEntry[3]) b += `${getEntry(barEntry[3])} Bar D: *${barEntry[3].alias}*\n`;
 
-    b += `\nSELLERS:\n`;
+    b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n——————————————\n\n`;
+
+    // SELLERS SECTION (Sala Staff only)
+    b += `SELLERS:\n`;
     if (sellers[0]) b += `${getEntry(sellers[0])} Seller A: *${sellers[0].alias}*\n`;
     if (sellers[1]) b += `${getEntry(sellers[1])} Seller B: *${sellers[1].alias}*\n`;
+    if (sellers[2]) b += `${getEntry(sellers[2])} Seller C: *${sellers[2].alias}*\n`;
 
-    b += `\n——————————————\nCLEANING:\n`;
-    if (barExit[barExit.length - 1]) {
-        const lastBar = barExit[barExit.length - 1];
-        b += `${getExit(lastBar)} Fecho Bar: *${lastBar.alias}*\n`;
-    }
-    if (salaExit[salaExit.length - 1]) {
-        const lastSala = salaExit[salaExit.length - 1];
-        b += `${getExit(lastSala)} Fecho Sala: *${lastSala.alias}*\n`;
-    }
+    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\n`;
+    if (sellers[0]) b += `Seller A: Mesas 20-30\n`;
+    if (sellers[1]) b += `Seller B & C: Mesas 1-12\n`;
+    if (sellers[2]) b += `Seller C: Mesas 40-57\n`;
+    b += `——————————————\n\n`;
+
+    // RUNNERS
+    const runnerStaff = activeStaff.filter(s => s.position.toLowerCase().includes('runner'));
+    const runnerTxt = runnerStaff.length > 0 ? runnerStaff.map(r => r.alias).join(' e ') : "Todos";
+    const runnerTime = runnerStaff.length > 0 ? getEntry(runnerStaff[0]) : (salaEntry[0] ? getEntry(salaEntry[0]) : "08:00");
+    b += `RUNNERS:\n${runnerTime} Runner A e B: ${runnerTxt}\n——————————————\n\n`;
+
+    // HACCP BAR (Bar Staff based on Exit)
+    const bE1 = barExit[0], bE2 = barExit[1], bL = barExit[barExit.length - 1];
+    b += `HACCP / LIMPEZA BAR:\n`;
+    if (bE1) b += `${getExit(bE1)} Preparações Bar: *${bE1.alias}*\n`;
+    if (bE2) b += `${getExit(bE2)} Reposição Bar: *${bE2.alias}*\n`;
+    else if (bL) b += `${getExit(bL)} Limpeza Máquina/Leites: *${bL.alias}*\n`;
+    if (bL) b += `${getExit(bL)} Fecho Bar: *${bL.alias}*\n\n`;
+
+    // HACCP SALA (Sala Staff based on Exit)
+    const sE1 = salaExit[0], sL = salaExit[salaExit.length - 1];
+    const wcS = barExit[1] ? barExit[1].alias : (salaExit[2] ? salaExit[2].alias : sL.alias);
+    b += `HACCP / SALA:\n`;
+    if (sE1) b += `${getExit(sE1)} Sala de Cima: *${sE1.alias}*\n`;
+    if (sL) b += `${getExit(sL)} Fecho da Sala: *${sL.alias}*\n`;
+    b += `${getExit(sE1)} Limpeza WC: *${wcS}*\n`;
     b += `${getExit(fechoCaixa)} Fecho de Caixa: *${fechoCaixa.alias}*`;
 
-    // 7. Show Modal
+    // 7. Output to Modal
     const modal = document.getElementById('briefingModal');
     const container = document.getElementById('briefingTextContainer');
     if (modal && container) {
@@ -78,8 +99,8 @@ window.generateBriefing = function() {
 };
 
 window.copyBriefingText = function() {
-    const txt = document.getElementById('briefingTextContainer').innerText;
-    navigator.clipboard.writeText(txt).then(() => alert("✅ Briefing Copied!"));
+    const text = document.getElementById('briefingTextContainer').innerText;
+    navigator.clipboard.writeText(text).then(() => alert("✅ Copied!"));
 };
 
 window.closeBriefingModal = function() { 
