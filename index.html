@@ -12,13 +12,26 @@
     <div id="homePage" class="page active">
         <div class="brand-header">
             <h1 class="app-logo">ZENITH</h1>
-            <p class="app-subtitle">STAFF MANAGER v1.8</p>
+            <p class="app-subtitle">Brunch & Cocktails</p>
         </div>
         <div class="icon-grid">
             <div class="big-icon" onclick="openPage('briefingPage')">
                 <div class="icon-circle">📋</div>
                 <span>Briefing</span>
             </div>
+            <div class="big-icon" onclick="openPage('managePage')">
+                <div class="icon-circle">⚙️</div>
+                <span>Manage</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="managePage" class="page">
+        <div class="brand-header">
+            <button class="close-btn" onclick="openPage('homePage')">✕</button>
+            <h2 class="header-title">Manage</h2>
+        </div>
+        <div class="icon-grid">
             <div class="big-icon" onclick="openPage('showStaffPage')">
                 <div class="icon-circle">📅</div>
                 <span>Schedule</span>
@@ -46,7 +59,7 @@
 
     <div id="showStaffPage" class="page">
         <div class="brand-header">
-            <button class="close-btn" onclick="openPage('homePage')">✕</button>
+            <button class="close-btn" onclick="openPage('managePage')">✕</button>
             <h2 class="header-title">Daily View</h2>
         </div>
         <div class="padded-container">
@@ -57,7 +70,7 @@
 
     <div id="editStaffPage" class="page">
         <div class="brand-header">
-            <button class="close-btn" onclick="openPage('homePage')">✕</button>
+            <button class="close-btn" onclick="openPage('managePage')">✕</button>
             <h2 class="header-title">Directory</h2>
         </div>
         <div class="padded-container">
