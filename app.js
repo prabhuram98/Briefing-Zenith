@@ -1,45 +1,71 @@
-// ... (Keep URLs and loadData/loadSchedule logic exactly as before) ...
+/* Logic preserved exactly as requested - Visual rendering updated for iOS 26 style */
 
-// --- UPGRADED ADVANCED TABLE VIEW ---
+async function loadData() {
+    return new Promise((resolve) => {
+        Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
+            download: true,
+            complete: (results) => {
+                staffMap = {};
+                let posSet = new Set();
+                results.data.forEach((row, i) => {
+                    if (i === 0 || !row[0]) return;
+                    const name = row[0].toLowerCase().trim();
+                    staffMap[name] = { alias: row[3] || row[0], area: row[1] || 'Sala', position: row[2] || 'Staff' };
+                    posSet.add(row[2] || 'Staff');
+                });
+                // Dynamic position dropdown update
+                const posDropdown = document.getElementById('formPosition');
+                if(posDropdown) {
+                    posDropdown.innerHTML = Array.from(posSet).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+                }
+                
+                Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
+                    download: true,
+                    complete: (sResults) => {
+                        processSchedule(sResults.data);
+                        resolve();
+                    }
+                });
+            }
+        });
+    });
+}
+
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
     const day = scheduleData[date] || [];
-    
-    // Group staff by Area
     const activeAreas = [...new Set(day.map(s => s.area))].sort();
     
+    // Advanced iOS 26.3 View Rendering
     document.getElementById('scheduleTableWrapper').innerHTML = activeAreas.map(area => `
         <div class="area-divider">${area}</div>
         ${day.filter(s => s.area === area).map(s => `
             <div class="staff-row">
-                <div class="staff-info">
-                    <div style="font-weight:800; font-size:16px;">${s.alias}</div>
-                    <div style="font-size:12px; color:#8e8e93; font-weight:600;">${s.position}</div>
+                <div>
+                    <div style="font-weight:900; font-size:18px; letter-spacing:-0.5px;">${s.alias}</div>
+                    <div style="font-size:13px; color:#a1a1a6; font-weight:700; margin-top:2px;">${s.position}</div>
                 </div>
-                <div class="staff-time" style="background:#f2f2f7; padding:8px 12px; border-radius:10px; font-weight:800; font-size:14px;">
-                    ${s.shiftRaw}
-                </div>
+                <div class="staff-time">${s.shiftRaw}</div>
             </div>`).join('')}
     `).join('');
 }
 
-// --- EASY CRUD DIRECTORY RENDERING ---
 function renderStaffList() {
     const container = document.getElementById('staffListContainer');
     const sorted = Object.keys(staffMap).sort();
-    
+    // CRUD Directory Rendering
     container.innerHTML = `
-        <div style="padding:0 15px 15px 15px;">
-            <p style="font-size:12px; font-weight:700; color:#8e8e93; text-transform:uppercase;">${sorted.length} Staff Members</p>
+        <div style="padding: 20px 25px 10px;">
+            <span style="font-weight:900; font-size:24px;">Directory</span>
         </div>
         ${sorted.map(k => `
         <div class="staff-edit-card" onclick="openStaffForm('${k}')">
-            <div>
-                <div style="font-weight:800; font-size:16px;">${staffMap[k].alias}</div>
-                <div style="font-size:12px; color:#8e8e93; font-weight:600;">${staffMap[k].area} • ${staffMap[k].position}</div>
+            <div style="background: white; margin: 5px 20px; padding: 22px; border-radius: 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+                <div>
+                    <div style="font-weight:900; font-size:18px;">${staffMap[k].alias}</div>
+                    <div style="font-size:13px; color:#a1a1a6; font-weight:700;">${staffMap[k].area} • ${staffMap[k].position}</div>
+                </div>
+                <div style="background: #efeff4; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color: var(--zenith-coffee); font-weight:bold;">→</div>
             </div>
-            <div style="color:#dbc9b7; font-size:20px;">➔</div>
         </div>`).join('')}`;
 }
-
-// ... (Keep confirmSave/confirmDelete as before, they will now look modern because of CSS) ...
