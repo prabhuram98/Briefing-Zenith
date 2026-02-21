@@ -1,14 +1,27 @@
 function generateBriefing() {
+    // 1. Ensure date is selected
     const selectedDate = document.getElementById('dateSelect').value;
-    const dayStaff = scheduleData[selectedDate];
-    if (!dayStaff || dayStaff.length === 0) return alert("Sem dados para esta data!");
+    if (!selectedDate) return alert("Please select a date first.");
 
+    // 2. Ensure data is loaded from app.js
+    if (!window.scheduleData || Object.keys(window.scheduleData).length === 0) {
+        return alert("Data is still loading. Please wait a second.");
+    }
+
+    const dayStaff = window.scheduleData[selectedDate];
+    if (!dayStaff || dayStaff.length === 0) return alert("No staff found for this date.");
+
+    // Filter active staff (ignore OFF/Folga)
     const activeStaff = dayStaff.filter(s => s.shiftRaw && /\d/.test(s.shiftRaw));
-    if (activeStaff.length === 0) return alert("Ninguém escalado com horários!");
+    if (activeStaff.length === 0) return alert("No active shifts found.");
 
+    // Helper functions for time sorting
     const getEntry = (s) => s.shiftRaw.split('-')[0].trim();
     const getExit = (s) => s.shiftRaw.split('-')[1].trim();
-    const parseToMin = (t) => { const p = t.split(':'); return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0); };
+    const parseToMin = (t) => { 
+        const p = t.split(':'); 
+        return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0); 
+    };
 
     const byEntry = [...activeStaff].sort((a, b) => parseToMin(getEntry(a)) - parseToMin(getEntry(b)));
     const byExit = [...activeStaff].sort((a, b) => parseToMin(getExit(a)) - parseToMin(getExit(b)));
@@ -20,10 +33,12 @@ function generateBriefing() {
 
     const findStaff = (list, pos) => list.find(s => s.position.toLowerCase().includes(pos.toLowerCase()));
 
+    // Logic for Task Assignments
     let porta = findStaff(activeStaff, 'Manager') || findStaff(activeStaff, 'Head Seller') || salaEntry[0];
     const sellers = salaEntry.filter(s => !s.position.toLowerCase().includes('manager') || salaEntry.length === 1);
     const fechoCaixa = findStaff(activeStaff, 'Head Seller') || findStaff(activeStaff, 'Bar Manager') || findStaff(activeStaff, 'Manager') || salaExit[salaExit.length - 1];
 
+    // Build the Text
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
     b += `${getEntry(porta)} Porta: ${porta.alias}\n\nBAR:\n`;
     if (barEntry[0]) {
@@ -68,6 +83,7 @@ function generateBriefing() {
     if (sL) b += `Fecho da sala: *${sL.alias}*\n`;
     b += `${getExit(fechoCaixa)} Fecho de Caixa: *${fechoCaixa.alias}*`;
 
+    // Show the modal with the text
     document.getElementById('briefingTextContainer').innerText = b;
     document.getElementById('briefingModal').style.display = 'flex';
 }
@@ -75,7 +91,9 @@ function generateBriefing() {
 function copyBriefingText() {
     const text = document.getElementById('briefingTextContainer').innerText;
     navigator.clipboard.writeText(text);
-    alert("✅ Briefing Copied!");
+    alert("✅ Copied!");
 }
 
-function closeBriefingModal() { document.getElementById('briefingModal').style.display = 'none'; }
+function closeBriefingModal() { 
+    document.getElementById('briefingModal').style.display = 'none'; 
+}
