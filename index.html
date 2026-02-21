@@ -64,7 +64,6 @@
         </div>
         <div class="padded-container">
             <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
-            <div id="dailyLoader" class="loader-container"><div class="spinner"></div></div>
             <div id="scheduleTableWrapper"></div>
         </div>
     </div>
@@ -76,7 +75,6 @@
         </div>
         <div class="padded-container">
             <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
-            <div id="directoryLoader" class="loader-container"><div class="spinner"></div></div>
             <div id="staffListContainer"></div>
         </div>
     </div>
@@ -85,10 +83,10 @@
         <div class="modal-content">
             <h3 id="modalTitle" style="margin-top:0">Edit Staff</h3>
             <input type="hidden" id="editOriginalKey">
-            <label class="field-label">Full Name (Spreadsheet Match)</label>
-            <input type="text" id="formFullName" placeholder="e.g. GONCALO">
+            <label class="field-label">Full Name</label>
+            <input type="text" id="formFullName">
             <label class="field-label">App Alias</label>
-            <input type="text" id="formAlias" placeholder="e.g. Gonçalo">
+            <input type="text" id="formAlias">
             <label class="field-label">Position</label>
             <select id="formPosition" class="styled-select"></select>
             <div style="margin-top: 25px;">
