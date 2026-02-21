@@ -29,7 +29,6 @@ async function loadData() {
                 });
                 const posDropdown = document.getElementById('formPosition');
                 if(posDropdown) posDropdown.innerHTML = Array.from(posSet).sort().map(p => `<option value="${p}">${p}</option>`).join('');
-                
                 Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
                     download: true,
                     complete: (sResults) => {
@@ -76,10 +75,39 @@ function updateDropdowns() {
 
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
-    const day = scheduleData[date] || [];
+    const workingStaff = scheduleData[date] || [];
     const container = document.getElementById('scheduleTableWrapper');
-    if (day.length === 0) { container.innerHTML = "<p>No shifts found.</p>"; return; }
-    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Staff</th><th>Area</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td><b>${s.alias}</b></td><td>${s.area}</td><td><span class="badge-time">${s.shiftRaw}</span></td></tr>`).join('')}</tbody></table></div>`;
+    const workingMap = {};
+    workingStaff.forEach(s => workingMap[s.alias.toLowerCase().trim()] = s.shiftRaw);
+    const allStaff = Object.keys(staffMap).map(key => staffMap[key]);
+
+    const groups = { "Bar": [], "Sala": [] };
+    allStaff.forEach(staff => {
+        const area = staff.area || "Sala";
+        if (!groups[area]) groups[area] = [];
+        groups[area].push(staff);
+    });
+
+    let html = "";
+    for (const [area, members] of Object.entries(groups)) {
+        members.sort((a, b) => {
+            const aW = !!workingMap[a.alias.toLowerCase().trim()];
+            const bW = !!workingMap[b.alias.toLowerCase().trim()];
+            if (aW && !bW) return -1;
+            if (!aW && bW) return 1;
+            return a.alias.localeCompare(b.alias);
+        });
+
+        html += `<h3 class="area-group-header">${area}</h3><div class="table-container" style="margin-bottom:20px;"><table><thead><tr><th>Staff</th><th>Status</th><th>Shift</th></tr></thead><tbody>`;
+        members.forEach(staff => {
+            const aliasKey = staff.alias.toLowerCase().trim();
+            const shiftTime = workingMap[aliasKey];
+            const isWorking = !!shiftTime;
+            html += `<tr class="${isWorking ? 'status-working' : 'status-off'}"><td><b>${staff.alias}</b></td><td><span class="status-dot"></span> ${isWorking ? 'Working' : 'Off'}</td><td>${isWorking ? `<span class="badge-time">${shiftTime}</span>` : 'OFF'}</td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+    }
+    container.innerHTML = html;
 }
 
 function renderStaffList() {
@@ -89,8 +117,6 @@ function renderStaffList() {
 }
 
 function openStaffForm(k = null) {
-    const btn = document.querySelector('.modal-content .btn-primary');
-    btn.disabled = false; btn.innerText = "Save Changes"; btn.style.opacity = "1";
     if (k) {
         document.getElementById('modalTitle').innerText = "Edit Staff";
         document.getElementById('editOriginalKey').value = k;
@@ -111,28 +137,24 @@ function openStaffForm(k = null) {
 function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
 async function confirmSave() {
-    const btn = document.querySelector('.modal-content .btn-primary');
     const fullName = document.getElementById('formFullName').value.trim().toUpperCase();
     const alias = document.getElementById('formAlias').value.trim();
     const pos = document.getElementById('formPosition').value;
     const key = document.getElementById('editOriginalKey').value;
     if (!fullName || !alias) return alert("Fill all fields");
-    btn.disabled = true; btn.innerText = "Saving..."; btn.style.opacity = "0.5";
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: key ? 'update' : 'add', originalKey: key, fullName, alias, position: pos, area: staffMap[key?.toLowerCase()]?.area || 'Sala' }) });
-        setTimeout(() => { alert("Success!"); closeStaffModal(); loadData().then(() => renderStaffList()); }, 600);
-    } catch (e) { alert("Error"); btn.disabled = false; btn.innerText = "Save Changes"; btn.style.opacity = "1"; }
+        setTimeout(() => { alert("Success!"); closeStaffModal(); loadData(); }, 600);
+    } catch (e) { alert("Error"); }
 }
 
 async function confirmDelete() {
-    const btn = document.getElementById('deleteBtn');
     const key = document.getElementById('editOriginalKey').value;
     if (!confirm(`Delete ${key}?`)) return;
-    btn.disabled = true; btn.innerText = "Deleting..."; btn.style.opacity = "0.5";
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', originalKey: key }) });
-        setTimeout(() => { alert("Removed"); closeStaffModal(); loadData().then(() => renderStaffList()); }, 600);
-    } catch (e) { alert("Error"); btn.disabled = false; btn.innerText = "Delete Staff"; }
+        setTimeout(() => { alert("Removed"); closeStaffModal(); loadData(); }, 600);
+    } catch (e) { alert("Error"); }
 }
 
 window.onload = loadData;
