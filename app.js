@@ -56,7 +56,8 @@ function processSchedule(rows) {
             }
         });
     }
-    scheduleData = dates; updateDropdowns();
+    scheduleData = dates; 
+    updateDropdowns(); // This ensures dates appear immediately
 }
 
 function updateDropdowns() {
