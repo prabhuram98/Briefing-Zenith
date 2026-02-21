@@ -9,6 +9,11 @@
 </head>
 <body>
 
+    <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+        <div class="spinner"></div>
+        <p style="font-weight:900; margin-top:15px; letter-spacing:2px; color:#3e2723;">FETCHING DATA...</p>
+    </div>
+
     <div id="homePage" class="page active">
         <div class="brand-header">
             <h1 class="app-logo">ZENITH</h1>
@@ -52,7 +57,7 @@
             <label class="field-label">Select Date</label>
             <select id="dateSelect" class="styled-select"></select>
             <div style="margin-top: 20px;">
-                <button class="btn-primary" onclick="generateBriefing()">Generate & Copy Briefing</button>
+                <button class="btn-primary" onclick="generateBriefing()">Generate Briefing</button>
             </div>
         </div>
     </div>
@@ -76,6 +81,17 @@
         <div class="padded-container">
             <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
             <div id="staffListContainer"></div>
+        </div>
+    </div>
+
+    <div id="briefingModal" class="modal">
+        <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <h3 style="margin-top:0">Zenith Briefing</h3>
+            <div id="briefingTextContainer" style="flex-grow: 1; overflow-y: auto; background: #f9f9f9; padding: 15px; border: 1px solid #3e2723; border-radius: 10px; white-space: pre-wrap; font-family: monospace; font-size: 13px; text-align: left; color: #333;"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" onclick="copyBriefingText()">Copy Briefing</button>
+                <button class="btn-secondary" onclick="closeBriefingModal()">Close</button>
+            </div>
         </div>
     </div>
 
