@@ -75,7 +75,7 @@ function generateBriefing() {
 function copyBriefingText() {
     const text = document.getElementById('briefingTextContainer').innerText;
     navigator.clipboard.writeText(text);
-    alert("✅ Copied!");
+    alert("✅ Briefing Copied!");
 }
 
 function closeBriefingModal() { document.getElementById('briefingModal').style.display = 'none'; }
