@@ -2,8 +2,9 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaD
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv';
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
-let staffMap = {};
-let scheduleData = {};
+let staffMap = {}; let scheduleData = {};
+
+function toggleLoader(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
 
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -15,12 +16,12 @@ function openPage(id) {
 }
 
 async function loadData() {
+    toggleLoader(true);
     return new Promise((resolve) => {
         Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
             download: true,
             complete: (results) => {
-                staffMap = {};
-                let posSet = new Set();
+                staffMap = {}; let posSet = new Set();
                 results.data.forEach((row, i) => {
                     if (i === 0 || !row[0]) return;
                     const name = row[0].toLowerCase().trim();
@@ -33,6 +34,7 @@ async function loadData() {
                     download: true,
                     complete: (sResults) => {
                         processSchedule(sResults.data);
+                        toggleLoader(false);
                         resolve();
                     }
                 });
@@ -45,9 +47,7 @@ function processSchedule(rows) {
     const dates = {}; const header = rows[0]; let dateCols = [];
     for (let j = 1; j < header.length; j++) {
         if (header[j] && !header[j].toLowerCase().includes("total")) {
-            const d = header[j].trim();
-            dateCols.push({ index: j, label: d });
-            dates[d] = [];
+            const d = header[j].trim(); dateCols.push({ index: j, label: d }); dates[d] = [];
         }
     }
     for (let i = 1; i < rows.length; i++) {
@@ -60,8 +60,7 @@ function processSchedule(rows) {
             }
         });
     }
-    scheduleData = dates;
-    updateDropdowns();
+    scheduleData = dates; updateDropdowns();
 }
 
 function updateDropdowns() {
@@ -78,7 +77,7 @@ function showStaffTable() {
     const day = scheduleData[date] || [];
     const container = document.getElementById('scheduleTableWrapper');
     if (day.length === 0) { container.innerHTML = "<p>Sem dados.</p>"; return; }
-    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Staff</th><th>Area</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td><b>${s.alias}</b></td><td>${s.area}</td><td><span class="badge-time">${s.shiftRaw}</span></td></tr>`).join('')}</tbody></table></div>`;
+    container.innerHTML = `<div class="table-container"><table><thead><tr><th>Staff</th><th>Area</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td><b>${s.alias}</b></td><td>${s.area}</td><td>${s.shiftRaw}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
 function renderStaffList() {
@@ -88,8 +87,6 @@ function renderStaffList() {
 }
 
 function openStaffForm(k = null) {
-    const btn = document.querySelector('.modal-content .btn-primary');
-    btn.disabled = false; btn.innerText = "Save Changes"; btn.style.opacity = "1";
     if (k) {
         document.getElementById('modalTitle').innerText = "Edit Staff";
         document.getElementById('editOriginalKey').value = k;
@@ -110,29 +107,26 @@ function openStaffForm(k = null) {
 function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
 async function confirmSave() {
-    const btn = document.querySelector('.modal-content .btn-primary');
     const fullName = document.getElementById('formFullName').value.trim().toUpperCase();
     const alias = document.getElementById('formAlias').value.trim();
     const pos = document.getElementById('formPosition').value;
     const key = document.getElementById('editOriginalKey').value;
-    if (!fullName || !alias) return alert("Preencha todos os campos");
-    btn.disabled = true; btn.innerText = "Saving..."; btn.style.opacity = "0.5";
+    if (!fullName || !alias) return alert("Preencha tudo!");
+    toggleLoader(true);
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: key ? 'update' : 'add', originalKey: key, fullName, alias, position: pos, area: staffMap[key?.toLowerCase()]?.area || 'Sala' }) });
-        setTimeout(() => { alert("Sucesso!"); closeStaffModal(); loadData(); }, 600);
-    } catch (e) { alert("Erro de conexão"); btn.disabled = false; btn.innerText = "Save Changes"; btn.style.opacity = "1"; }
+        setTimeout(() => { toggleLoader(false); closeStaffModal(); loadData(); }, 800);
+    } catch (e) { toggleLoader(false); alert("Erro!"); }
 }
 
 async function confirmDelete() {
-    const btn = document.getElementById('deleteBtn');
     const key = document.getElementById('editOriginalKey').value;
     if (!confirm(`Apagar ${key}?`)) return;
-    btn.disabled = true; btn.innerText = "Deleting..."; btn.style.opacity = "0.5";
+    toggleLoader(true);
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', originalKey: key }) });
-        setTimeout(() => { alert("Removido"); closeStaffModal(); loadData(); }, 600);
-    } catch (e) { alert("Erro ao apagar"); btn.disabled = false; btn.innerText = "Delete Staff"; }
+        setTimeout(() => { toggleLoader(false); closeStaffModal(); loadData(); }, 800);
+    } catch (e) { toggleLoader(false); alert("Erro!"); }
 }
 
 window.onload = loadData;
-setInterval(loadData, 300000);
