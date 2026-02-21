@@ -19,12 +19,12 @@ function openPage(id) {
         wrapper.style.display = 'none';
 
         loadData().then(() => {
-            setTimeout(() => {
-                if (id === 'editStaffPage') renderStaffList();
-                if (id === 'showStaffPage') showStaffTable();
-                loader.style.display = 'none';
-                wrapper.style.display = 'block';
-            }, 2000);
+            // Renders immediately after data is ready
+            if (id === 'editStaffPage') renderStaffList();
+            if (id === 'showStaffPage') showStaffTable();
+            
+            loader.style.display = 'none';
+            wrapper.style.display = 'block';
         });
     } else {
         loadData();
