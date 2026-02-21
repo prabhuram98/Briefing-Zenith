@@ -8,9 +8,7 @@ let staffMap = {};
 
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const target = document.getElementById(id);
-    if(target) target.classList.add('active');
-    
+    document.getElementById(id).classList.add('active');
     if (id === 'editStaffPage') renderStaffList();
 }
 
@@ -24,7 +22,6 @@ async function loadData() {
                 const name = row[0].toLowerCase().trim();
                 staffMap[name] = { alias: row[3] || row[0], area: row[1] || 'Sala', position: row[2] || 'Staff' };
             });
-            
             Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
                 download: true,
                 complete: (sResults) => processSchedule(sResults.data)
@@ -51,8 +48,8 @@ function processSchedule(rows) {
         if (!name || !staffMap[name]) continue;
         dateCols.forEach(col => {
             let shift = rows[i][col.index]?.toString().trim();
-            if (shift && /\d/.test(shift) && !["OFF", "FOLGA"].includes(shift.toUpperCase())) {
-                dates[col.label].push({ ...staffMap[name], fullName: name, shiftRaw: shift });
+            if (shift && /\d/.test(shift)) {
+                dates[col.label].push({ ...staffMap[name], shiftRaw: shift });
             }
         });
     }
@@ -62,25 +59,31 @@ function processSchedule(rows) {
 
 function updateDropdowns() {
     const keys = Object.keys(window.scheduleData);
-    const options = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-    if(document.getElementById('dateSelect')) document.getElementById('dateSelect').innerHTML = options;
-    if(document.getElementById('manageDateSelect')) document.getElementById('manageDateSelect').innerHTML = options;
+    const html = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+    document.getElementById('dateSelect').innerHTML = html;
+    document.getElementById('manageDateSelect').innerHTML = html;
 }
 
 function renderStaffList() {
     const container = document.getElementById('staffListContainer');
-    if (!container) return;
-    container.innerHTML = Object.keys(staffMap).map(key => {
+    container.innerHTML = Object.keys(staffMap).sort().map(key => {
         const s = staffMap[key];
-        return `<div class="staff-card"><div><strong>${s.alias}</strong><br><small>${s.area} | ${s.position}</small></div></div>`;
+        return `
+            <div class="form-field">
+                <div><div class="form-label">Name / Alias</div><div class="form-value">${s.alias}</div></div>
+                <div style="text-align:right"><div class="form-label">Role</div><div class="form-value" style="color:#8d6e63">${s.area}</div></div>
+            </div>`;
     }).join('');
 }
 
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
     const day = window.scheduleData[date] || [];
-    const container = document.getElementById('scheduleTableWrapper');
-    container.innerHTML = day.length ? `<table><thead><tr><th>Alias</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td>${s.alias}</td><td>${s.shiftRaw}</td></tr>`).join('')}</tbody></table>` : "No staff found.";
+    document.getElementById('scheduleTableWrapper').innerHTML = day.map(s => `
+        <div class="form-field">
+            <div><div class="form-label">Staff Member</div><div class="form-value">${s.alias}</div></div>
+            <div style="text-align:right"><div class="form-label">Shift Time</div><div class="form-value">${s.shiftRaw}</div></div>
+        </div>`).join('');
 }
 
 window.onload = loadData;
