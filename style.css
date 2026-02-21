@@ -5,10 +5,10 @@ body { background-color: #ffffff; margin: 0; color: #3e2723; height: 100vh; over
 
 .brand-header { background-color: #dbc9b7; padding: 65px 20px 45px 20px; text-align: center; position: relative; border-bottom: 3px solid #3e2723; }
 .app-logo { font-size: 58px; letter-spacing: 12px; margin: 0; line-height: 1; font-weight: 900; color: #3e2723; }
-.app-subtitle { font-size: 12px; letter-spacing: 4px; margin: 8px 0 0 0; font-weight: 700; text-transform: uppercase; color: #3e2723; opacity: 0.9;}
+.app-subtitle { font-size: 12px; letter-spacing: 4px; margin: 8px 0 0 0; font-weight: 700; text-transform: uppercase; color: #3e2723; }
 
 .header-title { font-size: 24px; text-transform: uppercase; margin: 0; font-weight: 900; color: #3e2723; }
-.close-btn { position: absolute; left: 20px; top: 65px; background: none; border: none; font-size: 24px; color: #3e2723; font-weight: bold; cursor: pointer; }
+.close-btn { position: absolute; left: 20px; top: 65px; background: none; border: none; font-size: 24px; color: #3e2723; font-weight: bold; }
 
 .padded-container { padding: 20px; background-color: #ffffff; overflow-y: auto; flex-grow: 1; }
 .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 30px 20px; }
@@ -16,21 +16,17 @@ body { background-color: #ffffff; margin: 0; color: #3e2723; height: 100vh; over
 .icon-circle { font-size: 44px; margin-bottom: 12px; }
 .big-icon span { font-weight: 900; font-size: 13px; color: #3e2723; text-transform: uppercase; }
 
-.field-label { display: block; font-weight: 900; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; color: #3e2723; }
-.styled-select, input[type="text"] { width: 100%; padding: 15px; border: 2px solid #3e2723; border-radius: 12px; font-size: 16px; background: #fff; color: #3e2723; margin-bottom: 15px; }
+.field-label { display: block; font-weight: 900; text-transform: uppercase; font-size: 11px; margin-bottom: 5px; color: #3e2723; }
+.styled-select, .styled-input { width: 100%; padding: 15px; border: 2px solid #3e2723; border-radius: 12px; font-size: 16px; background: #fff; color: #3e2723; margin-bottom: 10px; }
 
 .btn-primary { background: #3e2723; color: #fff; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: 900; text-transform: uppercase; }
 .btn-secondary { background: #fff; color: #3e2723; border: 2px solid #3e2723; padding: 16px; border-radius: 12px; width: 100%; margin-top: 8px; font-weight: 900; text-transform: uppercase; }
-.btn-delete { background: #fff; color: #c62828; border: 2px solid #c62828; padding: 12px; border-radius: 12px; width: 100%; margin-top: 8px; font-weight: 900; text-transform: uppercase; }
+.btn-delete { background: #fff; color: #c62828; border: 2px solid #c62828; padding: 12px; border-radius: 12px; width: 100%; margin-top: 15px; font-weight: 900; text-transform: uppercase; }
 
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #ffffff; width: 90%; max-width: 450px; padding: 25px; border-radius: 25px; border: 2px solid #3e2723; }
-
-.form-group { text-align: left; margin-bottom: 15px; }
-.form-group label { display: block; font-weight: 900; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; color: #3e2723; }
+.modal-content { background: #ffffff; width: 90%; max-width: 450px; padding: 25px; border-radius: 25px; border: 2px solid #3e2723; text-align: center; }
 
 .table-container { width: 100%; margin-top: 15px; background: #ffffff; border-radius: 15px; border: 2px solid #3e2723; overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
 th { background-color: #3e2723; color: #fff; text-align: left; padding: 12px; font-size: 11px; text-transform: uppercase; }
 td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; }
-
