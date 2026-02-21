@@ -5,35 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Zenith Brunch & Cocktails</title>
     <style>
-        :root { --primary: #3e2723; --accent: #dbc9b7; --bg: #fdfaf7; }
+        :root { --primary: #3e2723; --accent: #dbc9b7; --bg: #fdfaf7; --field-bg: #ffffff; --border: #e0d7d0; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--primary); }
         .page { display: none; padding-bottom: 50px; }
         .page.active { display: block; }
         
-        /* Header Styling */
         .brand-header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; position: relative; }
-        .close-btn { position: absolute; left: 20px; top: 40px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
         .app-logo { margin: 0; letter-spacing: 6px; font-size: 2.2rem; font-weight: 700; }
         .app-subtitle { margin: 2px 0 0; opacity: 0.8; font-weight: 300; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; }
+        .close-btn { position: absolute; left: 20px; top: 40px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
 
-        /* Grid Layout */
         .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; margin-top: -30px; }
         .big-icon { background: white; padding: 30px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
-        .icon-circle { font-size: 40px; margin-bottom: 10px; }
         
-        /* Directory & Forms */
         .padded-container { padding: 20px; }
-        .styled-select { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--accent); font-size: 16px; background: white; margin-bottom: 20px; }
-        .btn-primary { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .btn-secondary { background: #eee; color: #333; border: none; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; }
-        
-        /* Staff Cards */
-        .staff-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .section-label { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #8d6e63; margin-bottom: 8px; display: block; margin-left: 5px; }
 
+        /* FORM-LIKE COMPONENTS */
+        .form-field { background: var(--field-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .form-label { font-size: 0.7rem; color: #9e9e9e; text-transform: uppercase; margin-bottom: 2px; }
+        .form-value { font-size: 1rem; font-weight: 600; color: var(--primary); }
+        
+        .styled-select { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; background: white; margin-bottom: 20px; color: var(--primary); outline: none; }
+        .btn-primary { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 15px; max-height: 80vh; display: flex; flex-direction: column; }
-        .briefing-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 13px; overflow-y: auto; flex-grow: 1; margin: 15px 0; color: #333; text-align: left; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 20px; max-height: 80vh; display: flex; flex-direction: column; }
+        .briefing-box { background: #fcfbf9; padding: 15px; border: 1px solid #eee; border-radius: 12px; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px; overflow-y: auto; flex-grow: 1; margin: 15px 0; color: #333; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
@@ -45,63 +44,48 @@
             <p class="app-subtitle">Brunch & Cocktails</p>
         </div>
         <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('briefingPage')"><div class="icon-circle">📋</div><span>Briefing</span></div>
-            <div class="big-icon" onclick="openPage('managePage')"><div class="icon-circle">⚙️</div><span>Manage</span></div>
+            <div class="big-icon" onclick="openPage('briefingPage')"><div>📋</div><span>Briefing</span></div>
+            <div class="big-icon" onclick="openPage('managePage')"><div>⚙️</div><span>Manage</span></div>
         </div>
     </div>
 
     <div id="managePage" class="page">
-        <div class="brand-header">
-            <button class="close-btn" onclick="openPage('homePage')">✕</button>
-            <h2 style="margin:0">Manage</h2>
-        </div>
+        <div class="brand-header"><button class="close-btn" onclick="openPage('homePage')">✕</button><h2 style="margin:0">Manage</h2></div>
         <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('showStaffPage')"><div class="icon-circle">📅</div><span>Daily View</span></div>
-            <div class="big-icon" onclick="openPage('editStaffPage')"><div class="icon-circle">👥</div><span>Directory</span></div>
+            <div class="big-icon" onclick="openPage('showStaffPage')"><div>📅</div><span>Daily View</span></div>
+            <div class="big-icon" onclick="openPage('editStaffPage')"><div>👥</div><span>Directory</span></div>
         </div>
     </div>
 
     <div id="briefingPage" class="page">
-        <div class="brand-header">
-            <button class="close-btn" onclick="openPage('homePage')">✕</button>
-            <h2 style="margin:0">Briefing</h2>
-        </div>
+        <div class="brand-header"><button class="close-btn" onclick="openPage('homePage')">✕</button><h2 style="margin:0">Briefing</h2></div>
         <div class="padded-container">
-            <label style="display:block; margin-bottom:10px;">Select Date</label>
+            <span class="section-label">Target Date</span>
             <select id="dateSelect" class="styled-select"></select>
             <button class="btn-primary" onclick="window.generateBriefing()">Generate Briefing</button>
         </div>
     </div>
 
     <div id="showStaffPage" class="page">
-        <div class="brand-header">
-            <button class="close-btn" onclick="openPage('managePage')">✕</button>
-            <h2 style="margin:0">Daily View</h2>
-        </div>
+        <div class="brand-header"><button class="close-btn" onclick="openPage('managePage')">✕</button><h2 style="margin:0">Daily View</h2></div>
         <div class="padded-container">
+            <span class="section-label">Select Date to View</span>
             <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
             <div id="scheduleTableWrapper"></div>
         </div>
     </div>
 
     <div id="editStaffPage" class="page">
-        <div class="brand-header">
-            <button class="close-btn" onclick="openPage('managePage')">✕</button>
-            <h2 style="margin:0">Directory</h2>
-        </div>
-        <div class="padded-container">
-            <div id="staffListContainer"></div>
-        </div>
+        <div class="brand-header"><button class="close-btn" onclick="openPage('managePage')">✕</button><h2 style="margin:0">Directory</h2></div>
+        <div class="padded-container" id="staffListContainer"></div>
     </div>
 
     <div id="briefingModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin:0">Briefing Text</h3>
+            <h3 style="margin:0">Briefing Preview</h3>
             <div id="briefingTextContainer" class="briefing-box"></div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-primary" style="flex:2" onclick="window.copyBriefingText()">Copy Text</button>
-                <button class="btn-secondary" style="flex:1" onclick="window.closeBriefingModal()">Close</button>
-            </div>
+            <button class="btn-primary" onclick="window.copyBriefingText()">Copy Text</button>
+            <button onclick="window.closeBriefingModal()" style="background:none; border:none; color:#999; margin-top:10px; cursor:pointer;">Close</button>
         </div>
     </div>
 
