@@ -1,21 +1,22 @@
-function generateBriefing() {
-    // 1. Ensure date is selected
-    const selectedDate = document.getElementById('dateSelect').value;
+window.generateBriefing = function() {
+    console.log("Briefing function triggered"); // This helps us debug
+    
+    const dateDropdown = document.getElementById('dateSelect');
+    if (!dateDropdown) return alert("Error: Date dropdown not found.");
+    
+    const selectedDate = dateDropdown.value;
     if (!selectedDate) return alert("Please select a date first.");
 
-    // 2. Ensure data is loaded from app.js
     if (!window.scheduleData || Object.keys(window.scheduleData).length === 0) {
-        return alert("Data is still loading. Please wait a second.");
+        return alert("Data is still loading from the spreadsheet. Try again in 2 seconds.");
     }
 
     const dayStaff = window.scheduleData[selectedDate];
     if (!dayStaff || dayStaff.length === 0) return alert("No staff found for this date.");
 
-    // Filter active staff (ignore OFF/Folga)
     const activeStaff = dayStaff.filter(s => s.shiftRaw && /\d/.test(s.shiftRaw));
-    if (activeStaff.length === 0) return alert("No active shifts found.");
+    if (activeStaff.length === 0) return alert("No active shifts found for this day.");
 
-    // Helper functions for time sorting
     const getEntry = (s) => s.shiftRaw.split('-')[0].trim();
     const getExit = (s) => s.shiftRaw.split('-')[1].trim();
     const parseToMin = (t) => { 
@@ -33,12 +34,10 @@ function generateBriefing() {
 
     const findStaff = (list, pos) => list.find(s => s.position.toLowerCase().includes(pos.toLowerCase()));
 
-    // Logic for Task Assignments
     let porta = findStaff(activeStaff, 'Manager') || findStaff(activeStaff, 'Head Seller') || salaEntry[0];
     const sellers = salaEntry.filter(s => !s.position.toLowerCase().includes('manager') || salaEntry.length === 1);
     const fechoCaixa = findStaff(activeStaff, 'Head Seller') || findStaff(activeStaff, 'Bar Manager') || findStaff(activeStaff, 'Manager') || salaExit[salaExit.length - 1];
 
-    // Build the Text
     let b = `Bom dia a todos!\n\n*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
     b += `${getEntry(porta)} Porta: ${porta.alias}\n\nBAR:\n`;
     if (barEntry[0]) {
@@ -83,17 +82,21 @@ function generateBriefing() {
     if (sL) b += `Fecho da sala: *${sL.alias}*\n`;
     b += `${getExit(fechoCaixa)} Fecho de Caixa: *${fechoCaixa.alias}*`;
 
-    // Show the modal with the text
-    document.getElementById('briefingTextContainer').innerText = b;
-    document.getElementById('briefingModal').style.display = 'flex';
-}
+    const modal = document.getElementById('briefingModal');
+    const container = document.getElementById('briefingTextContainer');
+    if (modal && container) {
+        container.innerText = b;
+        modal.style.display = 'flex';
+    } else {
+        alert("Error: Briefing popup elements missing in HTML.");
+    }
+};
 
-function copyBriefingText() {
+window.copyBriefingText = function() {
     const text = document.getElementById('briefingTextContainer').innerText;
-    navigator.clipboard.writeText(text);
-    alert("✅ Copied!");
-}
+    navigator.clipboard.writeText(text).then(() => alert("✅ Copied!"));
+};
 
-function closeBriefingModal() { 
+window.closeBriefingModal = function() { 
     document.getElementById('briefingModal').style.display = 'none'; 
-}
+};
