@@ -10,9 +10,11 @@ body { background-color: #dbc9b7; margin: 0; color: #3e2723; }
 .app-logo { font-size: 48px; letter-spacing: 8px; margin: 0; font-weight: 900; }
 .app-subtitle { font-size: 14px; letter-spacing: 3px; margin-top: 5px; font-weight: 600; }
 
+.page-title { text-align: center; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; }
+
 .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-/* Icons & Buttons: Coffee Background, Dark Coffee Text/Borders */
+/* COFFEE UI ELEMENTS */
 .big-icon, .btn-primary, .btn-secondary, .mini-sync-btn, .close-btn, .modal-content {
     background-color: #dbc9b7;
     border: 2px solid #3e2723;
@@ -27,19 +29,21 @@ body { background-color: #dbc9b7; margin: 0; color: #3e2723; }
 .big-icon span { font-weight: bold; font-size: 13px; }
 
 .btn-primary { padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px;}
-.btn-secondary { padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; }
+.btn-secondary { padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; margin-top: 5px; }
+.btn-delete { padding: 12px; border-radius: 12px; width: 100%; font-weight: bold; margin: 10px 0; background: #a84a4a; color: white; border: none; }
 
-.mini-sync-btn { position: fixed; top: 20px; left: 20px; padding: 8px 12px; border-radius: 8px; z-index: 999; }
-.close-btn { position: absolute; top: 20px; right: 20px; width: 35px; height: 35px; border-radius: 50%; }
+.mini-sync-btn { position: fixed; top: 20px; left: 20px; padding: 8px 12px; border-radius: 8px; z-index: 999; font-size: 11px; font-weight: bold; }
+.close-btn { position: absolute; top: 20px; right: 20px; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; }
 
 .modal { 
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(62, 39, 35, 0.7); align-items: center; justify-content: center; z-index: 1000;
 }
-.modal-content { width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; }
+.modal-content { width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; max-height: 90vh; overflow-y: auto; }
 
 .filter-card, .staff-edit-card, .staff-row { 
     background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #3e2723;
 }
 
-.styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #3e2723; background: #fafafa; font-size: 16px; }
+.styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #3e2723; background: #fdfaf7; font-size: 16px; margin-top: 5px; color: #3e2723; }
+.field-label { font-size: 11px; font-weight: bold; text-transform: uppercase; }
