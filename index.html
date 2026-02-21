@@ -10,30 +10,30 @@
         .page { display: none; padding-bottom: 50px; }
         .page.active { display: block; }
         
-        /* Brand Header */
+        /* Header Styling */
         .brand-header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; position: relative; }
         .close-btn { position: absolute; left: 20px; top: 40px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-        
-        /* Navigation Grid */
+        .app-logo { margin: 0; letter-spacing: 6px; font-size: 2.2rem; font-weight: 700; }
+        .app-subtitle { margin: 2px 0 0; opacity: 0.8; font-weight: 300; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; }
+
+        /* Grid Layout */
         .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; margin-top: -30px; }
-        .big-icon { background: white; padding: 30px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .big-icon { background: white; padding: 30px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; }
         .icon-circle { font-size: 40px; margin-bottom: 10px; }
         
-        /* UI Elements */
+        /* Directory & Forms */
         .padded-container { padding: 20px; }
         .styled-select { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--accent); font-size: 16px; background: white; margin-bottom: 20px; }
         .btn-primary { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
         .btn-secondary { background: #eee; color: #333; border: none; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; }
         
-        /* Briefing Modal Layout */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 15px; max-height: 85vh; display: flex; flex-direction: column; }
-        .briefing-box { background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 13px; overflow-y: auto; flex-grow: 1; margin: 15px 0; color: #333; text-align: left; line-height: 1.4; }
-        
-        /* Tables */
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th { background: #f8f3ef; padding: 12px; text-align: left; font-size: 12px; color: #666; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        /* Staff Cards */
+        .staff-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 15px; max-height: 80vh; display: flex; flex-direction: column; }
+        .briefing-box { background: #f9f9f9; padding: 15px; border: 1px solid #eee; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 13px; overflow-y: auto; flex-grow: 1; margin: 15px 0; color: #333; text-align: left; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
@@ -41,18 +41,12 @@
 
     <div id="homePage" class="page active">
         <div class="brand-header">
-            <h1 style="margin:0; letter-spacing: 4px;">ZENITH</h1>
-            <p style="margin:5px 0 0; opacity: 0.8; font-weight: 300; text-transform: uppercase;">Brunch & Cocktails</p>
+            <h1 class="app-logo">ZENITH</h1>
+            <p class="app-subtitle">Brunch & Cocktails</p>
         </div>
         <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('briefingPage')">
-                <div class="icon-circle">📋</div>
-                <span>Briefing</span>
-            </div>
-            <div class="big-icon" onclick="openPage('managePage')">
-                <div class="icon-circle">⚙️</div>
-                <span>Manage</span>
-            </div>
+            <div class="big-icon" onclick="openPage('briefingPage')"><div class="icon-circle">📋</div><span>Briefing</span></div>
+            <div class="big-icon" onclick="openPage('managePage')"><div class="icon-circle">⚙️</div><span>Manage</span></div>
         </div>
     </div>
 
@@ -62,24 +56,18 @@
             <h2 style="margin:0">Manage</h2>
         </div>
         <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('showStaffPage')">
-                <div class="icon-circle">📅</div>
-                <span>Daily View</span>
-            </div>
-            <div class="big-icon" onclick="openPage('editStaffPage')">
-                <div class="icon-circle">👥</div>
-                <span>Directory</span>
-            </div>
+            <div class="big-icon" onclick="openPage('showStaffPage')"><div class="icon-circle">📅</div><span>Daily View</span></div>
+            <div class="big-icon" onclick="openPage('editStaffPage')"><div class="icon-circle">👥</div><span>Directory</span></div>
         </div>
     </div>
 
     <div id="briefingPage" class="page">
         <div class="brand-header">
             <button class="close-btn" onclick="openPage('homePage')">✕</button>
-            <h2 style="margin:0">Briefing Generator</h2>
+            <h2 style="margin:0">Briefing</h2>
         </div>
         <div class="padded-container">
-            <label style="display:block; margin-bottom:8px; font-weight:bold;">Select Date</label>
+            <label style="display:block; margin-bottom:10px;">Select Date</label>
             <select id="dateSelect" class="styled-select"></select>
             <button class="btn-primary" onclick="window.generateBriefing()">Generate Briefing</button>
         </div>
@@ -99,7 +87,7 @@
     <div id="editStaffPage" class="page">
         <div class="brand-header">
             <button class="close-btn" onclick="openPage('managePage')">✕</button>
-            <h2 style="margin:0">Staff Directory</h2>
+            <h2 style="margin:0">Directory</h2>
         </div>
         <div class="padded-container">
             <div id="staffListContainer"></div>
@@ -108,10 +96,8 @@
 
     <div id="briefingModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin:0; padding-bottom:10px; border-bottom:1px solid #eee;">Briefing Preview</h3>
-            <div id="briefingTextContainer" class="briefing-box">
-                Processing data...
-            </div>
+            <h3 style="margin:0">Briefing Text</h3>
+            <div id="briefingTextContainer" class="briefing-box"></div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn-primary" style="flex:2" onclick="window.copyBriefingText()">Copy Text</button>
                 <button class="btn-secondary" style="flex:1" onclick="window.closeBriefingModal()">Close</button>
