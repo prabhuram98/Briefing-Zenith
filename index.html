@@ -10,10 +10,7 @@
 <body>
 
     <div id="dashboardPage" class="page active">
-        <div class="brand-container">
-            <h1 class="app-logo">ZENITH</h1>
-            <p class="app-subtitle">BRUNCH & COCKTAILS</p>
-        </div>
+        <h1 class="app-logo">ZENITH</h1>
         <div class="icon-grid">
             <div class="big-icon" onclick="openPage('briefingPage')">
                 <div class="icon-circle">☕</div>
@@ -42,69 +39,18 @@
         </div>
     </div>
 
-    <div id="briefingPage" class="page">
-        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
-        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
-        <h2 class="page-title">Briefing</h2>
-        <div class="filter-card">
-            <label class="field-label">Select Date</label>
-            <select id="dateSelect" class="styled-select"></select>
-            <button class="btn-primary" style="margin-top: 25px;" onclick="generateBriefing()">Generate Briefing</button>
-        </div>
-    </div>
-
     <div id="showStaffPage" class="page">
-        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Daily Staff</h2>
-        <div style="padding: 0 20px;">
-            <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
-        </div>
-        <div id="scheduleTableWrapper"></div>
+        <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
+        <div id="scheduleTableWrapper" style="margin-top:20px;"></div>
     </div>
 
     <div id="editStaffPage" class="page">
-        <button class="mini-sync-btn" onclick="loadData()">🔄 Sync</button>
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Directory</h2>
-        <div style="padding: 0 20px;">
-            <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
-        </div>
+        <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
         <div id="staffListContainer"></div>
-    </div>
-
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div id="modalResult"></div>
-            <div class="modal-buttons-vertical">
-                <button class="btn-primary" onclick="copyBriefing()">Copy to WhatsApp</button>
-                <button class="btn-secondary" onclick="closeModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="staffModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle" style="margin-top:0;">Staff Details</h3>
-            <input type="hidden" id="editOriginalKey">
-            <div class="form-group">
-                <label class="field-label">Full Name</label>
-                <input type="text" id="formFullName">
-            </div>
-            <div class="form-group" style="margin-top:15px;">
-                <label class="field-label">Alias</label>
-                <input type="text" id="formAlias">
-            </div>
-            <div class="form-group" style="margin-top:15px;">
-                <label class="field-label">Position</label>
-                <select id="formPosition" class="styled-select"></select>
-            </div>
-            <div class="modal-buttons-vertical">
-                <button class="btn-primary" onclick="confirmSave()">SAVE CHANGES</button>
-                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE</button>
-                <button class="btn-secondary" onclick="closeStaffModal()">CANCEL</button>
-            </div>
-        </div>
     </div>
 
     <script src="app.js"></script>
