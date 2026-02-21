@@ -39,6 +39,16 @@
         </div>
     </div>
 
+    <div id="briefingPage" class="page">
+        <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+        <h2 class="page-title">Briefing</h2>
+        <div class="filter-card">
+            <label class="field-label">Select Date</label>
+            <select id="dateSelect" class="styled-select"></select>
+            <button class="btn-primary" style="margin-top: 25px;" onclick="generateBriefing()">Generate Briefing</button>
+        </div>
+    </div>
+
     <div id="showStaffPage" class="page">
         <button class="close-btn" onclick="openPage('managePage')">✕</button>
         <h2 class="page-title">Daily Staff</h2>
@@ -51,6 +61,22 @@
         <h2 class="page-title">Directory</h2>
         <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
         <div id="staffListContainer"></div>
+    </div>
+
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Staff Details</h3>
+            <input type="hidden" id="editOriginalKey">
+            <label class="field-label">Full Name</label>
+            <input type="text" id="formFullName">
+            <label class="field-label">Alias</label>
+            <input type="text" id="formAlias">
+            <label class="field-label">Position</label>
+            <select id="formPosition" class="styled-select"></select>
+            <button class="btn-primary" onclick="confirmSave()" style="margin-top:20px;">SAVE CHANGES</button>
+            <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE</button>
+            <button class="btn-secondary" onclick="closeStaffModal()">CANCEL</button>
+        </div>
     </div>
 
     <script src="app.js"></script>
