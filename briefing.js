@@ -73,7 +73,8 @@ function generateBriefing() {
 }
 
 function copyBriefingText() {
-    navigator.clipboard.writeText(document.getElementById('briefingTextContainer').innerText);
+    const text = document.getElementById('briefingTextContainer').innerText;
+    navigator.clipboard.writeText(text);
     alert("✅ Copied!");
 }
 
