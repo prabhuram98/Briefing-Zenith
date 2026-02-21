@@ -5,7 +5,7 @@ body { background-color: #ffffff; margin: 0; color: #3e2723; height: 100vh; over
 .page { display: none; height: 100vh; flex-direction: column; background: #ffffff; }
 .page.active { display: flex; }
 
-/* BRANDING HEADER (Signature Coffee Background) */
+/* BRANDING HEADER (Coffee) */
 .brand-header {
     background-color: #dbc9b7;
     padding: 60px 20px 45px 20px;
@@ -34,15 +34,15 @@ body { background-color: #ffffff; margin: 0; color: #3e2723; height: 100vh; over
 
 .header-title { font-size: 24px; text-transform: uppercase; margin: 0; font-weight: 900; color: #3e2723; }
 
-/* CONTENT AREA (Pure White) */
+/* CONTENT AREA (White) */
 .content-area { flex-grow: 1; overflow-y: auto; background-color: #ffffff; }
 .padded-container { padding: 20px; background-color: #ffffff; }
 
-/* BIG ICONS (White Background + Border) */
+/* BIG ICONS - UPDATED TO WHITE BACKGROUND */
 .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 30px 20px; }
 .big-icon { 
-    background: #ffffff; 
-    border: 2px solid #3e2723; 
+    background: #ffffff;            /* Background changed to White */
+    border: 2px solid #3e2723;      /* Border added for definition */
     border-radius: 20px; 
     padding: 40px 10px; 
     display: flex; 
