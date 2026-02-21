@@ -4,8 +4,6 @@ const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhoj
 
 let staffMap = {}; let scheduleData = {};
 
-function toggleLoader(show) { document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none'; }
-
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -16,7 +14,6 @@ function openPage(id) {
 }
 
 async function loadData() {
-    toggleLoader(true);
     return new Promise((resolve) => {
         Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
             download: true,
@@ -34,7 +31,6 @@ async function loadData() {
                     download: true,
                     complete: (sResults) => {
                         processSchedule(sResults.data);
-                        toggleLoader(false);
                         resolve();
                     }
                 });
@@ -67,8 +63,10 @@ function updateDropdowns() {
     const keys = Object.keys(scheduleData);
     if(keys.length > 0) {
         const opt = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-        document.getElementById('dateSelect').innerHTML = opt;
-        document.getElementById('manageDateSelect').innerHTML = opt;
+        const d1 = document.getElementById('dateSelect');
+        const d2 = document.getElementById('manageDateSelect');
+        if(d1) d1.innerHTML = opt;
+        if(d2) d2.innerHTML = opt;
     }
 }
 
@@ -112,21 +110,19 @@ async function confirmSave() {
     const pos = document.getElementById('formPosition').value;
     const key = document.getElementById('editOriginalKey').value;
     if (!fullName || !alias) return alert("Preencha tudo!");
-    toggleLoader(true);
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: key ? 'update' : 'add', originalKey: key, fullName, alias, position: pos, area: staffMap[key?.toLowerCase()]?.area || 'Sala' }) });
-        setTimeout(() => { toggleLoader(false); closeStaffModal(); loadData(); }, 800);
-    } catch (e) { toggleLoader(false); alert("Erro!"); }
+        closeStaffModal(); loadData();
+    } catch (e) { alert("Erro!"); }
 }
 
 async function confirmDelete() {
     const key = document.getElementById('editOriginalKey').value;
     if (!confirm(`Apagar ${key}?`)) return;
-    toggleLoader(true);
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', originalKey: key }) });
-        setTimeout(() => { toggleLoader(false); closeStaffModal(); loadData(); }, 800);
-    } catch (e) { toggleLoader(false); alert("Erro!"); }
+        closeStaffModal(); loadData();
+    } catch (e) { alert("Erro!"); }
 }
 
 window.onload = loadData;
