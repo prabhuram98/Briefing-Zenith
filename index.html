@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenith Brunch & Cocktails</title>
+    <title>Zenith Manager</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
@@ -91,28 +91,24 @@
     </div>
 
     <div id="staffModal" class="modal">
-        <div class="modal-content staff-form">
+        <div class="modal-content">
             <h3 id="modalTitle">Staff Details</h3>
             <input type="hidden" id="editOriginalKey">
-            
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" id="formFullName" placeholder="e.g. JOHN DOE">
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label class="field-label">Full Name</label>
+                <input type="text" id="formFullName" class="styled-input">
             </div>
-
-            <div class="form-group">
-                <label>Alias</label>
-                <input type="text" id="formAlias" placeholder="e.g. John">
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label class="field-label">Alias</label>
+                <input type="text" id="formAlias" class="styled-input">
             </div>
-
-            <div class="form-group">
-                <label>Position</label>
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label class="field-label">Position</label>
                 <select id="formPosition" class="styled-select"></select>
             </div>
-
-            <div class="form-actions">
-                <button class="btn-primary" onclick="confirmSave()">Save Staff</button>
-                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">Delete</button>
+            <div style="margin-top: 25px;">
+                <button class="btn-primary" onclick="confirmSave()">Save Changes</button>
+                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">Delete Staff</button>
                 <button class="btn-secondary" onclick="closeStaffModal()">Cancel</button>
             </div>
         </div>
