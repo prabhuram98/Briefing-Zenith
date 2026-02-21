@@ -1,3 +1,5 @@
+// --- CONFIGURATION ---
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaDta8Pm4GyYT-rtbbFrkYrGSE74KWq6wpnJ8qOn_5JL4V6d8-pg/exec'; 
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv';
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
@@ -5,7 +7,7 @@ let staffMap = {};
 let scheduleData = {};
 let dynamicPositions = new Set();
 
-// --- NAVIGATION ---
+// --- CORE NAVIGATION ---
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const target = document.getElementById(id);
@@ -15,8 +17,9 @@ function openPage(id) {
     if (id === 'showStaffPage') showStaffTable();
 }
 
-// --- DATA SYNC ---
+// --- DATA SYNC (Read Only) ---
 async function loadData() {
+    console.log("Syncing...");
     Papa.parse(`${STAFF_URL}&t=${new Date().getTime()}`, {
         download: true,
         complete: (results) => {
@@ -25,7 +28,7 @@ async function loadData() {
             results.data.forEach((row, i) => {
                 if (i === 0 || !row[0]) return;
                 const name = row[0].toLowerCase().trim();
-                const area = row[1] || 'General';
+                const area = row[1] || 'Sala';
                 const pos = row[2] || 'Staff';
                 const alias = row[3] || row[0];
                 
@@ -71,18 +74,22 @@ function loadSchedule() {
                 });
             }
             scheduleData = dates;
-            const keys = Object.keys(dates);
-            if(keys.length > 0) {
-                const opt = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-                document.getElementById('dateSelect').innerHTML = opt;
-                document.getElementById('manageDateSelect').innerHTML = opt;
-            }
-            console.log("Sync successful");
+            updateDropdowns();
+            console.log("Sync Complete");
         }
     });
 }
 
-// --- STAFF DIRECTORY ---
+function updateDropdowns() {
+    const keys = Object.keys(scheduleData);
+    if(keys.length > 0) {
+        const opt = keys.map(k => `<option value="${k}">${k}</option>`).join('');
+        document.getElementById('dateSelect').innerHTML = opt;
+        document.getElementById('manageDateSelect').innerHTML = opt;
+    }
+}
+
+// --- STAFF DIRECTORY RENDER ---
 function renderStaffList() {
     const container = document.getElementById('staffListContainer');
     const sorted = Object.keys(staffMap).sort();
@@ -94,7 +101,6 @@ function renderStaffList() {
 }
 
 function openStaffForm(k = null) {
-    const modal = document.getElementById('staffModal');
     if (k) {
         document.getElementById('modalTitle').innerText = "Edit Staff";
         document.getElementById('editOriginalKey').value = k;
@@ -109,22 +115,80 @@ function openStaffForm(k = null) {
         document.getElementById('formAlias').value = "";
         document.getElementById('deleteBtn').style.display = "none";
     }
-    modal.style.display = 'flex';
+    document.getElementById('staffModal').style.display = 'flex';
 }
 
-function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
+// --- CRUD OPERATIONS (Write Access) ---
+async function confirmSave() {
+    const fullName = document.getElementById('formFullName').value.trim().toUpperCase();
+    const alias = document.getElementById('formAlias').value.trim();
+    const position = document.getElementById('formPosition').value;
+    const originalKey = document.getElementById('editOriginalKey').value;
 
-// --- DAILY VIEW ---
+    if (!fullName || !alias) return alert("Please fill in Full Name and Alias.");
+
+    const existingArea = originalKey ? (staffMap[originalKey.toLowerCase()]?.area || 'Sala') : 'Sala';
+
+    const payload = {
+        action: originalKey ? 'update' : 'add',
+        originalKey: originalKey,
+        fullName: fullName,
+        alias: alias,
+        position: position,
+        area: existingArea
+    };
+
+    const saveBtn = document.querySelector('#staffModal .btn-primary');
+    saveBtn.innerText = "SAVING...";
+    saveBtn.disabled = true;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        alert("Change sent to Sheet!");
+        closeStaffModal();
+        setTimeout(loadData, 1500); 
+    } catch (error) {
+        alert("Error connecting to database.");
+    } finally {
+        saveBtn.innerText = "SAVE CHANGES";
+        saveBtn.disabled = false;
+    }
+}
+
+async function confirmDelete() {
+    const key = document.getElementById('editOriginalKey').value;
+    if (!key || !confirm(`Delete ${staffMap[key].alias}?`)) return;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'delete', fullName: key })
+        });
+        alert("Delete sent!");
+        closeStaffModal();
+        setTimeout(loadData, 1500);
+    } catch (error) {
+        alert("Delete failed.");
+    }
+}
+
+// --- DAILY STAFF VIEW ---
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
     const day = scheduleData[date];
     if(!day) return;
     
-    // Dynamically identify all areas present today
     const activeAreas = [...new Set(day.map(s => s.area))].sort();
     
     document.getElementById('scheduleTableWrapper').innerHTML = activeAreas.map(area => `
-        <div style="margin: 15px 0 5px 0; font-weight: 900; border-bottom: 1px solid #3e2723; padding-bottom: 3px;">${area.toUpperCase()}</div>
+        <div style="margin: 15px 0 5px 0; font-weight: 900; border-bottom: 1px solid #3e2723;">${area.toUpperCase()}</div>
         ${day.filter(s => s.area === area).map(s => `
             <div class="staff-row">
                 <div><b>${s.alias}</b><br><small>${s.position}</small></div>
@@ -133,12 +197,14 @@ function showStaffTable() {
     `).join('');
 }
 
-// --- BRIEFING ---
+// --- MODAL UTILS ---
 function generateBriefing() {
     const date = document.getElementById('dateSelect').value;
     document.getElementById('modalResult').innerHTML = `<h3>Briefing: ${date}</h3><p>Area-based tasks will be computed here.</p>`;
     document.getElementById('modal').style.display = 'flex';
 }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
+// --- BOOTSTRAP ---
 window.onload = loadData;
