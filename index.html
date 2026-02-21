@@ -52,7 +52,7 @@
             <label class="field-label">Select Date</label>
             <select id="dateSelect" class="styled-select"></select>
             <div style="margin-top: 20px;">
-                <button class="btn-primary" id="genBtn" onclick="generateBriefing()">Generate Briefing</button>
+                <button class="btn-primary" onclick="generateBriefing()">Generate Briefing</button>
             </div>
         </div>
     </div>
@@ -91,18 +91,28 @@
     </div>
 
     <div id="staffModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Edit Staff</h3>
+        <div class="modal-content staff-form">
+            <h3 id="modalTitle">Staff Details</h3>
             <input type="hidden" id="editOriginalKey">
-            <label class="field-label">Full Name</label>
-            <input type="text" id="formFullName">
-            <label class="field-label">Alias</label>
-            <input type="text" id="formAlias">
-            <label class="field-label">Position</label>
-            <select id="formPosition" class="styled-select"></select>
-            <div style="margin-top: 25px;">
-                <button class="btn-primary" onclick="confirmSave()">Save Changes</button>
-                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">Delete Staff</button>
+            
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="formFullName" placeholder="e.g. JOHN DOE">
+            </div>
+
+            <div class="form-group">
+                <label>Alias</label>
+                <input type="text" id="formAlias" placeholder="e.g. John">
+            </div>
+
+            <div class="form-group">
+                <label>Position</label>
+                <select id="formPosition" class="styled-select"></select>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-primary" onclick="confirmSave()">Save Staff</button>
+                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">Delete</button>
                 <button class="btn-secondary" onclick="closeStaffModal()">Cancel</button>
             </div>
         </div>
