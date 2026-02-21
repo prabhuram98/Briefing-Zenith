@@ -29,6 +29,7 @@ async function loadData() {
                 });
                 const posDropdown = document.getElementById('formPosition');
                 if(posDropdown) posDropdown.innerHTML = Array.from(posSet).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+                
                 Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
                     download: true,
                     complete: (sResults) => {
@@ -68,8 +69,8 @@ function updateDropdowns() {
     const keys = Object.keys(scheduleData);
     if(keys.length > 0) {
         const opt = keys.map(k => `<option value="${k}">${k}</option>`).join('');
-        document.getElementById('dateSelect').innerHTML = opt;
-        document.getElementById('manageDateSelect').innerHTML = opt;
+        if(document.getElementById('dateSelect')) document.getElementById('dateSelect').innerHTML = opt;
+        if(document.getElementById('manageDateSelect')) document.getElementById('manageDateSelect').innerHTML = opt;
     }
 }
 
@@ -135,4 +136,3 @@ async function confirmDelete() {
 }
 
 window.onload = loadData;
-setInterval(loadData, 300000);
