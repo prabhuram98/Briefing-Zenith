@@ -1,19 +1,108 @@
-<div id="dashboardPage" class="page active">
-    <div class="brand-header">
-        <h1 class="app-logo">ZENITH</h1>
-        <p class="app-subtitle">Brunch & Cocktails</p>
-    </div>
-    
-    <div class="content-area">
-        <div class="icon-grid">
-            <div class="big-icon" onclick="openPage('briefingPage')">
-                <div class="icon-circle">☕</div>
-                <span>Briefing</span>
-            </div>
-            <div class="big-icon" onclick="openPage('managePage')">
-                <div class="icon-circle">⚙️</div>
-                <span>Manage</span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zenith Manager 1.0</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+
+    <div id="dashboardPage" class="page active">
+        <div class="brand-header">
+            <h1 class="app-logo">ZENITH</h1>
+            <p class="app-subtitle">Brunch & Cocktails</p>
+        </div>
+        <div class="content-area">
+            <div class="icon-grid">
+                <div class="big-icon" onclick="openPage('briefingPage')">
+                    <div class="icon-circle">☕</div>
+                    <span>Briefing</span>
+                </div>
+                <div class="big-icon" onclick="openPage('managePage')">
+                    <div class="icon-circle">⚙️</div>
+                    <span>Manage</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <div id="managePage" class="page">
+        <div class="brand-header">
+            <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+            <h2 class="header-title">Manage</h2>
+        </div>
+        <div class="content-area">
+            <div class="icon-grid">
+                <div class="big-icon" onclick="openPage('showStaffPage')">
+                    <div class="icon-circle">📅</div>
+                    <span>Daily Staff</span>
+                </div>
+                <div class="big-icon" onclick="openPage('editStaffPage')">
+                    <div class="icon-circle">👤</div>
+                    <span>Directory</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="briefingPage" class="page">
+        <div class="brand-header">
+            <button class="close-btn" onclick="openPage('dashboardPage')">✕</button>
+            <h2 class="header-title">Briefing</h2>
+        </div>
+        <div class="content-area">
+            <div class="padded-container">
+                <label class="field-label">Select Date</label>
+                <select id="dateSelect" class="styled-select"></select>
+                <button class="btn-primary" style="margin-top: 25px;" onclick="generateBriefing()">Generate Briefing</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="showStaffPage" class="page">
+        <div class="brand-header">
+            <button class="close-btn" onclick="openPage('managePage')">✕</button>
+            <h2 class="header-title">Daily Staff</h2>
+        </div>
+        <div class="content-area">
+            <div class="padded-container">
+                <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
+                <div id="scheduleTableWrapper"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editStaffPage" class="page">
+        <div class="brand-header">
+            <button class="close-btn" onclick="openPage('managePage')">✕</button>
+            <h2 class="header-title">Directory</h2>
+        </div>
+        <div class="content-area">
+            <div class="padded-container">
+                <button class="btn-primary" onclick="openStaffForm()" style="margin-bottom:20px;">+ Add New Staff</button>
+                <div id="staffListContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Staff Details</h3>
+            <input type="hidden" id="editOriginalKey">
+            <label class="field-label">Full Name</label>
+            <input type="text" id="formFullName">
+            <label class="field-label">Alias</label>
+            <input type="text" id="formAlias">
+            <label class="field-label">Position</label>
+            <select id="formPosition" class="styled-select"></select>
+            <button class="btn-primary" onclick="confirmSave()" style="margin-top:20px;">SAVE CHANGES</button>
+            <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">DELETE</button>
+            <button class="btn-secondary" onclick="closeStaffModal()">CANCEL</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
