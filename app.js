@@ -9,26 +9,26 @@ function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 
-    // Show Loader for data pages
-    if (id === 'showStaffPage') {
-        document.getElementById('dailyLoader').style.display = 'flex';
-        document.getElementById('scheduleTableWrapper').innerHTML = '';
-    }
-    if (id === 'editStaffPage') {
-        document.getElementById('directoryLoader').style.display = 'flex';
-        document.getElementById('staffListContainer').innerHTML = '';
-    }
+    if (id === 'showStaffPage' || id === 'editStaffPage') {
+        const loaderId = id === 'showStaffPage' ? 'dailyLoader' : 'directoryLoader';
+        const wrapperId = id === 'showStaffPage' ? 'scheduleTableWrapper' : 'staffListContainer';
+        const loader = document.getElementById(loaderId);
+        const wrapper = document.getElementById(wrapperId);
 
-    loadData().then(() => {
-        if (id === 'editStaffPage') {
-            renderStaffList();
-            document.getElementById('directoryLoader').style.display = 'none';
-        }
-        if (id === 'showStaffPage') {
-            showStaffTable();
-            document.getElementById('dailyLoader').style.display = 'none';
-        }
-    });
+        loader.style.display = 'flex';
+        wrapper.style.display = 'none';
+
+        loadData().then(() => {
+            setTimeout(() => {
+                if (id === 'editStaffPage') renderStaffList();
+                if (id === 'showStaffPage') showStaffTable();
+                loader.style.display = 'none';
+                wrapper.style.display = 'block';
+            }, 2000);
+        });
+    } else {
+        loadData();
+    }
 }
 
 async function loadData() {
