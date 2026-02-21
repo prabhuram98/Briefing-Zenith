@@ -1,57 +1,50 @@
-* { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-
-body { 
-    background-color: #f3ebe3; /* Light Coffee / Latte Cream */
-    margin: 0; 
-    color: #3e2723; /* Dark Coffee Text */
+/* Table Layout Container */
+.table-container {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid #d7ccc8;
 }
 
-.page { display: none; padding: 20px; min-height: 100vh; position: relative; }
-.page.active { display: block; }
-
-.app-logo { text-align: center; letter-spacing: 5px; margin: 60px 0 40px 0; font-weight: 900; color: #3e2723; font-size: 32px; }
-.page-title { text-align: center; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; }
-
-.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
-/* Icon Cards: Dark Coffee */
-.big-icon { 
-    background: #3e2723; 
-    border-radius: 20px; 
-    padding: 30px 10px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    box-shadow: 0 4px 15px rgba(62, 39, 35, 0.2); 
-    cursor: pointer;
+table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-.icon-circle { font-size: 40px; margin-bottom: 10px; }
-.big-icon span { font-weight: bold; font-size: 13px; color: #f3ebe3; text-transform: uppercase; }
-
-/* Buttons */
-.btn-primary { 
-    background: #3e2723; 
-    color: #f3ebe3; 
-    border: none; 
-    padding: 16px; 
-    border-radius: 12px; 
-    width: 100%; 
-    font-weight: bold; 
-    font-size: 16px; 
+th {
+    background-color: #3e2723;
+    color: #f3ebe3;
+    text-align: left;
+    padding: 12px 15px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-.close-btn { 
-    position: absolute; top: 20px; right: 20px; width: 35px; height: 35px; 
-    border-radius: 50%; background: #3e2723; color: #f3ebe3; border: none;
+td {
+    padding: 15px;
+    border-bottom: 1px solid #f3ebe3;
+    font-size: 14px;
+    color: #3e2723;
 }
 
-.styled-select, input { 
-    width: 100%; padding: 14px; border-radius: 10px; 
-    border: 1px solid #d7ccc8; background: #ffffff; font-size: 16px; 
+tr:last-child td {
+    border-bottom: none;
 }
 
-.staff-row, .staff-edit-card { 
-    background: #ffffff; padding: 15px; border-radius: 15px; 
-    margin-bottom: 10px; border: 1px solid #d7ccc8; 
+/* Specific Column Styling */
+.col-alias { font-weight: 800; }
+.col-meta { font-size: 12px; color: #8d6e63; }
+.col-action { text-align: right; }
+
+.badge-time {
+    background: #3e2723;
+    color: #f3ebe3;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 12px;
 }
