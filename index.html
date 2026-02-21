@@ -3,16 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zenith Manager v1.8</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Zenith Brunch & Cocktails</title>
+    <style>
+        :root { --primary: #3e2723; --accent: #dbc9b7; --bg: #fdfaf7; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--primary); }
+        .page { display: none; padding-bottom: 50px; }
+        .page.active { display: block; }
+        
+        /* Brand Header */
+        .brand-header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; position: relative; }
+        .close-btn { position: absolute; left: 20px; top: 40px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        
+        /* Navigation Grid */
+        .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; margin-top: -30px; }
+        .big-icon { background: white; padding: 30px 10px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .icon-circle { font-size: 40px; margin-bottom: 10px; }
+        
+        /* UI Elements */
+        .padded-container { padding: 20px; }
+        .styled-select { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--accent); font-size: 16px; background: white; margin-bottom: 20px; }
+        .btn-primary { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-secondary { background: #eee; color: #333; border: none; width: 100%; padding: 12px; border-radius: 10px; cursor: pointer; }
+        
+        /* Briefing Modal Layout */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 15px; max-height: 85vh; display: flex; flex-direction: column; }
+        .briefing-box { background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 13px; overflow-y: auto; flex-grow: 1; margin: 15px 0; color: #333; text-align: left; line-height: 1.4; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
+        th { background: #f8f3ef; padding: 12px; text-align: left; font-size: 12px; color: #666; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
 
     <div id="homePage" class="page active">
         <div class="brand-header">
-            <h1 class="app-logo">ZENITH</h1>
-            <p class="app-subtitle">BRUNCH & COCKTAILS</p>
+            <h1 style="margin:0; letter-spacing: 4px;">ZENITH</h1>
+            <p style="margin:5px 0 0; opacity: 0.8; font-weight: 300; text-transform: uppercase;">Brunch & Cocktails</p>
         </div>
         <div class="icon-grid">
             <div class="big-icon" onclick="openPage('briefingPage')">
@@ -29,12 +59,12 @@
     <div id="managePage" class="page">
         <div class="brand-header">
             <button class="close-btn" onclick="openPage('homePage')">✕</button>
-            <h2 class="header-title">Manage</h2>
+            <h2 style="margin:0">Manage</h2>
         </div>
         <div class="icon-grid">
             <div class="big-icon" onclick="openPage('showStaffPage')">
                 <div class="icon-circle">📅</div>
-                <span>Schedule</span>
+                <span>Daily View</span>
             </div>
             <div class="big-icon" onclick="openPage('editStaffPage')">
                 <div class="icon-circle">👥</div>
@@ -46,21 +76,19 @@
     <div id="briefingPage" class="page">
         <div class="brand-header">
             <button class="close-btn" onclick="openPage('homePage')">✕</button>
-            <h2 class="header-title">Briefing</h2>
+            <h2 style="margin:0">Briefing Generator</h2>
         </div>
         <div class="padded-container">
-            <label class="field-label">Select Date</label>
+            <label style="display:block; margin-bottom:8px; font-weight:bold;">Select Date</label>
             <select id="dateSelect" class="styled-select"></select>
-            <div style="margin-top: 20px;">
-                <button class="btn-primary" onclick="generateBriefing()">Generate Briefing</button>
-            </div>
+            <button class="btn-primary" onclick="window.generateBriefing()">Generate Briefing</button>
         </div>
     </div>
 
     <div id="showStaffPage" class="page">
         <div class="brand-header">
             <button class="close-btn" onclick="openPage('managePage')">✕</button>
-            <h2 class="header-title">Daily View</h2>
+            <h2 style="margin:0">Daily View</h2>
         </div>
         <div class="padded-container">
             <select id="manageDateSelect" class="styled-select" onchange="showStaffTable()"></select>
@@ -71,45 +99,22 @@
     <div id="editStaffPage" class="page">
         <div class="brand-header">
             <button class="close-btn" onclick="openPage('managePage')">✕</button>
-            <h2 class="header-title">Directory</h2>
+            <h2 style="margin:0">Staff Directory</h2>
         </div>
         <div class="padded-container">
-            <button class="btn-primary" onclick="openStaffForm()">+ Add New Staff</button>
             <div id="staffListContainer"></div>
         </div>
     </div>
 
     <div id="briefingModal" class="modal">
-        <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column;">
-            <h3 style="margin-top:0">Zenith Briefing</h3>
-            <div id="briefingTextContainer" style="flex-grow: 1; overflow-y: auto; background: #f9f9f9; padding: 15px; border: 1px solid #3e2723; border-radius: 10px; white-space: pre-wrap; font-family: monospace; font-size: 13px; text-align: left; color: #333;"></div>
-            <div style="margin-top: 20px;">
-                <button class="btn-primary" onclick="copyBriefingText()">Copy Briefing</button>
-                <button class="btn-secondary" onclick="closeBriefingModal()">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="staffModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle">Staff Details</h3>
-            <input type="hidden" id="editOriginalKey">
-            <div style="text-align: left; margin-bottom: 15px;">
-                <label class="field-label">Full Name</label>
-                <input type="text" id="formFullName" class="styled-input">
+            <h3 style="margin:0; padding-bottom:10px; border-bottom:1px solid #eee;">Briefing Preview</h3>
+            <div id="briefingTextContainer" class="briefing-box">
+                Processing data...
             </div>
-            <div style="text-align: left; margin-bottom: 15px;">
-                <label class="field-label">Alias</label>
-                <input type="text" id="formAlias" class="styled-input">
-            </div>
-            <div style="text-align: left; margin-bottom: 15px;">
-                <label class="field-label">Position</label>
-                <select id="formPosition" class="styled-select"></select>
-            </div>
-            <div style="margin-top: 25px;">
-                <button class="btn-primary" onclick="confirmSave()">Save Changes</button>
-                <button id="deleteBtn" class="btn-delete" onclick="confirmDelete()">Delete Staff</button>
-                <button class="btn-secondary" onclick="closeStaffModal()">Cancel</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-primary" style="flex:2" onclick="window.copyBriefingText()">Copy Text</button>
+                <button class="btn-secondary" style="flex:1" onclick="window.closeBriefingModal()">Close</button>
             </div>
         </div>
     </div>
