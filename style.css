@@ -1,31 +1,11 @@
-* { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background-color: #ffffff; margin: 0; color: #3e2723; height: 100vh; overflow: hidden; }
-.page { display: none; height: 100vh; flex-direction: column; background: #ffffff; }
-.page.active { display: flex; }
-.brand-header { background-color: #dbc9b7; padding: 60px 20px 45px 20px; text-align: center; position: relative; border-bottom: 3px solid #3e2723; }
-.app-logo { font-size: 52px; letter-spacing: 10px; margin: 0; font-weight: 900; color: #3e2723; }
-.app-subtitle { font-size: 14px; letter-spacing: 3px; margin: 10px 0 0 0; font-weight: 700; text-transform: uppercase; color: #3e2723; }
-.header-title { font-size: 24px; text-transform: uppercase; margin: 0; font-weight: 900; color: #3e2723; }
-.padded-container { padding: 20px; background-color: #ffffff; overflow-y: auto; flex-grow: 1; }
-.icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 30px 20px; }
-.big-icon { background: #ffffff; border: 2px solid #3e2723; border-radius: 20px; padding: 40px 10px; display: flex; flex-direction: column; align-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.icon-circle { font-size: 44px; margin-bottom: 12px; }
-.big-icon span { font-weight: 900; font-size: 13px; color: #3e2723; text-transform: uppercase; }
-.table-container { width: 100%; margin-top: 15px; background: #ffffff; border-radius: 15px; border: 2px solid #3e2723; overflow: hidden; }
-table { width: 100%; border-collapse: collapse; }
-th { background-color: #3e2723; color: #f3ebe3; text-align: left; padding: 12px; font-size: 11px; text-transform: uppercase; }
-td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; color: #3e2723; }
-.badge-time { background: #3e2723; color: #f3ebe3; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
-.btn-primary { background: #ffffff; color: #3e2723; border: 2px solid #3e2723; padding: 16px; border-radius: 12px; width: 100%; font-weight: 900; text-transform: uppercase; }
-.btn-secondary { background: #ffffff; color: #8d6e63; border: 2px solid #8d6e63; padding: 16px; border-radius: 12px; width: 100%; margin-top: 8px; font-weight: 900; }
-.btn-delete { background: #ffffff; color: #c62828; border: 2px solid #c62828; padding: 12px; border-radius: 12px; width: 100%; margin-top: 15px; font-weight: 900; }
-.close-btn { position: absolute; top: 15px; left: 20px; width: 35px; height: 35px; border-radius: 50%; background: #ffffff; color: #3e2723; border: 2px solid #3e2723; display: flex; align-items: center; justify-content: center; }
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #ffffff; width: 90%; max-width: 400px; padding: 25px; border-radius: 25px; border: 2px solid #3e2723; }
-.styled-select, input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #d7ccc8; background: #ffffff; font-size: 16px; margin-top: 5px; color: #3e2723; }
-.field-label { font-size: 11px; font-weight: 900; text-transform: uppercase; margin-top: 15px; display: block; }
-
-/* Loader Styles */
+/* Faster 0.6s rotation */
 .loader-container { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 60px; width: 100%; }
-.spinner { width: 50px; height: 50px; border: 5px solid #f3ebe3; border-top: 5px solid #3e2723; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.spinner { 
+    width: 50px; 
+    height: 50px; 
+    border: 5px solid #f3ebe3; 
+    border-top: 5px solid #3e2723; 
+    border-radius: 50%; 
+    animation: spin 0.6s linear infinite; 
+}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
