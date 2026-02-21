@@ -2,8 +2,9 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXw6HhEm_DCNIZOuTaD
 const SCHEDULE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=65389581&single=true&output=csv';
 const STAFF_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHJ_JT_klhojgLxfsWe00P1_cQ57sQrObsfirrf07bUZkpUaj5EEaRx-gOzlhcWkuXXA4LkQMFpYSC/pub?gid=1462047861&single=true&output=csv';
 
-let staffMap = {}; 
-let scheduleData = {}; // This is what briefing.js will use
+// Global variable so briefing.js can access it
+window.scheduleData = {};
+let staffMap = {};
 
 function openPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -23,11 +24,16 @@ async function loadData() {
                 results.data.forEach((row, i) => {
                     if (i === 0 || !row[0]) return;
                     const name = row[0].toLowerCase().trim();
-                    staffMap[name] = { alias: row[3] || row[0], area: row[1] || 'Sala', position: row[2] || 'Staff' };
+                    staffMap[name] = { 
+                        alias: row[3] || row[0], 
+                        area: row[1] || 'Sala', 
+                        position: row[2] || 'Staff' 
+                    };
                     posSet.add(row[2] || 'Staff');
                 });
                 const posDropdown = document.getElementById('formPosition');
                 if(posDropdown) posDropdown.innerHTML = Array.from(posSet).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+                
                 Papa.parse(`${SCHEDULE_URL}&t=${new Date().getTime()}`, {
                     download: true,
                     complete: (sResults) => {
@@ -44,7 +50,9 @@ function processSchedule(rows) {
     const dates = {}; const header = rows[0]; let dateCols = [];
     for (let j = 1; j < header.length; j++) {
         if (header[j] && !header[j].toLowerCase().includes("total")) {
-            const d = header[j].trim(); dateCols.push({ index: j, label: d }); dates[d] = [];
+            const d = header[j].trim(); 
+            dateCols.push({ index: j, label: d }); 
+            dates[d] = [];
         }
     }
     for (let i = 1; i < rows.length; i++) {
@@ -53,16 +61,16 @@ function processSchedule(rows) {
         dateCols.forEach(col => {
             let shift = rows[i][col.index]?.toString().trim();
             if (shift && /\d/.test(shift) && !["OFF", "FOLGA"].includes(shift.toUpperCase())) {
-                dates[col.label].push({ ...staffMap[name], shiftRaw: shift });
+                dates[col.label].push({ ...staffMap[name], fullName: name, shiftRaw: shift });
             }
         });
     }
-    scheduleData = dates; 
+    window.scheduleData = dates; 
     updateDropdowns();
 }
 
 function updateDropdowns() {
-    const keys = Object.keys(scheduleData);
+    const keys = Object.keys(window.scheduleData);
     if(keys.length > 0) {
         const opt = keys.map(k => `<option value="${k}">${k}</option>`).join('');
         const d1 = document.getElementById('dateSelect');
@@ -74,7 +82,7 @@ function updateDropdowns() {
 
 function showStaffTable() {
     const date = document.getElementById('manageDateSelect').value;
-    const day = scheduleData[date] || [];
+    const day = window.scheduleData[date] || [];
     const container = document.getElementById('scheduleTableWrapper');
     if (day.length === 0) { container.innerHTML = "<p>Sem dados.</p>"; return; }
     container.innerHTML = `<div class="table-container"><table><thead><tr><th>Staff</th><th>Area</th><th>Shift</th></tr></thead><tbody>${day.map(s => `<tr><td><b>${s.alias}</b></td><td>${s.area}</td><td>${s.shiftRaw}</td></tr>`).join('')}</tbody></table></div>`;
@@ -87,6 +95,7 @@ function renderStaffList() {
 }
 
 function openStaffForm(k = null) {
+    const modal = document.getElementById('staffModal');
     if (k) {
         document.getElementById('modalTitle').innerText = "Edit Staff";
         document.getElementById('editOriginalKey').value = k;
@@ -101,7 +110,7 @@ function openStaffForm(k = null) {
         document.getElementById('formAlias').value = "";
         document.getElementById('deleteBtn').style.display = "none";
     }
-    document.getElementById('staffModal').style.display = 'flex';
+    modal.style.display = 'flex';
 }
 
 function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
@@ -111,20 +120,20 @@ async function confirmSave() {
     const alias = document.getElementById('formAlias').value.trim();
     const pos = document.getElementById('formPosition').value;
     const key = document.getElementById('editOriginalKey').value;
-    if (!fullName || !alias) return alert("Fill all fields!");
+    if (!fullName || !alias) return alert("Preencha tudo!");
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: key ? 'update' : 'add', originalKey: key, fullName, alias, position: pos, area: staffMap[key?.toLowerCase()]?.area || 'Sala' }) });
         closeStaffModal(); loadData();
-    } catch (e) { alert("Error connecting to sheet."); }
+    } catch (e) { alert("Erro de conexão"); }
 }
 
 async function confirmDelete() {
     const key = document.getElementById('editOriginalKey').value;
-    if (!confirm(`Delete ${key}?`)) return;
+    if (!confirm(`Apagar ${key}?`)) return;
     try {
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', originalKey: key }) });
         closeStaffModal(); loadData();
-    } catch (e) { alert("Error!"); }
+    } catch (e) { alert("Erro!"); }
 }
 
 window.onload = loadData;
