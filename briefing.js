@@ -7,16 +7,28 @@ function generateBriefing() {
         return;
     }
 
-    const getEntry = (s) => s.shiftRaw.split('-')[0].trim();
-    const getExit = (s) => s.shiftRaw.split('-')[1].trim();
+    // --- SAFETY HELPER FUNCTIONS ---
+    const getEntry = (s) => {
+        if (!s.shiftRaw || !s.shiftRaw.includes('-')) return "00:00";
+        return s.shiftRaw.split('-')[0].trim();
+    };
+    
+    const getExit = (s) => {
+        if (!s.shiftRaw || !s.shiftRaw.includes('-')) return "00:00";
+        return s.shiftRaw.split('-')[1].trim();
+    };
+
     const parseToMin = (tStr) => {
         const p = tStr.split(':');
+        if (p.length < 2) return 0;
         return parseInt(p[0]) * 60 + parseInt(p[1]);
     };
     
+    // --- SORTING ---
     const byEntry = [...dayStaff].sort((a, b) => parseToMin(getEntry(a)) - parseToMin(getEntry(b)));
     const byExit = [...dayStaff].sort((a, b) => parseToMin(getExit(a)) - parseToMin(getExit(b)));
 
+    // --- ROLE SEPARATION ---
     const barEntry = byEntry.filter(s => s.area.toLowerCase() === 'bar');
     const barExit = byExit.filter(s => s.area.toLowerCase() === 'bar');
     const salaEntry = byEntry.filter(s => s.area.toLowerCase() === 'sala');
@@ -24,61 +36,63 @@ function generateBriefing() {
 
     const findStaff = (list, pos) => list.find(s => s.position.toLowerCase().includes(pos.toLowerCase()));
 
-    // ASSIGNMENTS
-    let porta = findStaff(dayStaff, 'Manager') || findStaff(dayStaff, 'Head Seller') || salaEntry[0];
-    const sellers = salaEntry.filter(s => !s.position.toLowerCase().includes('manager') || salaEntry.length === 1);
-    const fechoCaixa = findStaff(dayStaff, 'Head Seller') || findStaff(dayStaff, 'Bar Manager') || findStaff(dayStaff, 'Manager') || salaExit[salaExit.length-1];
+    // --- ASSIGNMENTS ---
+    let opener = barEntry.length > 0 ? barEntry[0] : { alias: "Manager", shiftRaw: "08:00-17:00" };
+    const runnerStaff = dayStaff.filter(s => s.position.toLowerCase().includes('runner'));
+    const lastSala = salaExit.length > 0 ? salaExit[salaExit.length - 1] : salaEntry[0];
 
-    // TEMPLATE
-    let b = `Bom dia a todos!\n\n`;
-    b += `*BRIEFING ${selectedDate.split('/')[0]}/${selectedDate.split('/')[1]}*\n\n`;
-    b += `${getEntry(porta)} Porta: ${porta.alias}\n\n`;
-
-    b += `BAR:\n`;
-    if (barEntry[0]) {
-        b += `${getEntry(barEntry[0])} Abertura Sala/Bar: *${barEntry[0].alias}*\n`;
-        b += `${getEntry(barEntry[0])} Bar A: *${barEntry[0].alias}* Barista – Bebidas\n`;
-    }
-    if (barEntry[1]) b += `${getEntry(barEntry[1])} Bar B: *${barEntry[1].alias}* Barista – Cafés / Caixa\n`;
-    if (barEntry[2]) b += `${getEntry(barEntry[2])} Bar C: *${barEntry[2].alias}*\n`;
-    if (barEntry[3]) b += `${getEntry(barEntry[3])} Bar D: *${barEntry[3].alias}*\n`;
-
-    b += `\n⸻⸻⸻⸻\n\n‼️ Loiça é responsabilidade de todos.\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n——————————————\n\n`;
-
-    b += `SELLERS:\n`;
-    if (sellers[0]) b += `${getEntry(sellers[0])} Seller A: *${sellers[0].alias}*\n`;
-    if (sellers[1]) b += `${getEntry(sellers[1])} Seller B: *${sellers[1].alias}*\n`;
-    if (sellers[2]) b += `${getEntry(sellers[2])} Seller C: *${sellers[2].alias}*\n`;
-
-    b += `\n⚠ Pastéis de Nata – Cada Seller na sua secção ⚠\n——————————————\n`;
-    if (sellers[0]) b += `Seller A: Mesas 20-30\n`;
-    if (sellers[1]) b += `Seller B & C: Mesas 1-12\n`;
-    if (sellers[2]) b += `Seller C: Mesas 40-57\n`;
+    // --- TEMPLATE GENERATION ---
+    let b = `*Abertura Sala/Bar*: ${opener.alias}\n`;
+    b += `________________________\n\n`;
+    
+    b += `SELLERS:\n\n`;
+    b += `Seller A: ${salaEntry[0] ? salaEntry[0].alias : "---"}\n`;
+    b += `Seller B: ${salaEntry[1] ? salaEntry[1].alias : "---"}\n\n`;
+    
+    b += `Seller A: Mesa 20-30\n`;
+    b += `Seller B: Mesa 1-12\n`;
+    b += `Seller C: ${salaEntry[2] ? salaEntry[2].alias : "---"} (Sala de cima)\n`;
+    
+    b += `——————————————\n`;
+    b += `RUNNERS:\n`;
+    const runnerTxt = runnerStaff.length > 0 ? runnerStaff.map(r => r.alias).join(' e ') : "TODOS";
+    b += `Runner A e B: ${runnerTxt}\n`;
     b += `——————————————\n\n`;
 
-    const runnerStaff = dayStaff.filter(s => s.position.toLowerCase().includes('runner'));
-    const runnerTxt = runnerStaff.length > 0 ? runnerStaff.map(r => r.alias).join(' e ') : "Todos";
-    const runnerTime = runnerStaff.length > 0 ? getEntry(runnerStaff[0]) : getEntry(salaEntry[0]);
-    b += `RUNNERS:\n${runnerTime} Runner A e B: ${runnerTxt}\n——————————————\n\n`;
+    b += `HACCP/LIMPEZA BAR:\n`;
+    if (barEntry.length > 0) {
+        const bL = barExit[barExit.length - 1];
+        b += `*Preparações Bar:* ${barEntry[0].alias}\n\n`;
+        b += `*Reposição Bar:* ${barEntry[1] ? barEntry[1].alias : barEntry[0].alias}\n\n`;
+        b += `*Limpeza Máquina de Café/Reposição de Leites:* ${bL.alias}\n\n`;
+        b += `*Fecho Bar:* ${bL.alias}\n\n\n`;
+    }
 
-    const bE1 = barExit[0], bE2 = barExit[1], bL = barExit[barExit.length-1];
-    b += `HACCP / LIMPEZA BAR:\n`;
-    if (bE1) b += `${getExit(bE1)} Preparações Bar: *${bE1.alias}*\n`;
-    if (bE2) b += `${getExit(bE2)} Reposição Bar: *${bE2.alias}*\n`;
-    else if (bL) b += `${getExit(bL)} Limpeza Máquina/Leites: *${bL.alias}*\n`;
-    if (bL) b += `${getExit(bL)} Fecho Bar: *${bL.alias}*\n\n`;
+    b += `HACCP/ :\n`;
+    const sA = salaEntry[0] ? salaEntry[0].alias : "---";
+    const sB = salaEntry[1] ? salaEntry[1].alias : "---";
+    const sC = salaEntry[2] ? salaEntry[2].alias : "---";
 
-    const sE1 = salaExit[0], sE2 = salaExit[1] || sE1, sE3 = salaExit[2], sL = salaExit[salaExit.length-1];
-    const wcS = barExit[1] ? barExit[1].alias : (sE3 ? sE3.alias : sL.alias);
-    b += `HACCP / SALA:\n`;
-    b += `${getExit(sE1)} Fecho do sala de cima: *${sE1.alias}*\n`;
-    b += `${getExit(sE1)} Limpeza aparador/cadeiras: *${sE1.alias}*\n`;
-    b += `${getExit(sE2)} Repor papel WC: *${sE2.alias}*\n`;
-    b += `${getExit(sE2)} Limpeza WC: *${wcS}*\n`;
-    b += `${getExit(sL)} Limpeza espelhos/vidros: *${sE3 ? sE3.alias : sL.alias}*\n`;
-    b += `Fecho da sala: *${sL.alias}*\n`;
-    b += `${getExit(fechoCaixa)} Fecho de Caixa: *${fechoCaixa.alias}*`;
+    b += `*Limpeza da sala de cima: ${sC}\n`;
+    b += `*Limpeza e reposição aparador/cadeira de bebés:* ${sA}\n`;
+    b += `*Repor papel  (casa de banho):* ${sB}\n`;
+    b += `*Limpeza de Espelhos e vidros:* ${sA}\n`;
+    b += `*Limpeza da casa de banho clientes e staff):* ${sB}\n`;
+    b += `*Fecho da sala:* ${lastSala.alias}\n`;
+    b += `*Fecho de Caixa*: ${lastSala.alias}`;
 
-    const el = document.createElement('textarea'); el.value = b; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-    alert("✅ Briefing Copiado!\n\n" + b);
+    // --- COPY TO CLIPBOARD ---
+    navigator.clipboard.writeText(b).then(() => {
+        alert("✅ Briefing Copiado com Sucesso!");
+    }).catch(err => {
+        // Fallback for older browsers
+        const el = document.createElement('textarea');
+        el.value = b;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("✅ Briefing Copiado!");
+    });
 }
+
