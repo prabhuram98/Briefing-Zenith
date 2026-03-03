@@ -1,4 +1,3 @@
-Aqui está o código do briefing.js atualizado para seguir exatamente o seu novo template, mantendo as regras de separação entre Bar e Sala e a regra do Manager, sem alterar a estrutura lógica de busca de dados.
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayStaff = scheduleData[selectedDate];
@@ -8,6 +7,7 @@ function generateBriefing() {
         return;
     }
 
+    // Helpers to handle time safely
     const getEntry = (s) => (s.shiftRaw && s.shiftRaw.includes('-')) ? s.shiftRaw.split('-')[0].trim() : "00:00";
     const getExit = (s) => (s.shiftRaw && s.shiftRaw.includes('-')) ? s.shiftRaw.split('-')[1].trim() : "00:00";
     const parseToMin = (tStr) => {
@@ -15,29 +15,42 @@ function generateBriefing() {
         return p.length < 2 ? 0 : parseInt(p[0]) * 60 + parseInt(p[1]);
     };
     
+    // Sort logic
     const byEntry = [...dayStaff].sort((a, b) => parseToMin(getEntry(a)) - parseToMin(getEntry(b)));
     const byExit = [...dayStaff].sort((a, b) => parseToMin(getExit(a)) - parseToMin(getExit(b)));
 
     const findStaff = (list, pos) => list.find(s => s.position.toLowerCase().includes(pos.toLowerCase()));
 
-    // Filtros de Área e Manager
+    // Rule: Manager only does Porta
     const manager = findStaff(dayStaff, 'Manager');
+
+    // Filter staff by area, excluding Manager from standard task pools
     const barEntry = byEntry.filter(s => s.area.toLowerCase() === 'bar' && s.position.toLowerCase() !== 'manager');
     const barExit = byExit.filter(s => s.area.toLowerCase() === 'bar' && s.position.toLowerCase() !== 'manager');
     const salaEntry = byEntry.filter(s => s.area.toLowerCase() === 'sala' && s.position.toLowerCase() !== 'manager');
     const salaExit = byExit.filter(s => s.area.toLowerCase() === 'sala' && s.position.toLowerCase() !== 'manager');
 
-    // Atribuições baseadas no template
-    const porta = manager || salaEntry[0] || byEntry[0];
-    const opener = barEntry[0] || byEntry[0];
-    const runnerStaff = dayStaff.filter(s => s.position.toLowerCase().includes('runner'));
-    const fechoCaixa = manager || findStaff(salaExit, 'Head Seller') || salaExit[salaExit.length - 1];
+    // Fecho de Caixa Hierarchy: Head Seller > Bar Manager > Manager
+    const fechoCaixa = findStaff(dayStaff, 'Head Seller') || 
+                       findStaff(dayStaff, 'Bar Manager') || 
+                       manager || 
+                       { alias: "---", shiftRaw: "00:00-00:00" };
 
-    // Formatação da Data para o Título (Ex: 3/03)
+    // Runner Logic
+    const runnerStaff = dayStaff.filter(s => s.position.toLowerCase().includes('runner'));
+    const runnerTxt = runnerStaff.length > 0 ? runnerStaff.map(r => r.alias).join(' e ') : "TODOS";
+    const runnerTime = runnerStaff.length > 0 ? getEntry(runnerStaff[0]) : "08:30";
+
+    // Assignments for Template
+    const porta = manager || salaEntry[0] || byEntry[0];
+    const sA = salaEntry[0] || { alias: "---", position: "---" };
+    const sB = salaEntry[1] || { alias: "---", position: "---" };
+    const sC = salaEntry[2] || { alias: "---" };
+
     const dateParts = selectedDate.split('/');
     const dateTitle = dateParts[0] + '/' + (dateParts[1] ? dateParts[1] : "");
 
-    // --- CONSTRUÇÃO DO TEMPLATE EXACTO ---
+    // --- TEMPLATE CONSTRUCTION ---
     let b = `Segue o briefing para hoje.\n`;
     b += `Bom dia equipa \n\n`;
     b += `BRIEFING ${dateTitle}\n\n`;
@@ -58,19 +71,17 @@ function generateBriefing() {
     b += `—————————————— \n\n`;
 
     b += `SELLERS:\n`;
-    if (salaEntry[0]) b += `${getEntry(salaEntry[0])} Seller A:* ${salaEntry[0].alias} *${salaEntry[0].position}*\n`;
-    if (salaEntry[1]) b += `${getEntry(salaEntry[1])} Seller B :* ${salaEntry[1].alias} *${salaEntry[1].position}*\n`;
+    b += `${getEntry(sA)} Seller A:* ${sA.alias} *${sA.position}*\n`;
+    b += `${getEntry(sB)} Seller B :* ${sB.alias} *${sB.position}*\n`;
 
     b += `\n\n⚠Pastéis de Nata - Cada Seller em sua secção⚠\n`;
     b += `——————————————\n`;
     b += `Seller A: Mesa 20-28\n`;
     b += `Seller B: Mesa 1-18\n`;
-    b += `Seller C: Sala de cima \n`;
+    b += `Seller C: ${sC.alias} (Sala de cima) \n`;
     b += `——————————————\n`;
     
     b += `RUNNERS:\n`;
-    const runnerTxt = runnerStaff.length > 0 ? runnerStaff.map(r => r.alias).join(' e ') : "TODOS";
-    const runnerTime = runnerStaff.length > 0 ? getEntry(runnerStaff[0]) : "08:30";
     b += `${runnerTime} *Runner A e B:* ${runnerTxt}\n\n`;
     
     b += `——————————————\n`;
@@ -82,10 +93,11 @@ function generateBriefing() {
 
     b += `HACCP/LIMPEZA BAR:\n`;
     if (barExit.length > 0) {
+        const bE0 = barExit[0];
         const bL = barExit[barExit.length - 1];
-        b += `${getExit(barExit[0])} Reposição Bar:* ${barExit[0].alias}\n`;
-        b += `${getExit(barExit[0])} Limpeza Máquina de Café/Reposição de Leites:* ${barExit[0].alias}\n`;
-        b += `17:30 Preparações Bar:* TODOS\n`;
+        b += `${getExit(bE0)} Reposição Bar:* ${bE0.alias}\n`;
+        b += `${getExit(bE0)} Limpeza Máquina de Café/Reposição de Leites:* ${bE0.alias}\n`;
+        b += `${getExit(bE0)} Preparações Bar:* ${bE0.alias}\n`;
         b += `${getExit(bL)} Fecho Bar:* ${bL.alias} \n\n\n`;
     }
 
@@ -96,13 +108,12 @@ function generateBriefing() {
         b += `${getExit(s0)} *Fecho da sala de cima:* ${s0.alias}\n`;
         b += `${getExit(s0)} *Repor papel (casa de banho):* ${s0.alias}\n`;
         b += `${getExit(s0)} *Limpeza e reposição aparador/cadeira de bebés :*${s0.alias}\n`;
-        b += `17:30 *Limpeza de Espelhos e vidros:* \n${salaEntry[0] ? salaEntry[0].alias : "---"}\n`;
-        b += `17:30 *Limpeza da casa de banho (clientes e staff):* ${salaEntry[1] ? salaEntry[1].alias : s0.alias}\n`;
+        b += `17:30 *Limpeza de Espelhos e vidros:* \n${sA.alias}\n`;
+        b += `17:30 *Limpeza da casa de banho (clientes e staff):* ${sB.alias}\n`;
         b += `${getExit(sL)} *Fecho da sala:* ${sL.alias}\n\n`;
         b += `${getExit(fechoCaixa)} *Fecho de Caixa*: ${fechoCaixa.alias}`;
     }
 
-    // Lógica de cópia
     const el = document.createElement('textarea');
     el.value = b;
     document.body.appendChild(el);
