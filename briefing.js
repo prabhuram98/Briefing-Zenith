@@ -1,12 +1,3 @@
-/**
- * BRIEFING GENERATOR - VERSION 1.8.3
- * Rules: 
- * 1. Porta Hierarchy: Manager > Headseller > First Seller.
- * 2. HACCP/Limpeza: Strictly ONE person per task.
- * 3. Headseller on Caixa: Max 1 HACCP task.
- * 4. UI: Modal with Copy/Close.
- */
-
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayStaff = scheduleData[selectedDate];
@@ -40,9 +31,7 @@ function generateBriefing() {
     const runnersList = byEntry.filter(isRunner);
     const salaExit = byExit.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s));
 
-    // Porta Hierarchy Logic
     const portaPerson = manager || headS || sellersPool[0];
-
     const barM = dayStaff.find(s => s.position.toLowerCase().includes('bar manager'));
     const fechoCaixa = headS || barM || manager || { alias: "---" };
 
@@ -80,16 +69,26 @@ function generateBriefing() {
         b += `${getExit(b0)} Preparações Bar:* ${b0.alias}\n`;
         b += `${getExit(bM)} Reposição Bar:* ${bM.alias}\n`;
         b += `${getExit(bL)} Limpeza Máquina de Café/Reposição de Leites:* ${bL.alias}\n`;
-        b += `${getExit(bL)} Fecho Bar:* ${bL.alias}\n\n`; // Strictly one person
+        b += `${getExit(bL)} Fecho Bar:* ${bL.alias}\n\n`;
     }
 
     b += `HACCP/ SALA:\n`;
-    b += `${runnerExitTime} *Limpeza da sala de cima:* ${runnerName}\n`;
-    b += `${runnerExitTime} *Limpeza e reposição aparador/cadeira de bebés:* ${runnerName}\n`;
-    b += `${runnerExitTime} *Repor papel (casa de banho):* ${runnerName}\n`;
+    
+    // Updated Logic: First exiting Sala staff gets the maintenance tasks
+    const firstExitingSalaStaff = salaExit.length > 0 ? salaExit[0] : null;
+    if (firstExitingSalaStaff) {
+        b += `${getExit(firstExitingSalaStaff)} *Limpeza da sala de cima:* ${firstExitingSalaStaff.alias}\n`;
+        b += `${getExit(firstExitingSalaStaff)} *Limpeza e reposição aparador/cadeira de bebés:* ${firstExitingSalaStaff.alias}\n`;
+        b += `${getExit(firstExitingSalaStaff)} *Repor papel (casa de banho):* ${firstExitingSalaStaff.alias}\n`;
+    } else {
+        // Fallback if no Sala staff found
+        b += `${runnerExitTime} *Limpeza da sala de cima:* ${runnerName}\n`;
+        b += `${runnerExitTime} *Limpeza e reposição aparador/cadeira de bebés:* ${runnerName}\n`;
+        b += `${runnerExitTime} *Repor papel (casa de banho):* ${runnerName}\n`;
+    }
 
-    const haccpPool = sellersPool.filter(s => s.alias !== fechoCaixa.alias);
-    const backupStaff = haccpPool.length > 0 ? haccpPool[0] : (sellersPool[1] || sellersPool[0]);
+    const haccpPool = sellersPool.filter(s => s.alias !== fechoCaixa.alias && (!firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias));
+    const backupStaff = haccpPool.length > 0 ? haccpPool[0] : (sellersPool.find(s => !firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias) || sellersPool[0]);
 
     b += `${getExit(backupStaff)} *Limpeza de Espelhos e vidros:* ${backupStaff.alias}\n`;
     b += `${getExit(backupStaff)} *Limpeza da casa de banho (clientes e staff):* ${backupStaff.alias}\n`;
@@ -99,33 +98,4 @@ function generateBriefing() {
     b += `${getExit(fechoCaixa)} *Fecho de Caixa*: ${fechoCaixa.alias}`;
 
     showBriefingModal(b);
-}
-
-function showBriefingModal(text) {
-    const existing = document.getElementById('briefingModal');
-    if (existing) existing.remove();
-    const modal = document.createElement('div');
-    modal.id = 'briefingModal';
-    Object.assign(modal.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: '1000', fontFamily: 'sans-serif' });
-    const box = document.createElement('div');
-    Object.assign(box.style, { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '90%', maxWidth: '500px', maxHeight: '80%', overflowY: 'auto', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', position: 'relative' });
-    const textArea = document.createElement('pre');
-    Object.assign(textArea.style, { whiteSpace: 'pre-wrap', wordWrap: 'break-word', fontSize: '14px', backgroundColor: '#f4f4f4', padding: '10px', borderRadius: '4px' });
-    textArea.innerText = text;
-    box.appendChild(textArea);
-    const btnContainer = document.createElement('div');
-    Object.assign(btnContainer.style, { display: 'flex', justifyContent: 'space-between', marginTop: '20px' });
-    const copyBtn = document.createElement('button');
-    copyBtn.innerText = "Copy Briefing";
-    Object.assign(copyBtn.style, { padding: '10px 20px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' });
-    copyBtn.onclick = () => { navigator.clipboard.writeText(text).then(() => { copyBtn.innerText = "COPIED!"; setTimeout(() => { copyBtn.innerText = "Copy Briefing"; }, 2000); }); };
-    const closeBtn = document.createElement('button');
-    closeBtn.innerText = "Close";
-    Object.assign(closeBtn.style, { padding: '10px 20px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' });
-    closeBtn.onclick = () => { modal.remove(); };
-    btnContainer.appendChild(copyBtn);
-    btnContainer.appendChild(closeBtn);
-    box.appendChild(btnContainer);
-    modal.appendChild(box);
-    document.body.appendChild(modal);
 }
