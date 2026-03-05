@@ -1,7 +1,9 @@
 /**
- * BRIEFING GENERATOR - VERSION 1.8.3 (RESTORED)
+ * BRIEFING GENERATOR - VERSION 1.8.3
+ * Corrected: showBriefingModal is defined at the top to ensure visibility.
  */
 
+// 1. MODAL FUNCTION DEFINED FIRST
 function showBriefingModal(text) {
     const existing = document.getElementById('briefingModal');
     if (existing) existing.remove();
@@ -25,10 +27,11 @@ function showBriefingModal(text) {
     btnContainer.appendChild(copyBtn);
     btnContainer.appendChild(closeBtn);
     box.appendChild(btnContainer);
-    modal.appendChild(modal);
+    modal.appendChild(box);
     document.body.appendChild(modal);
 }
 
+// 2. MAIN FUNCTION
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayStaff = scheduleData[selectedDate];
