@@ -1,29 +1,49 @@
 /**
  * BRIEFING GENERATOR - VERSION 1.8.3
- * Corrected: showBriefingModal is defined at the top to ensure visibility.
+ * Consolidated to fix scope errors and restore original UI formatting.
  */
 
-// 1. MODAL FUNCTION DEFINED FIRST
+// 1. MODAL FUNCTION - Defined first to ensure it is always available
 function showBriefingModal(text) {
     const existing = document.getElementById('briefingModal');
     if (existing) existing.remove();
+    
     const modal = document.createElement('div');
     modal.id = 'briefingModal';
     Object.assign(modal.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: '1000', fontFamily: 'sans-serif' });
+    
     const box = document.createElement('div');
     Object.assign(box.style, { backgroundColor: '#fff', padding: '20px', borderRadius: '8px', width: '90%', maxWidth: '500px', maxHeight: '80%', overflowY: 'auto', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', position: 'relative' });
+    
     const textArea = document.createElement('pre');
     Object.assign(textArea.style, { whiteSpace: 'pre-wrap', wordWrap: 'break-word', fontSize: '14px', backgroundColor: '#f4f4f4', padding: '10px', borderRadius: '4px' });
     textArea.innerText = text;
     box.appendChild(textArea);
+    
     const btnContainer = document.createElement('div');
     Object.assign(btnContainer.style, { display: 'flex', justifyContent: 'space-between', marginTop: '20px' });
+    
     const copyBtn = document.createElement('button');
     copyBtn.innerText = "Copy Briefing";
-    copyBtn.onclick = () => { navigator.clipboard.writeText(text); };
+    Object.assign(copyBtn.style, { padding: '10px 20px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' });
+    
+    // Copy logic with visual feedback
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(text).then(() => {
+            copyBtn.innerText = "COPIED!";
+            copyBtn.style.backgroundColor = "#218838";
+            setTimeout(() => {
+                copyBtn.innerText = "Copy Briefing";
+                copyBtn.style.backgroundColor = "#28a745";
+            }, 2000);
+        });
+    };
+    
     const closeBtn = document.createElement('button');
     closeBtn.innerText = "Close";
+    Object.assign(closeBtn.style, { padding: '10px 20px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' });
     closeBtn.onclick = () => { modal.remove(); };
+    
     btnContainer.appendChild(copyBtn);
     btnContainer.appendChild(closeBtn);
     box.appendChild(btnContainer);
@@ -31,7 +51,7 @@ function showBriefingModal(text) {
     document.body.appendChild(modal);
 }
 
-// 2. MAIN FUNCTION
+// 2. MAIN GENERATOR FUNCTION
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayStaff = scheduleData[selectedDate];
@@ -95,6 +115,7 @@ function generateBriefing() {
         b += `${getExit(firstExitingSalaStaff)} *Limpeza e reposição aparador/cadeira de bebés:* ${firstExitingSalaStaff.alias}\n`;
         b += `${getExit(firstExitingSalaStaff)} *Repor papel (casa de banho):* ${firstExitingSalaStaff.alias}\n`;
     }
+
     const haccpPool = sellersPool.filter(s => s.alias !== fechoCaixa.alias && (!firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias));
     const backupStaff = haccpPool.length > 0 ? haccpPool[0] : (sellersPool.find(s => !firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias) || sellersPool[0]);
 
