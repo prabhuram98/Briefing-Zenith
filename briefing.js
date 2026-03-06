@@ -1,9 +1,9 @@
 /**
  * BRIEFING GENERATOR - VERSION 1.8.3
  * Logic:
- * - Porta Rule: Manager > Headseller > First Seller.
- * - Dual Runner: Splits into A/B only if 2+ are present.
- * - HACCP Sala: Runners are now included in the assignment pool.
+ * - Runners A & B: Split if 2+ present.
+ * - HACCP: Runners are included in the pool and assigned tasks based on exit time.
+ * - One staff member per task.
  */
 
 // 1. MODAL FUNCTION
@@ -79,8 +79,8 @@ function generateBriefing() {
     const sellersPool = byEntry.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s) && !isRunner(s));
     const runnersList = byEntry.filter(isRunner);
     
-    // SalaExit pool now includes Runners for HACCP assignments
-    const salaExit = byExit.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s));
+    // Pool for HACCP assignments (Sellers + Runners)
+    const salaExitPool = byExit.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s));
 
     const portaPerson = manager || headS || sellersPool[0];
     const barM = dayStaff.find(s => s.position.toLowerCase().includes('bar manager'));
@@ -100,6 +100,7 @@ function generateBriefing() {
 
     b += `\n\n⚠Pastéis de Nata - Cada Seller na sua secção⚠\n——————————————\nSeller A: Mesa 20-30\nSeller B: Mesa 1-12\nSeller C: Sala de cima \n——————————————\n`;
     
+    // Runner section
     b += `RUNNERS:\n`;
     if (runnersList.length >= 2) {
         b += `${getEntry(runnersList[0])} *Runner A:* ${runnersList[0].alias}\n`;
@@ -122,22 +123,31 @@ function generateBriefing() {
     }
 
     b += `HACCP/ SALA:\n`;
-    const firstExitingSalaStaff = salaExit.length > 0 ? salaExit[0] : null;
-    if (firstExitingSalaStaff) {
-        b += `${getExit(firstExitingSalaStaff)} *Limpeza da sala de cima:* ${firstExitingSalaStaff.alias}\n`;
-        b += `${getExit(firstExitingSalaStaff)} *Limpeza e reposição aparador/cadeira de bebés:* ${firstExitingSalaStaff.alias}\n`;
-        b += `${getExit(firstExitingSalaStaff)} *Repor papel (casa de banho):* ${firstExitingSalaStaff.alias}\n`;
+    
+    // Assign top 3 tasks to the first person to leave in the Sala pool (Runner or Seller)
+    const firstExit = salaExitPool[0];
+    if (firstExit) {
+        b += `${getExit(firstExit)} *Limpeza da sala de cima:* ${firstExit.alias}\n`;
+        b += `${getExit(firstExit)} *Limpeza e reposição aparador/cadeira de bebés:* ${firstExit.alias}\n`;
+        b += `${getExit(firstExit)} *Repor papel (casa de banho):* ${firstExit.alias}\n`;
     }
 
-    const haccpPool = salaExit.filter(s => s.alias !== fechoCaixa.alias && (!firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias));
-    const backupStaff = haccpPool.length > 0 ? haccpPool[0] : (salaExit.find(s => !firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias) || salaExit[0]);
+    // Filter out the first person and the cashier closer to find the next staff members leaving
+    const remainingHaccpPool = salaExitPool.filter(s => s.alias !== fechoCaixa.alias && s.alias !== (firstExit ? firstExit.alias : ''));
 
-    if (backupStaff) {
-        b += `${getExit(backupStaff)} *Limpeza de Espelhos e vidros:* ${backupStaff.alias}\n`;
-        b += `${getExit(backupStaff)} *Limpeza da casa de banho (clientes e staff):* ${backupStaff.alias}\n`;
+    // Assignment for next person (could be Runner B or another Seller)
+    const secondExit = remainingHaccpPool[0];
+    if (secondExit) {
+        b += `${getExit(secondExit)} *Limpeza de Espelhos e vidros:* ${secondExit.alias}\n`;
+    }
+
+    // Assignment for next person (next in line for bathroom)
+    const thirdExit = remainingHaccpPool[1] || secondExit || firstExit;
+    if (thirdExit) {
+        b += `${getExit(thirdExit)} *Limpeza da casa de banho (clientes e staff):* ${thirdExit.alias}\n`;
     }
     
-    const lastSeller = salaExit[salaExit.length - 1];
+    const lastSeller = salaExitPool[salaExitPool.length - 1];
     b += `${getExit(lastSeller)} *Fecho da sala:* ${lastSeller.alias}\n\n`;
     b += `${getExit(fechoCaixa)} *Fecho de Caixa*: ${fechoCaixa.alias}`;
 
