@@ -1,6 +1,9 @@
 /**
  * BRIEFING GENERATOR - VERSION 1.8.3
- * Update: Conditional Runner Logic (A and B only if 2+ present)
+ * Logic:
+ * - Porta Rule: Manager > Headseller > First Seller.
+ * - Dual Runner: Splits into A/B only if 2+ are present.
+ * - HACCP Sala: Runners are now included in the assignment pool.
  */
 
 // 1. MODAL FUNCTION
@@ -75,6 +78,8 @@ function generateBriefing() {
     const barExit = byExit.filter(isBar);
     const sellersPool = byEntry.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s) && !isRunner(s));
     const runnersList = byEntry.filter(isRunner);
+    
+    // SalaExit pool now includes Runners for HACCP assignments
     const salaExit = byExit.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s));
 
     const portaPerson = manager || headS || sellersPool[0];
@@ -95,7 +100,6 @@ function generateBriefing() {
 
     b += `\n\n⚠Pastéis de Nata - Cada Seller na sua secção⚠\n——————————————\nSeller A: Mesa 20-30\nSeller B: Mesa 1-12\nSeller C: Sala de cima \n——————————————\n`;
     
-    // RUNNERS LOGIC: Only splits if 2 are present
     b += `RUNNERS:\n`;
     if (runnersList.length >= 2) {
         b += `${getEntry(runnersList[0])} *Runner A:* ${runnersList[0].alias}\n`;
@@ -125,11 +129,13 @@ function generateBriefing() {
         b += `${getExit(firstExitingSalaStaff)} *Repor papel (casa de banho):* ${firstExitingSalaStaff.alias}\n`;
     }
 
-    const haccpPool = sellersPool.filter(s => s.alias !== fechoCaixa.alias && (!firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias));
-    const backupStaff = haccpPool.length > 0 ? haccpPool[0] : (sellersPool.find(s => !firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias) || sellersPool[0]);
+    const haccpPool = salaExit.filter(s => s.alias !== fechoCaixa.alias && (!firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias));
+    const backupStaff = haccpPool.length > 0 ? haccpPool[0] : (salaExit.find(s => !firstExitingSalaStaff || s.alias !== firstExitingSalaStaff.alias) || salaExit[0]);
 
-    b += `${getExit(backupStaff)} *Limpeza de Espelhos e vidros:* ${backupStaff.alias}\n`;
-    b += `${getExit(backupStaff)} *Limpeza da casa de banho (clientes e staff):* ${backupStaff.alias}\n`;
+    if (backupStaff) {
+        b += `${getExit(backupStaff)} *Limpeza de Espelhos e vidros:* ${backupStaff.alias}\n`;
+        b += `${getExit(backupStaff)} *Limpeza da casa de banho (clientes e staff):* ${backupStaff.alias}\n`;
+    }
     
     const lastSeller = salaExit[salaExit.length - 1];
     b += `${getExit(lastSeller)} *Fecho da sala:* ${lastSeller.alias}\n\n`;
