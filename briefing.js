@@ -1,9 +1,9 @@
 /**
  * BRIEFING GENERATOR - VERSION 1.8.3
- * Consolidated to fix scope errors and restore original UI formatting.
+ * Update: Conditional Runner Logic (A and B only if 2+ present)
  */
 
-// 1. MODAL FUNCTION - Defined first to ensure it is always available
+// 1. MODAL FUNCTION
 function showBriefingModal(text) {
     const existing = document.getElementById('briefingModal');
     if (existing) existing.remove();
@@ -27,7 +27,6 @@ function showBriefingModal(text) {
     copyBtn.innerText = "Copy Briefing";
     Object.assign(copyBtn.style, { padding: '10px 20px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' });
     
-    // Copy logic with visual feedback
     copyBtn.onclick = () => {
         navigator.clipboard.writeText(text).then(() => {
             copyBtn.innerText = "COPIED!";
@@ -51,7 +50,7 @@ function showBriefingModal(text) {
     document.body.appendChild(modal);
 }
 
-// 2. MAIN GENERATOR FUNCTION
+// 2. GENERATOR FUNCTION
 function generateBriefing() {
     const selectedDate = document.getElementById('dateSelect').value;
     const dayStaff = scheduleData[selectedDate];
@@ -81,8 +80,6 @@ function generateBriefing() {
     const portaPerson = manager || headS || sellersPool[0];
     const barM = dayStaff.find(s => s.position.toLowerCase().includes('bar manager'));
     const fechoCaixa = headS || barM || manager || { alias: "---" };
-    const runnerPerson = runnersList.length > 0 ? runnersList[0] : null;
-    const runnerName = runnerPerson ? runnerPerson.alias : "TODOS";
 
     let b = `Segue o briefing para hoje.\nBom dia equipa \n\nBRIEFING ${selectedDate}\n\n`;
     b += `${getEntry(portaPerson)} *Porta*: ${portaPerson.alias}\n\n`;
@@ -97,7 +94,19 @@ function generateBriefing() {
     sellersPool.forEach((s, i) => { if(i < 3) b += `${getEntry(s)} Seller ${String.fromCharCode(65+i)}: ${s.alias} *${isHeadseller(s) ? "Headseller" : "Seller"}*\n`; });
 
     b += `\n\n⚠Pastéis de Nata - Cada Seller na sua secção⚠\n——————————————\nSeller A: Mesa 20-30\nSeller B: Mesa 1-12\nSeller C: Sala de cima \n——————————————\n`;
-    b += `RUNNERS:\n${runnerPerson ? getEntry(runnerPerson) : "08:00"} *Runner A e B:* ${runnerName}\n——————————————\n\n`;
+    
+    // RUNNERS LOGIC: Only splits if 2 are present
+    b += `RUNNERS:\n`;
+    if (runnersList.length >= 2) {
+        b += `${getEntry(runnersList[0])} *Runner A:* ${runnersList[0].alias}\n`;
+        b += `${getEntry(runnersList[1])} *Runner B:* ${runnersList[1].alias}\n`;
+    } else if (runnersList.length === 1) {
+        b += `${getEntry(runnersList[0])} *Runner A:* ${runnersList[0].alias}\n`;
+    } else {
+        b += `08:00 *Runner A e B:* TODOS\n`;
+    }
+    b += `——————————————\n\n`;
+
     b += `‼️Loiça é responsabilidade de todos!\nNÃO DEIXAR LOIÇA ACUMULAR EM NENHUM MOMENTO\n——————————————\n\n`;
 
     b += `HACCP/LIMPEZA BAR:\n`;
