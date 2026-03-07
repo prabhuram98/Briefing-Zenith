@@ -1,6 +1,6 @@
 /**
  * BRIEFING GENERATOR - VERSION 1.8.3
- * Fixed: Styling, Copy/Close colors, and Sequential HACCP distribution.
+ * Fixed: Runner data mapping and vertical-only scrolling.
  */
 
 window.generateBriefing = function() {
@@ -11,26 +11,21 @@ window.generateBriefing = function() {
 
     const getEntry = (s) => (s && s.shiftRaw ? s.shiftRaw.split('-')[0].trim() : "00:00");
     const getExit = (s) => (s && s.shiftRaw ? s.shiftRaw.split('-')[1].trim() : "00:00");
-    const parseMin = (t) => { const p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); };
     
-    // Logic: Sort by exit time to distribute tasks
+    // Logic: Sort by exit time for task distribution
     const haccpPool = dayStaff
         .filter(s => s.area.toLowerCase() === 'sala' && !s.position.toLowerCase().includes('manager'))
-        .sort((a,b) => parseMin(getExit(a)) - parseMin(getExit(b)));
+        .sort((a,b) => (parseInt(getExit(a)) - parseInt(getExit(b))));
 
-    const isManager = (s) => s.position.toLowerCase().includes('manager') && !s.position.toLowerCase().includes('bar');
-    const isRunner = (s) => s.position.toLowerCase().includes('runner');
-    const isHeadseller = (s) => s.position.toLowerCase().includes('head');
-
-    const manager = dayStaff.find(isManager);
-    const headS = dayStaff.find(isHeadseller);
+    const manager = dayStaff.find(s => s.position.toLowerCase().includes('manager') && !s.position.toLowerCase().includes('bar'));
+    const headS = dayStaff.find(s => s.position.toLowerCase().includes('head'));
     const barEntry = dayStaff.filter(s => s.area.toLowerCase() === 'bar');
-    const runnersList = dayStaff.filter(isRunner);
-    const sellersPool = dayStaff.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s) && !isRunner(s));
+    const runnersList = dayStaff.filter(s => s.position.toLowerCase().includes('runner'));
+    const sellersPool = dayStaff.filter(s => s.area.toLowerCase() === 'sala' && !s.position.toLowerCase().includes('manager') && !s.position.toLowerCase().includes('runner'));
     const fechoCaixa = headS || dayStaff.find(s => s.position.toLowerCase().includes('bar manager')) || manager;
 
     let b = `Segue o briefing para hoje.\nBom dia equipa \n\nBRIEFING ${selectedDate}\n\n`;
-    b += `${getEntry(manager || headS)} *Porta*: ${(manager || headS)?.alias}\n\n`;
+    b += `${getEntry(manager || headS)} *Porta*: ${(manager || headS)?.alias || "---"}\n\n`;
     
     b += `BAR: \n`;
     barEntry.forEach((s, i) => { b += `${getEntry(s)} *Bar ${String.fromCharCode(65+i)}*: ${s.alias} *${s.position}*\n`; });
@@ -39,12 +34,15 @@ window.generateBriefing = function() {
     sellersPool.forEach((s, i) => { b += `${getEntry(s)} Seller ${String.fromCharCode(65+i)}:* ${s.alias} *Seller*\n`; });
 
     b += `\n\n⚠Pastéis de Nata - Cada Seller em sua secção⚠\n——————————————\nSeller A: Mesa 20-28\nSeller B: Mesa 1-18\nSeller C: Sala de cima \n——————————————\n`;
-    b += `RUNNERS:\n${getEntry(runnersList[0])} *Runner A:* ${runnersList[0]?.alias || "---"}\n${getEntry(runnersList[1])} *Runner B:* ${runnersList[1]?.alias || "---"}\n——————————————\nRunner A:* Bebidas \nRunner B:* Comidas\n\n‼️Loiça é responsabilidade de todos!\n——————————————\n\n`;
+    
+    b += `RUNNERS:\n`;
+    b += `${getEntry(runnersList[0])} *Runner A:* ${runnersList[0]?.alias || "---"}\n`;
+    b += `${getEntry(runnersList[1])} *Runner B:* ${runnersList[1]?.alias || "---"}\n`;
+    b += `——————————————\nRunner A:* Bebidas \nRunner B:* Comidas\n\n‼️Loiça é responsabilidade de todos!\n——————————————\n\n`;
 
-    b += `HACCP/LIMPEZA BAR:\n16:00 Reposição Bar:* ${barEntry[0]?.alias}\n16:00 Limpeza Máquina de Café/Reposição de Leites:* ${barEntry[0]?.alias} \n17:30 Preparações Bar:* ${barEntry[barEntry.length-1]?.alias}\n17:30 Fecho Bar:* ${barEntry[barEntry.length-1]?.alias} \n\n\n`;
+    b += `HACCP/LIMPEZA BAR:\n16:00 Reposição Bar:* ${barEntry[0]?.alias || "---"}\n16:00 Limpeza Máquina de Café/Reposição de Leites:* ${barEntry[0]?.alias || "---"} \n17:30 Preparações Bar:* ${barEntry[barEntry.length-1]?.alias || "---"}\n17:30 Fecho Bar:* ${barEntry[barEntry.length-1]?.alias || "---"} \n\n\n`;
 
     b += `HACCP/ SALA:\n`;
-    // Distributed Task Assignment
     if(haccpPool.length > 0) {
         b += `${getExit(haccpPool[0])} Fecho da sala de cima:* ${haccpPool[0].alias}\n`;
         b += `${getExit(haccpPool[0])} Repor papel (casa de banho):* ${haccpPool[0].alias}\n`;
@@ -57,7 +55,7 @@ window.generateBriefing = function() {
         b += `${getExit(haccpPool[2])} *Limpeza de Espelhos e vidros:* ${haccpPool[2].alias}\n`;
     }
     b += `${getExit(haccpPool[haccpPool.length-1])} *Fecho da sala:* ${haccpPool[haccpPool.length-1].alias}\n\n`;
-    b += `17:30 *Fecho de Caixa*: ${fechoCaixa.alias}`;
+    b += `17:30 *Fecho de Caixa*: ${fechoCaixa?.alias || "---"}`;
 
     showBriefingModal(b);
 };
@@ -68,9 +66,11 @@ function showBriefingModal(text) {
     modal.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:9999;";
     
     const box = document.createElement('div');
-    box.style.cssText = "background:#fff; padding:20px; border-radius:8px; width:90%; max-width:500px; max-height:80%; overflow-y:auto;";
+    // 'word-wrap: break-word' and 'overflow-x: hidden' prevent horizontal scrolling
+    box.style.cssText = "background:#fff; padding:20px; border-radius:8px; width:90%; max-width:500px; max-height:80%; overflow-y:auto; overflow-x:hidden;";
     
     const pre = document.createElement('pre');
+    pre.style.cssText = "white-space: pre-wrap; word-wrap: break-word;";
     pre.innerText = text;
     box.appendChild(pre);
     
