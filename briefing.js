@@ -1,9 +1,6 @@
 /**
  * BRIEFING GENERATOR - VERSION 1.8.3
- * Rules:
- * 1. Manager is strictly for Abertura Porta (No Sala HACCP).
- * 2. Bar HACCP tasks must show specific staff, not "TODOS".
- * 3. Copy/Close buttons must function as originally built.
+ * Fixed: Styling, Copy/Close colors, and Sequential HACCP distribution.
  */
 
 window.generateBriefing = function() {
@@ -16,7 +13,11 @@ window.generateBriefing = function() {
     const getExit = (s) => (s && s.shiftRaw ? s.shiftRaw.split('-')[1].trim() : "00:00");
     const parseMin = (t) => { const p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); };
     
-    // Filters
+    // Logic: Sort by exit time to distribute tasks
+    const haccpPool = dayStaff
+        .filter(s => s.area.toLowerCase() === 'sala' && !s.position.toLowerCase().includes('manager'))
+        .sort((a,b) => parseMin(getExit(a)) - parseMin(getExit(b)));
+
     const isManager = (s) => s.position.toLowerCase().includes('manager') && !s.position.toLowerCase().includes('bar');
     const isRunner = (s) => s.position.toLowerCase().includes('runner');
     const isHeadseller = (s) => s.position.toLowerCase().includes('head');
@@ -26,14 +27,10 @@ window.generateBriefing = function() {
     const barEntry = dayStaff.filter(s => s.area.toLowerCase() === 'bar');
     const runnersList = dayStaff.filter(isRunner);
     const sellersPool = dayStaff.filter(s => s.area.toLowerCase() === 'sala' && !isManager(s) && !isRunner(s));
-    
-    // Logic Rules
-    const portaPerson = manager || headS || sellersPool[0];
     const fechoCaixa = headS || dayStaff.find(s => s.position.toLowerCase().includes('bar manager')) || manager;
-    const haccpPool = dayStaff.filter(s => s.area.toLowerCase() === 'sala' && s.alias !== fechoCaixa.alias && s.alias !== manager?.alias).sort((a,b) => parseMin(getExit(a)) - parseMin(getExit(b)));
 
     let b = `Segue o briefing para hoje.\nBom dia equipa \n\nBRIEFING ${selectedDate}\n\n`;
-    b += `${getEntry(portaPerson)} *Porta*: ${portaPerson.alias}\n\n`;
+    b += `${getEntry(manager || headS)} *Porta*: ${(manager || headS)?.alias}\n\n`;
     
     b += `BAR: \n`;
     barEntry.forEach((s, i) => { b += `${getEntry(s)} *Bar ${String.fromCharCode(65+i)}*: ${s.alias} *${s.position}*\n`; });
@@ -47,13 +44,18 @@ window.generateBriefing = function() {
     b += `HACCP/LIMPEZA BAR:\n16:00 Reposição Bar:* ${barEntry[0]?.alias}\n16:00 Limpeza Máquina de Café/Reposição de Leites:* ${barEntry[0]?.alias} \n17:30 Preparações Bar:* ${barEntry[barEntry.length-1]?.alias}\n17:30 Fecho Bar:* ${barEntry[barEntry.length-1]?.alias} \n\n\n`;
 
     b += `HACCP/ SALA:\n`;
-    if(haccpPool[0]) {
+    // Distributed Task Assignment
+    if(haccpPool.length > 0) {
         b += `${getExit(haccpPool[0])} Fecho da sala de cima:* ${haccpPool[0].alias}\n`;
         b += `${getExit(haccpPool[0])} Repor papel (casa de banho):* ${haccpPool[0].alias}\n`;
-        b += `${getExit(haccpPool[0])} Limpeza e reposição aparador/cadeira de bebés :*${haccpPool[0].alias}\n`;
-        b += `${getExit(haccpPool[0])} *Limpeza da casa de banho (clientes e staff):* ${haccpPool[0].alias}\n`;
     }
-    b += `${getExit(haccpPool[1] || haccpPool[0])} *Limpeza de Espelhos e vidros:* ${haccpPool[1]?.alias || haccpPool[0]?.alias}\n`;
+    if(haccpPool.length > 1) {
+        b += `${getExit(haccpPool[1])} Limpeza e reposição aparador/cadeira de bebés :*${haccpPool[1].alias}\n`;
+        b += `${getExit(haccpPool[1])} *Limpeza da casa de banho (clientes e staff):* ${haccpPool[1].alias}\n`;
+    }
+    if(haccpPool.length > 2) {
+        b += `${getExit(haccpPool[2])} *Limpeza de Espelhos e vidros:* ${haccpPool[2].alias}\n`;
+    }
     b += `${getExit(haccpPool[haccpPool.length-1])} *Fecho da sala:* ${haccpPool[haccpPool.length-1].alias}\n\n`;
     b += `17:30 *Fecho de Caixa*: ${fechoCaixa.alias}`;
 
@@ -74,11 +76,12 @@ function showBriefingModal(text) {
     
     const copyBtn = document.createElement('button');
     copyBtn.innerText = "Copy Briefing";
-    copyBtn.style.marginRight = "10px";
-    copyBtn.onclick = () => navigator.clipboard.writeText(text).then(() => alert("Copied!"));
+    copyBtn.style.cssText = "padding:10px 20px; background-color:#28a745; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-right:10px;";
+    copyBtn.onclick = () => navigator.clipboard.writeText(text).then(() => { copyBtn.innerText = "COPIED!"; setTimeout(() => copyBtn.innerText = "Copy Briefing", 2000); });
     
     const closeBtn = document.createElement('button');
     closeBtn.innerText = "Close";
+    closeBtn.style.cssText = "padding:10px 20px; background-color:#dc3545; color:#fff; border:none; border-radius:4px; cursor:pointer;";
     closeBtn.onclick = () => modal.remove();
     
     box.appendChild(copyBtn);
